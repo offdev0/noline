@@ -1,9 +1,13 @@
+import { auth, db } from '@/configs/firebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
 import Checkbox from 'expo-checkbox';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import {
+    Alert,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -21,13 +25,61 @@ export default function LoginScreen() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isChecked, setChecked] = useState(false);
-    const [isLoginMode, setIsLoginMode] = useState(false);
+    const [isLoginMode, setIsLoginMode] = useState(false); // Default to Signup
 
-    // TODO: Add actual authentication logic here
-    const handleAuth = () => {
-        // For now, bypass auth and go straight to dashboard
-        // In a real app, you would check firebase auth here
-        router.replace('/(tabs)');
+    const handleAuth = async () => {
+        if (!email || !password) {
+            Alert.alert("Error", "Please enter email and password");
+            return;
+        }
+
+        try {
+            if (isLoginMode) {
+                // Login Logic
+                await signInWithEmailAndPassword(auth, email, password);
+            } else {
+                // Signup Logic
+                if (password !== confirmPassword) {
+                    Alert.alert("Error", "Passwords do not match");
+                    return;
+                }
+                if (!isChecked) {
+                    Alert.alert("Error", "Please agree to the terms");
+                    return;
+                }
+
+                // 1. Create User in Auth
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // 2. Create User Document in Firestore
+                await setDoc(doc(db, "users", user.uid), {
+                    uid: user.uid,
+                    email: user.email,
+                    display_name: "", // Initial empty, user can update later
+                    photo_url: "",
+                    phone_number: "",
+                    username: email.split('@')[0], // Default username from email
+
+                    created_time: Timestamp.now(),
+                    joinedAt: Timestamp.now(),
+
+                    isGuest: false,
+                    darkMode: false,
+                    enableNotification: false, // Default false until requested
+                    enableLocation: false, // Default false until requested
+                    Language: true, // Matching the Boolean type in screenshot (weird, but following schema)
+                    xp: 0,
+
+                    favourite: [], // Empty list of references
+                    currentLocaton: null // Typo 'currentLocaton' matches screenshot schema
+                });
+            }
+            // If successful, navigate
+            router.replace('/(tabs)');
+        } catch (error: any) {
+            Alert.alert("Authentication Error", error.message);
+        }
     };
 
     return (
@@ -155,20 +207,6 @@ export default function LoginScreen() {
 
                         <View style={{ alignItems: 'center', marginTop: 12 }}>
                             <Text style={styles.forgotPassword}>Forgot Password?</Text>
-                        </View>
-
-
-                        {/* Social Logins */}
-                        <View style={styles.socialContainer}>
-                            <TouchableOpacity style={styles.socialButton}>
-                                <Ionicons name="logo-google" size={20} color="black" />
-                                <Text style={styles.socialButtonText}>Continue with Google</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={styles.socialButton}>
-                                <Ionicons name="logo-apple" size={20} color="black" />
-                                <Text style={styles.socialButtonText}>Continue with Apple</Text>
-                            </TouchableOpacity>
                         </View>
                     </ScrollView>
                 </View>

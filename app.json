@@ -40,6 +40,12 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.83234148402-1afb8eaa027069f7c06c2b"
+        }
       ]
     ],
     "experiments": {
