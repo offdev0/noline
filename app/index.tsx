@@ -1,5 +1,4 @@
 import { auth, db } from '@/configs/firebaseConfig';
-import { Ionicons } from '@expo/vector-icons';
 import Checkbox from 'expo-checkbox';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -12,10 +11,12 @@ import {
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
+
+import AuthHeader from '@/components/auth/AuthHeader';
+import AuthInput from '@/components/auth/AuthInput';
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -68,7 +69,7 @@ export default function LoginScreen() {
                     darkMode: false,
                     enableNotification: false, // Default false until requested
                     enableLocation: false, // Default false until requested
-                    Language: true, // Matching the Boolean type in screenshot (weird, but following schema)
+                    Language: true, // Matching the Boolean type in screenshot
                     xp: 0,
 
                     favourite: [], // Empty list of references
@@ -88,12 +89,7 @@ export default function LoginScreen() {
             style={styles.container}
         >
             <SafeAreaView style={styles.safeArea}>
-                <View style={styles.header}>
-                    <Text style={styles.appName}>NoLine</Text>
-                    <View style={styles.logoContainer}>
-                        <Ionicons name="hourglass-outline" size={60} color="#FFD700" />
-                    </View>
-                </View>
+                <AuthHeader />
 
                 <View style={styles.contentContainer}>
                     <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -101,72 +97,37 @@ export default function LoginScreen() {
                         <Text style={styles.subtitle}>Controlling your time starts here.</Text>
 
                         {/* Email Input */}
-                        <View style={styles.inputGroup}>
-                            <View style={styles.inputLabelContainer}>
-                                <Text style={styles.inputLabel}>Email</Text>
-                            </View>
-                            <TextInput
-                                style={styles.input}
-                                value={email}
-                                onChangeText={setEmail}
-                                placeholder=""
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                            />
-                        </View>
+                        <AuthInput
+                            label="Email"
+                            value={email}
+                            onChangeText={setEmail}
+                            placeholder=""
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                        />
 
                         {/* Password Input */}
-                        <View style={styles.inputGroup}>
-                            <View style={styles.inputLabelContainer}>
-                                <Text style={styles.inputLabel}>Password</Text>
-                            </View>
-                            <View style={styles.passwordContainer}>
-                                <TextInput
-                                    style={[styles.input, styles.passwordInput]}
-                                    value={password}
-                                    onChangeText={setPassword}
-                                    secureTextEntry={!showPassword}
-                                    placeholder=""
-                                />
-                                <TouchableOpacity
-                                    onPress={() => setShowPassword(!showPassword)}
-                                    style={styles.eyeIcon}
-                                >
-                                    <Ionicons
-                                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                                        size={24}
-                                        color="#666"
-                                    />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
+                        <AuthInput
+                            label="Password"
+                            isPassword
+                            showPassword={showPassword}
+                            onTogglePassword={() => setShowPassword(!showPassword)}
+                            value={password}
+                            onChangeText={setPassword}
+                            placeholder=""
+                        />
 
                         {/* Confirm Password Input - Only for Signup */}
                         {!isLoginMode && (
-                            <View style={styles.inputGroup}>
-                                <View style={styles.inputLabelContainer}>
-                                    <Text style={styles.inputLabel}>Confirm Password</Text>
-                                </View>
-                                <View style={styles.passwordContainer}>
-                                    <TextInput
-                                        style={[styles.input, styles.passwordInput]}
-                                        value={confirmPassword}
-                                        onChangeText={setConfirmPassword}
-                                        secureTextEntry={!showConfirmPassword}
-                                        placeholder=""
-                                    />
-                                    <TouchableOpacity
-                                        onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        style={styles.eyeIcon}
-                                    >
-                                        <Ionicons
-                                            name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
-                                            size={24}
-                                            color="#666"
-                                        />
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
+                            <AuthInput
+                                label="Confirm Password"
+                                isPassword
+                                showPassword={showConfirmPassword}
+                                onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                placeholder=""
+                            />
                         )}
 
                         {/* Action Button */}
@@ -222,22 +183,6 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
     },
-    header: {
-        alignItems: 'center',
-        paddingTop: 40,
-        paddingBottom: 20,
-        height: '25%',
-        justifyContent: 'center'
-    },
-    appName: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: 'white',
-        marginBottom: 10,
-    },
-    logoContainer: {
-        // marginBottom: 20,
-    },
     contentContainer: {
         flex: 1,
         backgroundColor: 'white',
@@ -259,43 +204,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#666',
         marginBottom: 32,
-    },
-    inputGroup: {
-        marginBottom: 20,
-        position: 'relative',
-    },
-    inputLabelContainer: {
-        position: 'absolute',
-        top: -10,
-        left: 12,
-        zIndex: 1,
-        backgroundColor: 'white',
-        paddingHorizontal: 4,
-    },
-    inputLabel: {
-        fontSize: 12,
-        color: '#666',
-    },
-    input: {
-        height: 56,
-        borderWidth: 1.5,
-        borderColor: '#787878',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        fontSize: 16,
-        color: '#000',
-        backgroundColor: 'transparent',
-    },
-    passwordContainer: {
-        position: 'relative',
-    },
-    passwordInput: {
-        paddingRight: 50,
-    },
-    eyeIcon: {
-        position: 'absolute',
-        right: 16,
-        top: 16,
     },
     button: {
         backgroundColor: '#5A46E5', // Distinctive purple/blue
@@ -342,23 +250,5 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
         marginBottom: 24
-    },
-    socialContainer: {
-        gap: 16,
-    },
-    socialButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: 56,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-        borderRadius: 12,
-        gap: 12,
-    },
-    socialButtonText: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: 'black',
     },
 });
