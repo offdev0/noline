@@ -104,31 +104,41 @@ export default function LoginScreen() {
                 }
 
                 // 1. Create User in Auth
+                console.log('Creating user in Firebase Auth...');
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
+                console.log('User created in Auth:', user.uid);
 
                 // 2. Create User Document in Firestore
-                await setDoc(doc(db, "users", user.uid), {
-                    uid: user.uid,
-                    email: user.email,
-                    display_name: "", // Initial empty, user can update later
-                    photo_url: "",
-                    phone_number: "",
-                    username: email.split('@')[0], // Default username from email
+                try {
+                    console.log('Creating user document in Firestore...');
+                    await setDoc(doc(db, "users", user.uid), {
+                        uid: user.uid,
+                        email: user.email || '',
+                        display_name: "", // Initial empty, user can update later
+                        photo_url: "",
+                        phone_number: "",
+                        username: email.split('@')[0], // Default username from email
 
-                    created_time: Timestamp.now(),
-                    joinedAt: Timestamp.now(),
+                        created_time: Timestamp.now(),
+                        joinedAt: Timestamp.now(),
 
-                    isGuest: false,
-                    darkMode: false,
-                    enableNotification: false, // Default false until requested
-                    enableLocation: false, // Default false until requested
-                    Language: true, // Matching the Boolean type in screenshot
-                    xp: 0,
+                        isGuest: false,
+                        darkMode: false,
+                        enableNotification: false, // Default false until requested
+                        enableLocation: false, // Default false until requested
+                        Language: true, // Matching the Boolean type in screenshot
+                        xp: 0,
 
-                    favourite: [], // Empty list of references
-                    currentLocaton: null // Typo 'currentLocaton' matches screenshot schema
-                });
+                        favourite: [], // Empty list of references
+                        currentLocaton: null // Typo 'currentLocaton' matches screenshot schema
+                    });
+                    console.log('User document created in Firestore successfully!');
+                } catch (firestoreError: any) {
+                    console.error('Firestore error:', firestoreError);
+                    // User was created in Auth, but Firestore failed - still allow them to proceed
+                    // The document can be created later when they update their profile
+                }
             }
             // Navigation will happen automatically via UserContext/MainLayout
         } catch (error: any) {
