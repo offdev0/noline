@@ -1,123 +1,157 @@
+import SideDrawer from '@/components/SideDrawer';
 import { Ionicons } from '@expo/vector-icons';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import { useNavigation } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { Dimensions, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const navigation = useNavigation<BottomTabNavigationProp<any>>();
+
+  useEffect(() => {
+    navigation.setOptions({
+      tabBarStyle: isDrawerOpen ? { display: 'none' } : {
+        position: 'absolute',
+        bottom: 25,
+        left: 20,
+        right: 20,
+        marginHorizontal: 20,
+        backgroundColor: '#eeececff',
+        borderRadius: 20,
+        height: 70,
+        borderTopWidth: 0,
+        paddingBottom: 2,
+        paddingTop: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }
+    });
+  }, [isDrawerOpen, navigation]);
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+    <View style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity>
-            <Ionicons name="menu-outline" size={32} color="#666" />
-          </TouchableOpacity>
-          <View style={styles.pointsBadge}>
-            <Ionicons name="medal-outline" size={24} color="#888" style={{ marginRight: 4 }} />
-            {/* Note: The image had a specific medal icon, using ionicons basic one for now or we can use an image */}
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="flame" size={16} color="#FF6B00" />
-              <Text style={styles.pointsText}>0</Text>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => setIsDrawerOpen(true)}>
+              <Ionicons name="menu-outline" size={32} color="#666" />
+            </TouchableOpacity>
+            <View style={styles.pointsBadge}>
+              <Ionicons name="medal-outline" size={24} color="#888" style={{ marginRight: 4 }} />
+              {/* Note: The image had a specific medal icon, using ionicons basic one for now or we can use an image */}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="flame" size={16} color="#FF6B00" />
+                <Text style={styles.pointsText}>0</Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Title */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.titleBlue}>Before you leave</Text>
-          <Text style={styles.titleBlue}>– Check the queue!</Text>
-        </View>
+          {/* Title */}
+          <View style={styles.titleContainer}>
+            <Text style={styles.titleBlue}>Before you leave</Text>
+            <Text style={styles.titleBlue}>– Check the queue!</Text>
+          </View>
 
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/100?img=33' }} // Placeholder Avatar
-            style={styles.avatar}
-          />
-          <TextInput
-            placeholder="Search for a place or category"
-            style={styles.searchInput}
-            placeholderTextColor="#999"
-          />
-          <TouchableOpacity>
-            <Ionicons name="search" size={20} color="#666" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Action Buttons (Search history/filters placeholders) - Hidden based on image, but maybe useful later */}
-
-        {/* Map Widget */}
-        <View style={styles.mapWidgetContainer}>
-          {/* Simulated Map Preview */}
-          <View style={styles.mapPreview}>
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
             <Image
-              source={{ uri: 'https://maps.googleapis.com/maps/api/staticmap?center=40.7128,-74.0060&zoom=13&size=600x300&maptype=roadmap&key=YOUR_API_KEY_HERE' }} // Placeholder static map or just a grey box
-              style={styles.mapImage}
+              source={{ uri: 'https://i.pravatar.cc/100?img=33' }} // Placeholder Avatar
+              style={styles.avatar}
             />
-            {/* Overlay Error/Info Box from screenshot */}
-            <View style={[styles.mapOverlayBox, { zIndex: 2 }]}>
-              <Text style={styles.overlayTitle}>Location</Text>
-              <Text style={styles.overlayText}>Current Location near you.</Text>
-            </View>
-
-            {/* Open Full Map Button */}
-            <View style={styles.floatingMapButtonContainer}>
-              <TouchableOpacity style={styles.openMapButton}>
-                <Ionicons name="map-outline" size={20} color="white" style={{ marginRight: 8 }} />
-                <Text style={styles.openMapText}>Open full map</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {/* Places with special atmosphere */}
-        <View style={styles.sectionContainer}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <Text style={styles.sectionTitle}>Places with a special atmosphere</Text>
-            <Text style={{ fontSize: 16 }}> ✨</Text>
+            <TextInput
+              placeholder="Search for a place or category"
+              style={styles.searchInput}
+              placeholderTextColor="#999"
+            />
+            <TouchableOpacity>
+              <Ionicons name="search" size={20} color="#666" />
+            </TouchableOpacity>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardsScroll}>
-            {/* Card 1 */}
-            <View style={styles.placeCard}>
-              <LinearGradient
-                colors={['#a8c0ff', '#3f2b96']} // Placeholder gradient
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.cardImagePlaceholder}
+          {/* Action Buttons (Search history/filters placeholders) - Hidden based on image, but maybe useful later */}
+
+          {/* Map Widget */}
+          <View style={styles.mapWidgetContainer}>
+            {/* Simulated Map Preview */}
+            <View style={styles.mapPreview}>
+              <Image
+                source={{ uri: 'https://maps.googleapis.com/maps/api/staticmap?center=40.7128,-74.0060&zoom=13&size=600x300&maptype=roadmap&key=YOUR_API_KEY_HERE' }} // Placeholder static map or just a grey box
+                style={styles.mapImage}
               />
-              <Text style={styles.cardTitle}>Uniqlo</Text>
+              {/* Overlay Error/Info Box from screenshot */}
+              <View style={[styles.mapOverlayBox, { zIndex: 2 }]}>
+                <Text style={styles.overlayTitle}>Location</Text>
+                <Text style={styles.overlayText}>Current Location near you.</Text>
+              </View>
+
+              {/* Open Full Map Button */}
+              <View style={styles.floatingMapButtonContainer}>
+                <TouchableOpacity style={styles.openMapButton}>
+                  <Ionicons name="map-outline" size={20} color="white" style={{ marginRight: 8 }} />
+                  <Text style={styles.openMapText}>Open full map</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Places with special atmosphere */}
+          <View style={styles.sectionContainer}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={styles.sectionTitle}>Places with a special atmosphere</Text>
+              <Text style={{ fontSize: 16 }}> ✨</Text>
             </View>
 
-            {/* Card 2 */}
-            <View style={styles.placeCard}>
-              <LinearGradient
-                colors={['#fbc2eb', '#a6c1ee']} // Placeholder gradient
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.cardImagePlaceholder}
-              />
-              <Text style={styles.cardTitle}>H&M</Text>
-            </View>
-            {/* Card 3 */}
-            <View style={styles.placeCard}>
-              <LinearGradient
-                colors={['#84fab0', '#8fd3f4']} // Placeholder gradient
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.cardImagePlaceholder}
-              />
-              <Text style={styles.cardTitle}>Zara</Text>
-            </View>
-          </ScrollView>
-        </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardsScroll}>
+              {/* Card 1 */}
+              <View style={styles.placeCard}>
+                <LinearGradient
+                  colors={['#a8c0ff', '#3f2b96']} // Placeholder gradient
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.cardImagePlaceholder}
+                />
+                <Text style={styles.cardTitle}>Uniqlo</Text>
+              </View>
 
-      </ScrollView>
-    </SafeAreaView>
+              {/* Card 2 */}
+              <View style={styles.placeCard}>
+                <LinearGradient
+                  colors={['#fbc2eb', '#a6c1ee']} // Placeholder gradient
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.cardImagePlaceholder}
+                />
+                <Text style={styles.cardTitle}>H&M</Text>
+              </View>
+              {/* Card 3 */}
+              <View style={styles.placeCard}>
+                <LinearGradient
+                  colors={['#84fab0', '#8fd3f4']} // Placeholder gradient
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.cardImagePlaceholder}
+                />
+                <Text style={styles.cardTitle}>Zara</Text>
+              </View>
+            </ScrollView>
+          </View>
+
+        </ScrollView>
+      </SafeAreaView>
+
+      <SideDrawer
+        isVisible={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        userEmail="user@noline.com"
+      />
+    </View>
   );
 }
 
