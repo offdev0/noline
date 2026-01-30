@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+    ActivityIndicator,
     Animated,
     Dimensions,
     Image,
@@ -13,6 +15,8 @@ import {
     View
 } from 'react-native';
 
+import { useUser } from '@/context/UserContext';
+
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DRAWER_WIDTH = SCREEN_WIDTH * 0.85;
 
@@ -23,9 +27,14 @@ interface SideDrawerProps {
 }
 
 export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawerProps) {
+    const router = useRouter();
+    const { logout } = useUser();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
     const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
+    // Animate drawer visibility
     useEffect(() => {
         if (isVisible) {
             Animated.parallel([
@@ -56,18 +65,42 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
         }
     }, [isVisible]);
 
+    // Handle logout
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        try {
+            // Close the drawer first to ensure navigation is visible
+            onClose();
+            // Small delay to let the modal close animation complete
+            await new Promise(resolve => setTimeout(resolve, 100));
+            await logout();
+            // Navigation will happen automatically via UserContext/MainLayout
+        } catch (error) {
+            console.error("Error signing out: ", error);
+            setIsLoggingOut(false);
+        }
+    };
+
     // Helper for menu items
-    const MenuItem = ({ icon, label, onPress, isDestructive = false }: any) => (
-        <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+    const MenuItem = ({ icon, label, onPress, isDestructive = false, isLoading = false }: any) => (
+        <TouchableOpacity
+            style={styles.menuItem}
+            onPress={onPress}
+            disabled={isLoading}
+        >
             <View style={styles.menuItemLeft}>
                 <View style={styles.menuIconContainer}>
-                    <Ionicons name={icon} size={20} color="#555" />
+                    {isLoading ? (
+                        <ActivityIndicator size="small" color="#555" />
+                    ) : (
+                        <Ionicons name={icon} size={20} color={isDestructive ? '#FF4444' : '#555'} />
+                    )}
                 </View>
                 <Text style={[styles.menuItemLabel, isDestructive && styles.destructiveLabel]}>
-                    {label}
+                    {isLoading ? 'Logging out...' : label}
                 </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color="#ccc" />
+            {!isLoading && <Ionicons name="chevron-forward" size={16} color="#ccc" />}
         </TouchableOpacity>
     );
 
@@ -86,7 +119,12 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
         >
             {/* Overlay Backdrop */}
             <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
-                <TouchableOpacity style={styles.backdropTouch} onPress={onClose} activeOpacity={1} />
+                <TouchableOpacity
+                    style={styles.backdropTouch}
+                    onPress={onClose}
+                    activeOpacity={1}
+                    disabled={isLoggingOut}
+                />
             </Animated.View>
 
             {/* Drawer Content */}
@@ -96,7 +134,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
 
                         {/* Close Button Header */}
                         <View style={styles.headerRow}>
-                            <TouchableOpacity onPress={onClose}>
+                            <TouchableOpacity onPress={onClose} disabled={isLoggingOut}>
                                 <Ionicons name="arrow-back" size={24} color="#333" />
                             </TouchableOpacity>
                             <Text style={styles.headerTitle}>My profile</Text>
@@ -149,19 +187,23 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                         </View>
 
                         {/* Support */}
-                        <SectionHeader title="support" />
+                        <SectionHeader title="Support" />
                         <View style={styles.menuGroup}>
                             <MenuItem icon="help-circle" label="Help and support" />
-                            <MenuItem icon="information-circle" label="about" />
+                            <MenuItem icon="information-circle" label="About" />
                         </View>
 
                         {/* Entry/Exit */}
-                        <SectionHeader title="entry" />
+                        <SectionHeader title="Account" />
                         <View style={styles.menuGroup}>
                             <MenuItem icon="swap-horizontal" label="Account switching" />
-                            <MenuItem icon="log-out-outline" label="exit" onPress={() => {
-                                onClose();
-                            }} />
+                            <MenuItem
+                                icon="log-out-outline"
+                                label="Exit"
+                                onPress={handleLogout}
+                                isDestructive
+                                isLoading={isLoggingOut}
+                            />
                         </View>
 
                         <View style={{ height: 50 }} />
@@ -180,7 +222,7 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: 0,
         backgroundColor: '#000',
-        zIndex: 100, // Below drawer, above content
+        zIndex: 100,
     },
     backdropTouch: {
         width: '100%',
@@ -192,7 +234,7 @@ const styles = StyleSheet.create({
         left: 0,
         bottom: 0,
         width: DRAWER_WIDTH,
-        backgroundColor: '#F8F9FA', // Light greyish background from screenshot
+        backgroundColor: '#F8F9FA',
         zIndex: 101,
         shadowColor: '#000',
         shadowOffset: { width: 2, height: 0 },
@@ -294,7 +336,7 @@ const styles = StyleSheet.create({
         color: '#444',
     },
     menuGroup: {
-        backgroundColor: 'white', // Card style groups
+        backgroundColor: 'white',
         marginHorizontal: 20,
         borderRadius: 16,
         paddingVertical: 8,
@@ -310,7 +352,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingVertical: 14,
         paddingHorizontal: 16,
-        // Border separator logic if needed
     },
     menuItemLeft: {
         flexDirection: 'row',
@@ -327,6 +368,6 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     destructiveLabel: {
-        color: 'red',
+        color: '#FF4444',
     }
 });

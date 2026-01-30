@@ -6,7 +6,10 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
+    Animated,
+    Easing,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -27,12 +30,61 @@ export default function LoginScreen() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isChecked, setChecked] = useState(false);
     const [isLoginMode, setIsLoginMode] = useState(false); // Default to Signup
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Animation for button
+    const buttonScale = React.useRef(new Animated.Value(1)).current;
+    const spinValue = React.useRef(new Animated.Value(0)).current;
+
+    const animateButtonPress = () => {
+        Animated.sequence([
+            Animated.timing(buttonScale, {
+                toValue: 0.95,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+            Animated.timing(buttonScale, {
+                toValue: 1,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
+
+    const startLoadingAnimation = () => {
+        spinValue.setValue(0);
+        Animated.loop(
+            Animated.timing(spinValue, {
+                toValue: 1,
+                duration: 1000,
+                easing: Easing.linear,
+                useNativeDriver: true,
+            })
+        ).start();
+    };
 
     const handleAuth = async () => {
         if (!email || !password) {
             Alert.alert("Error", "Please enter email and password");
             return;
         }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            Alert.alert("Error", "Please enter a valid email address");
+            return;
+        }
+
+        // Validate password length
+        if (password.length < 6) {
+            Alert.alert("Error", "Password must be at least 6 characters");
+            return;
+        }
+
+        animateButtonPress();
+        setIsLoading(true);
+        startLoadingAnimation();
 
         try {
             if (isLoginMode) {
@@ -41,10 +93,12 @@ export default function LoginScreen() {
             } else {
                 // Signup Logic
                 if (password !== confirmPassword) {
+                    setIsLoading(false);
                     Alert.alert("Error", "Passwords do not match");
                     return;
                 }
                 if (!isChecked) {
+                    setIsLoading(false);
                     Alert.alert("Error", "Please agree to the terms");
                     return;
                 }
@@ -76,11 +130,39 @@ export default function LoginScreen() {
                     currentLocaton: null // Typo 'currentLocaton' matches screenshot schema
                 });
             }
-            // If successful, navigate
-            router.replace('/(tabs)');
+            // Navigation will happen automatically via UserContext/MainLayout
         } catch (error: any) {
-            Alert.alert("Authentication Error", error.message);
+            setIsLoading(false);
+            let errorMessage = error.message;
+
+            // User-friendly error messages
+            if (error.code === 'auth/user-not-found') {
+                errorMessage = 'No account found with this email. Please sign up first.';
+            } else if (error.code === 'auth/wrong-password') {
+                errorMessage = 'Incorrect password. Please try again.';
+            } else if (error.code === 'auth/email-already-in-use') {
+                errorMessage = 'An account already exists with this email. Please log in.';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = 'Invalid email format.';
+            } else if (error.code === 'auth/weak-password') {
+                errorMessage = 'Password is too weak. Use at least 6 characters.';
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMessage = 'Network error. Please check your internet connection.';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage = 'Too many failed attempts. Please try again later.';
+            } else if (error.code === 'auth/invalid-credential') {
+                errorMessage = 'Invalid email or password. Please check and try again.';
+            }
+
+            Alert.alert("Authentication Error", errorMessage);
         }
+    };
+
+    const toggleMode = () => {
+        // Animate mode switch
+        setIsLoginMode(!isLoginMode);
+        setPassword('');
+        setConfirmPassword('');
     };
 
     return (
@@ -130,10 +212,28 @@ export default function LoginScreen() {
                             />
                         )}
 
-                        {/* Action Button */}
-                        <TouchableOpacity style={styles.button} onPress={handleAuth}>
-                            <Text style={styles.buttonText}>{isLoginMode ? 'Log In' : 'Create Account'}</Text>
-                        </TouchableOpacity>
+                        {/* Action Button with Loading State */}
+                        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                            <TouchableOpacity
+                                style={[styles.button, isLoading && styles.buttonDisabled]}
+                                onPress={handleAuth}
+                                disabled={isLoading}
+                                activeOpacity={0.8}
+                            >
+                                {isLoading ? (
+                                    <View style={styles.loadingContainer}>
+                                        <ActivityIndicator size="small" color="#fff" />
+                                        <Text style={[styles.buttonText, { marginLeft: 10 }]}>
+                                            {isLoginMode ? 'Logging in...' : 'Creating account...'}
+                                        </Text>
+                                    </View>
+                                ) : (
+                                    <Text style={styles.buttonText}>
+                                        {isLoginMode ? 'Log In' : 'Create Account'}
+                                    </Text>
+                                )}
+                            </TouchableOpacity>
+                        </Animated.View>
 
                         {/* Terms Checkbox - Only for Signup */}
                         {!isLoginMode && (
@@ -151,12 +251,16 @@ export default function LoginScreen() {
                         )}
 
                         {isLoginMode ? (
-                            <TouchableOpacity onPress={() => setIsLoginMode(false)}>
-                                <Text style={styles.privacyLink}>Don't have an account? Sign Up</Text>
+                            <TouchableOpacity onPress={toggleMode} disabled={isLoading}>
+                                <Text style={[styles.privacyLink, isLoading && styles.disabledText]}>
+                                    Don't have an account? Sign Up
+                                </Text>
                             </TouchableOpacity>
                         ) : (
-                            <TouchableOpacity onPress={() => setIsLoginMode(true)}>
-                                <Text style={styles.privacyLink}>Already have an account? Log In</Text>
+                            <TouchableOpacity onPress={toggleMode} disabled={isLoading}>
+                                <Text style={[styles.privacyLink, isLoading && styles.disabledText]}>
+                                    Already have an account? Log In
+                                </Text>
                             </TouchableOpacity>
                         )}
 
@@ -167,7 +271,11 @@ export default function LoginScreen() {
                         )}
 
                         <View style={{ alignItems: 'center', marginTop: 12 }}>
-                            <Text style={styles.forgotPassword}>Forgot Password?</Text>
+                            <TouchableOpacity disabled={isLoading}>
+                                <Text style={[styles.forgotPassword, isLoading && styles.disabledText]}>
+                                    Forgot Password?
+                                </Text>
+                            </TouchableOpacity>
                         </View>
                     </ScrollView>
                 </View>
@@ -219,10 +327,18 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
     },
+    buttonDisabled: {
+        opacity: 0.8,
+    },
     buttonText: {
         color: 'white',
         fontSize: 18,
         fontWeight: '600',
+    },
+    loadingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     checkboxContainer: {
         flexDirection: 'row',
@@ -250,5 +366,8 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
         marginBottom: 24
+    },
+    disabledText: {
+        opacity: 0.5,
     },
 });

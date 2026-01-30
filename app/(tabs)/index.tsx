@@ -9,10 +9,12 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MapWidget from '@/components/dashboard/MapWidget';
 import PlacesSection from '@/components/dashboard/PlacesSection';
 import SearchBar from '@/components/dashboard/SearchBar';
+import { useUser } from '@/context/UserContext';
 
 export default function DashboardScreen() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
+  const { user } = useUser();
 
   // Effect to hide tab bar when drawer is open
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function DashboardScreen() {
       <SideDrawer
         isVisible={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
-        userEmail="user@noline.com"
+        userEmail={user?.email || ''}
       />
     </View>
   );
