@@ -1,8 +1,8 @@
 import { useLocation } from '@/context/LocationContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Animated,
     Dimensions,
@@ -26,10 +26,20 @@ const nearbyPlaces = [
 
 export default function FullMapScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams<{
+        searchQuery?: string;
+        latitude?: string;
+        longitude?: string;
+    }>();
     const insets = useSafeAreaInsets();
     const { location, address, refreshLocation, loading } = useLocation();
     const mapRef = useRef<MapView>(null);
     const [selectedPlace, setSelectedPlace] = useState<typeof nearbyPlaces[0] | null>(null);
+    const [searchedLocation, setSearchedLocation] = useState<{
+        latitude: number;
+        longitude: number;
+        query: string;
+    } | null>(null);
 
     // Animation for bottom sheet
     const slideAnim = useRef(new Animated.Value(0)).current;
@@ -39,9 +49,35 @@ export default function FullMapScreen() {
         longitude: 88.3639,
     };
 
+    // Handle search params
+    useEffect(() => {
+        if (params.latitude && params.longitude && params.searchQuery) {
+            const lat = parseFloat(params.latitude);
+            const lng = parseFloat(params.longitude);
+
+            if (!isNaN(lat) && !isNaN(lng)) {
+                setSearchedLocation({
+                    latitude: lat,
+                    longitude: lng,
+                    query: params.searchQuery,
+                });
+
+                // Animate to searched location after a short delay
+                setTimeout(() => {
+                    mapRef.current?.animateToRegion({
+                        latitude: lat,
+                        longitude: lng,
+                        latitudeDelta: 0.02,
+                        longitudeDelta: 0.02,
+                    }, 1000);
+                }, 500);
+            }
+        }
+    }, [params.latitude, params.longitude, params.searchQuery]);
+
     const initialRegion: Region = {
-        latitude: location?.latitude || defaultLocation.latitude,
-        longitude: location?.longitude || defaultLocation.longitude,
+        latitude: params.latitude ? parseFloat(params.latitude) : (location?.latitude || defaultLocation.latitude),
+        longitude: params.longitude ? parseFloat(params.longitude) : (location?.longitude || defaultLocation.longitude),
         latitudeDelta: 0.02,
         longitudeDelta: 0.02,
     };
@@ -88,6 +124,17 @@ export default function FullMapScreen() {
             mapRef.current?.animateToRegion({
                 latitude: location.latitude,
                 longitude: location.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+            }, 500);
+        }
+    };
+
+    const centerOnSearch = () => {
+        if (searchedLocation) {
+            mapRef.current?.animateToRegion({
+                latitude: searchedLocation.latitude,
+                longitude: searchedLocation.longitude,
                 latitudeDelta: 0.01,
                 longitudeDelta: 0.01,
             }, 500);
@@ -161,6 +208,25 @@ export default function FullMapScreen() {
                         </View>
                     </Marker>
                 ))}
+
+                {/* Searched Location Marker */}
+                {searchedLocation && (
+                    <Marker
+                        coordinate={{
+                            latitude: searchedLocation.latitude,
+                            longitude: searchedLocation.longitude,
+                        }}
+                        title={searchedLocation.query}
+                        description="Searched location"
+                    >
+                        <View style={styles.searchMarker}>
+                            <View style={styles.searchMarkerInner}>
+                                <Ionicons name="search" size={18} color="#fff" />
+                            </View>
+                            <View style={styles.searchMarkerPin} />
+                        </View>
+                    </Marker>
+                )}
             </MapView>
 
             {/* Header Overlay */}
@@ -173,24 +239,58 @@ export default function FullMapScreen() {
                 </TouchableOpacity>
 
                 <View style={styles.headerTitle}>
-                    <Text style={styles.headerTitleText}>Explore Map</Text>
-                    <Text style={styles.headerSubtitle}>{nearbyPlaces.length} places nearby</Text>
+                    <Text style={styles.headerTitleText}>
+                        {searchedLocation ? 'Search Results' : 'Explore Map'}
+                    </Text>
+                    <Text style={styles.headerSubtitle}>
+                        {searchedLocation
+                            ? `"${searchedLocation.query}"`
+                            : `${nearbyPlaces.length} places nearby`
+                        }
+                    </Text>
                 </View>
 
-                <TouchableOpacity
-                    style={styles.refreshButton}
-                    onPress={refreshLocation}
-                >
-                    <Ionicons name="refresh" size={22} color="#5356FF" />
-                </TouchableOpacity>
+                {searchedLocation ? (
+                    <TouchableOpacity
+                        style={styles.refreshButton}
+                        onPress={centerOnSearch}
+                    >
+                        <Ionicons name="navigate" size={22} color="#5356FF" />
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity
+                        style={styles.refreshButton}
+                        onPress={refreshLocation}
+                    >
+                        <Ionicons name="refresh" size={22} color="#5356FF" />
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Location Info Card */}
             <View style={styles.locationCard}>
-                <Ionicons name="location" size={20} color="#5356FF" />
+                <Ionicons
+                    name={searchedLocation ? "search" : "location"}
+                    size={20}
+                    color="#5356FF"
+                />
                 <Text style={styles.locationText} numberOfLines={1}>
-                    {address || 'Detecting location...'}
+                    {searchedLocation
+                        ? searchedLocation.query
+                        : (address || 'Detecting location...')
+                    }
                 </Text>
+                {searchedLocation && (
+                    <TouchableOpacity
+                        style={styles.clearSearchButton}
+                        onPress={() => {
+                            setSearchedLocation(null);
+                            centerOnUser();
+                        }}
+                    >
+                        <Ionicons name="close-circle" size={20} color="#999" />
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Center on User Button */}
@@ -502,5 +602,37 @@ const styles = StyleSheet.create({
     legendText: {
         fontSize: 11,
         color: '#666',
+    },
+    searchMarker: {
+        alignItems: 'center',
+    },
+    searchMarkerInner: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#FF6B6B',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+        borderColor: '#fff',
+        shadowColor: '#FF6B6B',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.4,
+        shadowRadius: 6,
+        elevation: 5,
+    },
+    searchMarkerPin: {
+        width: 0,
+        height: 0,
+        borderLeftWidth: 8,
+        borderRightWidth: 8,
+        borderTopWidth: 12,
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+        borderTopColor: '#FF6B6B',
+        marginTop: -2,
+    },
+    clearSearchButton: {
+        padding: 4,
     },
 });

@@ -1,8 +1,74 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { Image, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Image,
+    Keyboard,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 export default function SearchBar() {
+    const router = useRouter();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+
+    const handleSearch = async () => {
+        if (!searchQuery.trim()) {
+            // If no query, just open the map
+            router.push('/map');
+            return;
+        }
+
+        Keyboard.dismiss();
+        setIsSearching(true);
+
+        try {
+            // Geocode the search query to get coordinates
+            const results = await Location.geocodeAsync(searchQuery.trim());
+
+            if (results && results.length > 0) {
+                const { latitude, longitude } = results[0];
+                console.log('Search result:', { query: searchQuery, latitude, longitude });
+
+                // Navigate to map with the searched location
+                router.push({
+                    pathname: '/map',
+                    params: {
+                        searchQuery: searchQuery.trim(),
+                        latitude: latitude.toString(),
+                        longitude: longitude.toString(),
+                    }
+                });
+            } else {
+                Alert.alert(
+                    'Location Not Found',
+                    `We couldn't find "${searchQuery}". Try a different search term or check the spelling.`,
+                    [{ text: 'OK' }]
+                );
+            }
+        } catch (error: any) {
+            console.error('Geocoding error:', error);
+            Alert.alert(
+                'Search Error',
+                'Unable to search for this location. Please try again.',
+                [{ text: 'OK' }]
+            );
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleInputFocus = () => {
+        // Optionally navigate to a dedicated search screen
+        // For now, we'll keep the inline search
+    };
+
     return (
         <View style={styles.searchContainer}>
             <Image
@@ -10,12 +76,26 @@ export default function SearchBar() {
                 style={styles.avatar}
             />
             <TextInput
-                placeholder="Search for a place or category"
+                placeholder="Search for a place or address"
                 style={styles.searchInput}
                 placeholderTextColor="#999"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={handleSearch}
+                returnKeyType="search"
+                autoCorrect={false}
+                editable={!isSearching}
             />
-            <TouchableOpacity>
-                <Ionicons name="search" size={20} color="#666" />
+            <TouchableOpacity
+                style={styles.searchButton}
+                onPress={handleSearch}
+                disabled={isSearching}
+            >
+                {isSearching ? (
+                    <ActivityIndicator size="small" color="#5356FF" />
+                ) : (
+                    <Ionicons name="search" size={20} color="#5356FF" />
+                )}
             </TouchableOpacity>
         </View>
     );
@@ -49,5 +129,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         fontSize: 16,
         color: '#333',
+    },
+    searchButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#EEF0FF',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

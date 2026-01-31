@@ -102,15 +102,15 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Customized Tab - Gift */}
+      {/* Customized Tab - Route */}
       <Tabs.Screen
         name="customized"
         options={{
-          title: 'Customized',
+          title: 'Route',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "gift" : "gift-outline"}
-              size={24}
+              size={26}
               color={color}
             />
           ),

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 60) / 2; // Two cards with spacing
@@ -15,18 +15,50 @@ interface Place {
     category: string;
     queueStatus: 'Short queue' | 'Medium queue' | 'Long queue';
     peopleInQueue: number;
-    imageColors: string[];
+    image: string;
 }
 
-// Sample data
+// Sample data with real images
 const specialPlaces: Place[] = [
-    { id: '1', name: 'Uniqlo Store', rating: 4.5, category: 'Fashion', queueStatus: 'Short queue', peopleInQueue: 3, imageColors: ['#e8d5f0', '#c5b3e0'] },
-    { id: '2', name: 'Coffee House', rating: 4.2, category: 'Cafe', queueStatus: 'Short queue', peopleInQueue: 1, imageColors: ['#d5e8f0', '#b3c5e0'] },
+    {
+        id: '1',
+        name: 'Uniqlo Store',
+        rating: 4.5,
+        category: 'Fashion',
+        queueStatus: 'Short queue',
+        peopleInQueue: 3,
+        image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400'
+    },
+    {
+        id: '2',
+        name: 'Coffee House',
+        rating: 4.2,
+        category: 'Cafe',
+        queueStatus: 'Short queue',
+        peopleInQueue: 1,
+        image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400'
+    },
 ];
 
 const hotPlaces: Place[] = [
-    { id: '3', name: 'Tech Store', rating: 4.8, category: 'Electronics', queueStatus: 'Medium queue', peopleInQueue: 8, imageColors: ['#f0e8d5', '#e0c5b3'] },
-    { id: '4', name: 'Food Court', rating: 4.0, category: 'Restaurant', queueStatus: 'Long queue', peopleInQueue: 15, imageColors: ['#d5f0e8', '#b3e0c5'] },
+    {
+        id: '3',
+        name: 'Tech Store',
+        rating: 4.8,
+        category: 'Electronics',
+        queueStatus: 'Medium queue',
+        peopleInQueue: 8,
+        image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400'
+    },
+    {
+        id: '4',
+        name: 'Food Court',
+        rating: 4.0,
+        category: 'Restaurant',
+        queueStatus: 'Long queue',
+        peopleInQueue: 15,
+        image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400'
+    },
 ];
 
 // Place Card Component
@@ -51,12 +83,11 @@ const PlaceCard = ({ place, onPress }: { place: Place; onPress: () => void }) =>
             onPress={handlePress}
             activeOpacity={0.85}
         >
-            {/* Image Placeholder */}
-            <LinearGradient
-                colors={place.imageColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+            {/* Place Image */}
+            <Image
+                source={{ uri: place.image }}
                 style={styles.cardImage}
+                resizeMode="cover"
             />
 
             {/* Card Content */}

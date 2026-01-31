@@ -52,8 +52,8 @@ function MainLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false, statusBarStyle: 'light' }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false, statusBarStyle: 'dark' }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, statusBarHidden: false, statusBarStyle: 'dark', statusBarTranslucent: true }} />
         <Stack.Screen name="place" options={{ headerShown: false }} />
         <Stack.Screen
           name="map"
