@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     Image,
     Keyboard,
     StyleSheet,
@@ -13,14 +12,16 @@ import {
     View
 } from 'react-native';
 
+import { usePlaces } from '@/context/PlacesContext';
+
 export default function SearchBar() {
     const router = useRouter();
+    const { searchLocation } = usePlaces();
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) {
-            // If no query, just open the map
             router.push('/map');
             return;
         }
@@ -29,14 +30,13 @@ export default function SearchBar() {
         setIsSearching(true);
 
         try {
-            // Geocode the search query to get coordinates
-            const results = await Location.geocodeAsync(searchQuery.trim());
+            // Updated global places based on search
+            await searchLocation(searchQuery.trim());
 
+            // Geocode for map navigation
+            const results = await Location.geocodeAsync(searchQuery.trim());
             if (results && results.length > 0) {
                 const { latitude, longitude } = results[0];
-                console.log('Search result:', { query: searchQuery, latitude, longitude });
-
-                // Navigate to map with the searched location
                 router.push({
                     pathname: '/map',
                     params: {
@@ -45,20 +45,9 @@ export default function SearchBar() {
                         longitude: longitude.toString(),
                     }
                 });
-            } else {
-                Alert.alert(
-                    'Location Not Found',
-                    `We couldn't find "${searchQuery}". Try a different search term or check the spelling.`,
-                    [{ text: 'OK' }]
-                );
             }
         } catch (error: any) {
-            console.error('Geocoding error:', error);
-            Alert.alert(
-                'Search Error',
-                'Unable to search for this location. Please try again.',
-                [{ text: 'OK' }]
-            );
+            console.error('Search error:', error);
         } finally {
             setIsSearching(false);
         }

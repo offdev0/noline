@@ -16,39 +16,44 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const { width } = Dimensions.get('window');
 
 const moods = [
-    { id: '1', label: 'calm', icon: 'heart', colors: ['#FFF9C4', '#FFF176'], iconColor: '#FBC02D' },
-    { id: '2', label: 'social', icon: 'heart', colors: ['#E3F2FD', '#90CAF9'], iconColor: '#1976D2' },
-    { id: '3', label: 'adventurous', icon: 'heart', colors: ['#FFEBEE', '#EF9A9A'], iconColor: '#D32F2F' },
-    { id: '4', label: 'spontaneous', icon: 'heart', colors: ['#E8F5E9', '#A5D6A7'], iconColor: '#388E3C' },
+    { id: '1', label: 'calm', icon: 'leaf-outline', colors: ['#FFF9C4', '#FFF59D'], iconColor: '#F59E0B' },
+    { id: '2', label: 'social', icon: 'people-outline', colors: ['#E0F2FE', '#BAE6FD'], iconColor: '#0284C7' },
+    { id: '3', label: 'adventure', icon: 'rocket-outline', colors: ['#FEF2F2', '#FECACA'], iconColor: '#DC2626' },
+    { id: '4', label: 'freedom', icon: 'aperture-outline', colors: ['#F0FDF4', '#DCFCE7'], iconColor: '#16A34A' },
 ];
 
 const trendingPlaces = [
     {
         id: '1',
         name: 'Sacher Garden',
-        description: 'Peaceful park for morning walks',
-        distance: '0.8 km',
+        description: 'Vibrant urban park space',
+        distance: '0.8 km away',
         status: 'vacant',
-        image: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=300'
+        icon: 'leaf',
+        image: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500'
     },
     {
         id: '2',
         name: 'The Social Club',
-        description: 'Vibrant spot for evening drinks',
-        distance: '1.5 km',
+        description: 'Premier nightlife & drinks',
+        distance: '1.5 km away',
         status: 'vacant',
-        image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=300'
+        icon: 'beer',
+        image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500'
     },
 ];
 
 const favorites = [
-    { id: '1', name: 'Coffee House', status: 'loaded', statusColor: '#EF4444', image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=300' },
-    { id: '2', name: 'Uniqlo Store', status: 'loaded', statusColor: '#EF4444', image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=300' },
-    { id: '3', name: 'Tech Store', status: 'loaded', statusColor: '#EF4444', image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=300' },
+    { id: '1', name: 'Coffee House', image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400' },
+    { id: '2', name: 'Uniqlo Store', image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400' },
+    { id: '3', name: 'Tech Store', image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400' },
 ];
+
+import { usePlaces } from '@/context/PlacesContext';
 
 export default function TrendsScreen() {
     const router = useRouter();
+    const { trendingPlaces, loading } = usePlaces();
 
     const handlePlacePress = (id: string) => {
         router.push({
@@ -60,92 +65,121 @@ export default function TrendsScreen() {
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                {/* Hamburger Menu */}
-                <TouchableOpacity style={styles.menuButton}>
-                    <Ionicons name="menu" size={28} color="#333" />
-                </TouchableOpacity>
+                {/* Header Section */}
+                <View style={styles.header}>
+                    <TouchableOpacity style={styles.circularButton}>
+                        <Ionicons name="search-outline" size={20} color="#1E293B" />
+                    </TouchableOpacity>
+                </View>
 
-                {/* Main Title */}
-                <Text style={styles.mainTitle}>What do you want now?</Text>
+                {/* Main Hero Title */}
+                <View style={styles.titleContainer}>
+                    <Text style={styles.mainTitle}>What do you{"\n"}want now?</Text>
+                </View>
 
                 {/* Mood Selection */}
                 <View style={styles.moodContainer}>
                     {moods.map((mood) => (
                         <View key={mood.id} style={styles.moodItem}>
-                            <TouchableOpacity activeOpacity={0.8}>
-                                <LinearGradient
-                                    colors={mood.colors as any}
-                                    style={styles.moodCircle}
-                                >
-                                    <Ionicons name={mood.icon as any} size={24} color={mood.iconColor} />
+                            <TouchableOpacity activeOpacity={0.8} style={styles.moodWrapper}>
+                                <LinearGradient colors={mood.colors as any} style={styles.moodCircle}>
+                                    <Ionicons name={mood.icon as any} size={22} color={mood.iconColor} />
                                 </LinearGradient>
+                                <Text style={[styles.moodLabel, { color: mood.iconColor }]}>{mood.label}</Text>
                             </TouchableOpacity>
-                            <Text style={[styles.moodLabel, { color: mood.iconColor }]}>{mood.label}</Text>
                         </View>
                     ))}
                 </View>
 
-                {/* Trending Places */}
-                <View style={styles.trendingSection}>
-                    {trendingPlaces.map((place, index) => (
-                        <TouchableOpacity
-                            key={place.id}
-                            style={styles.placeCard}
-                            onPress={() => handlePlacePress(place.id)}
-                            activeOpacity={0.9}
-                        >
-                            <View style={styles.placeInfo}>
-                                <View>
-                                    <Text style={styles.placeName}>{place.name}</Text>
-                                    <Text style={styles.placeDescription}>[{place.description}]</Text>
-                                    <Text style={styles.placeDistance}>[{index + 1}] from you</Text>
-                                </View>
-                                <View style={styles.placeStatusContainer}>
-                                    <View style={styles.statusRow}>
-                                        <View style={styles.statusDot} />
-                                        <Text style={styles.statusText}>{place.status}</Text>
-                                    </View>
-                                    <TouchableOpacity style={styles.visitButton}>
-                                        <Text style={styles.visitButtonText}>Visit now</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                            {index === 1 && (
-                                <Image source={{ uri: place.image }} style={styles.placeImage} />
-                            )}
-                        </TouchableOpacity>
-                    ))}
+                {/* Trending Section */}
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Trending Near You</Text>
+                    <TouchableOpacity>
+                        <Text style={styles.seeAllText}>See all</Text>
+                    </TouchableOpacity>
                 </View>
 
-                {/* Favorites Section */}
-                <View style={styles.favoritesSection}>
-                    <View style={styles.favoritesHeader}>
-                        <Ionicons name="heart" size={24} color="#EF4444" />
-                        <Text style={styles.favoritesTitle}>Your favorites</Text>
-                    </View>
-                    <Text style={styles.favoritesSubtitle}>Always available with one click</Text>
+                <View style={styles.trendingContainer}>
+                    {loading && trendingPlaces.length === 0 ? (
+                        <View style={{ padding: 20 }}>
+                            <Text style={{ color: '#666', textAlign: 'center' }}>Updating live trends...</Text>
+                        </View>
+                    ) : (
+                        (trendingPlaces.length > 0 ? trendingPlaces : []).map((place) => (
+                            <TouchableOpacity
+                                key={place.id}
+                                style={styles.premiumCard}
+                                onPress={() => handlePlacePress(place.id)}
+                                activeOpacity={0.9}
+                            >
+                                <Image source={{ uri: place.image }} style={styles.cardCover} />
+                                <View style={styles.cardOverlay}>
+                                    <View style={styles.statusChip}>
+                                        <Ionicons name="flash" size={14} color="#16A34A" />
+                                        <Text style={styles.statusChipText}>{place.status}</Text>
+                                    </View>
+                                </View>
 
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.favoritesScroll}>
+                                <View style={styles.cardBody}>
+                                    <View style={styles.cardHeader}>
+                                        <View style={styles.nameContent}>
+                                            <Text style={styles.placeName}>{place.name}</Text>
+                                            <Text style={styles.placeDescription}>{place.description}</Text>
+                                        </View>
+                                        <TouchableOpacity style={styles.quickVisitBtn}>
+                                            <LinearGradient colors={['#6366F1', '#4F46E5']} style={styles.visitGradient}>
+                                                <Text style={styles.visitText}>Visit</Text>
+                                            </LinearGradient>
+                                        </TouchableOpacity>
+                                    </View>
+                                    <View style={styles.cardFooter}>
+                                        <View style={styles.metaRow}>
+                                            <Ionicons name="location-outline" size={14} color="#94A3B8" />
+                                            <Text style={styles.distanceText}>{place.distance} away</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                        ))
+                    )}
+                </View>
+
+                {/* Favorites Section - Redesigned */}
+                <View style={styles.favoritesSection}>
+                    <View style={styles.sectionHeader}>
+                        <View style={styles.favTitleRow}>
+                            <Ionicons name="heart" size={20} color="#EF4444" />
+                            <Text style={styles.sectionTitle}> Your Favorites</Text>
+                        </View>
+                    </View>
+
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.favoritesScroll}
+                        contentContainerStyle={styles.favScrollContent}
+                    >
                         {favorites.map((fav) => (
                             <TouchableOpacity
                                 key={fav.id}
-                                style={styles.favoriteCard}
+                                style={styles.favCompactCard}
                                 onPress={() => handlePlacePress(fav.id)}
+                                activeOpacity={0.85}
                             >
-                                <Image source={{ uri: fav.image }} style={styles.favImage} />
-                                <View style={styles.favContent}>
+                                <Image source={{ uri: fav.image }} style={styles.favThumb} />
+                                <View style={styles.favInfo}>
                                     <Text style={styles.favName} numberOfLines={1}>{fav.name}</Text>
-                                    <TouchableOpacity style={styles.goBackButton} activeOpacity={0.8}>
-                                        <Text style={styles.goBackText}>Go back ...</Text>
-                                    </TouchableOpacity>
-
+                                    <View style={styles.goBackBadge}>
+                                        <Text style={styles.goBackText}>Go back</Text>
+                                        <Ionicons name="chevron-forward" size={10} color="#fff" />
+                                    </View>
                                 </View>
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
                 </View>
 
-                <View style={styles.bottomPadding} />
+                <View style={styles.bottomSpace} />
             </ScrollView>
         </SafeAreaView>
     );
@@ -154,200 +188,242 @@ export default function TrendsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: '#FFFFFF',
     },
     scrollContent: {
-        paddingHorizontal: 20,
+        paddingTop: 10,
     },
-    menuButton: {
-        marginTop: 10,
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        paddingHorizontal: 20,
         marginBottom: 20,
     },
+    circularButton: {
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+        backgroundColor: '#F8FAFC',
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    titleContainer: {
+        paddingHorizontal: 20,
+        marginBottom: 25,
+        marginTop: -40
+    },
     mainTitle: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#1E293B',
-        textAlign: 'center',
-        marginBottom: 30,
-        lineHeight: 40,
+        fontSize: 34,
+        fontWeight: '800',
+        color: '#0F172A',
+        lineHeight: 42,
+        letterSpacing: -1,
     },
     moodContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 40,
+        paddingHorizontal: 20,
+        marginBottom: 35,
     },
     moodItem: {
         alignItems: 'center',
         width: (width - 60) / 4,
     },
+    moodWrapper: {
+        alignItems: 'center',
+    },
     moodCircle: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+        width: 64,
+        height: 64,
+        borderRadius: 32,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    moodLabel: {
-        marginTop: 8,
-        fontSize: 12,
-        fontWeight: '600',
-        textAlign: 'center',
-    },
-    trendingSection: {
-        gap: 16,
-    },
-    placeCard: {
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        padding: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
-        // marginBottom: 16,
-    },
-    placeInfo: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-    },
-    placeName: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#1E293B',
-    },
-    placeDescription: {
-        fontSize: 14,
-        color: '#64748B',
-        marginTop: 2,
-    },
-    placeDistance: {
-        fontSize: 12,
-        color: '#94A3B8',
-        marginTop: 8,
-    },
-    placeStatusContainer: {
-        alignItems: 'flex-end',
-        gap: 8,
-    },
-    statusRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    statusDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#10B981',
-    },
-    statusText: {
-        fontSize: 14,
-        color: '#10B981',
-        fontWeight: '500',
-    },
-    visitButton: {
-        backgroundColor: '#3B82F6',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-    },
-    visitButtonText: {
-        color: '#fff',
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    placeImage: {
-        width: '100%',
-        height: 150,
-        borderRadius: 16,
-        marginTop: 16,
-    },
-    favoritesSection: {
-        marginTop: 40,
-        paddingBottom: 20,
-    },
-    favoritesHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    favoritesTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#1E293B',
-    },
-    favoritesSubtitle: {
-        fontSize: 16,
-        color: '#64748B',
-        marginTop: 4,
-        marginBottom: 20,
-    },
-    favoritesScroll: {
-        marginHorizontal: -20,
-        paddingHorizontal: 20,
-    },
-    favoriteCard: {
-        backgroundColor: '#fff',
-        width: 160,
-        borderRadius: 20,
-        marginRight: 16,
+        marginBottom: 10,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 4,
-        overflow: 'hidden',
+        shadowRadius: 10,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.8)',
+    },
+    moodLabel: {
+        fontSize: 12,
+        fontWeight: '700',
+        textTransform: 'capitalize',
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
         marginBottom: 16,
     },
-    favImage: {
-        width: '100%',
-        height: 100,
+    favTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
-    favContent: {
+    sectionTitle: {
+        fontSize: 19,
+        fontWeight: '800',
+        color: '#1E293B',
+        letterSpacing: -0.5,
+    },
+    seeAllText: {
+        fontSize: 14,
+        color: '#6366F1',
+        fontWeight: '700',
+    },
+    trendingContainer: {
+        paddingHorizontal: 20,
+        gap: 20,
+    },
+    premiumCard: {
+        backgroundColor: '#fff',
+        borderRadius: 24,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.04,
+        shadowRadius: 20,
+        elevation: 4,
+    },
+    cardCover: {
+        width: '100%',
+        height: 180,
+    },
+    cardOverlay: {
+        position: 'absolute',
+        top: 14,
+        left: 14,
+    },
+    statusChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.95)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        gap: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    statusChipText: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: '#16A34A',
+        textTransform: 'uppercase',
+    },
+    cardBody: {
+        padding: 16,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    nameContent: {
+        flex: 1,
+        marginRight: 12,
+    },
+    placeName: {
+        fontSize: 19,
+        fontWeight: '800',
+        color: '#0F172A',
+        marginBottom: 4,
+    },
+    placeDescription: {
+        fontSize: 13,
+        color: '#64748B',
+        fontWeight: '500',
+    },
+    quickVisitBtn: {
+        borderRadius: 12,
+        overflow: 'hidden',
+    },
+    visitGradient: {
+        paddingHorizontal: 18,
+        paddingVertical: 10,
+    },
+    visitText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '800',
+    },
+    cardFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    metaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    distanceText: {
+        fontSize: 12,
+        color: '#94A3B8',
+        fontWeight: '600',
+    },
+    favoritesSection: {
+        marginTop: 40,
+        marginBottom: 20,
+    },
+    favoritesScroll: {
+        paddingLeft: 20,
+    },
+    favScrollContent: {
+        paddingRight: 40,
+        paddingBottom: 10,
+    },
+    favCompactCard: {
+        width: 150,
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        marginRight: 16,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.05,
+        shadowRadius: 15,
+        elevation: 3,
+        overflow: 'hidden',
+    },
+    favThumb: {
+        width: '100%',
+        height: 90,
+    },
+    favInfo: {
         padding: 12,
     },
     favName: {
         fontSize: 15,
-        fontWeight: 'bold',
+        fontWeight: '700',
         color: '#1E293B',
         marginBottom: 8,
     },
-    goBackButton: {
+    goBackBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: '#F97316',
         paddingVertical: 6,
-        borderRadius: 15,
-        marginBottom: 8,
+        borderRadius: 10,
+        gap: 4,
     },
     goBackText: {
         color: '#fff',
         fontSize: 11,
-        fontWeight: '700',
-        textAlign: 'center',
+        fontWeight: '800',
     },
-    favStatusRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-    },
-    loadedText: {
-        fontSize: 12,
-        color: '#EF4444',
-        fontWeight: '500',
-    },
-    favStatusDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-    },
-    bottomPadding: {
-        height: 100,
+    bottomSpace: {
+        height: 120,
     }
 });

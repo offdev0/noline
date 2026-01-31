@@ -7,6 +7,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { LocationProvider } from '@/context/LocationContext';
+import { PlacesProvider } from '@/context/PlacesContext';
 import { UserProvider, useUser } from '@/context/UserContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -74,7 +75,9 @@ export default function RootLayout() {
   return (
     <UserProvider>
       <LocationProvider>
-        <MainLayout />
+        <PlacesProvider>
+          <MainLayout />
+        </PlacesProvider>
       </LocationProvider>
     </UserProvider>
   );

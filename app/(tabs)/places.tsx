@@ -70,27 +70,50 @@ const reports = [
     },
 ];
 
+import { usePlaces } from '@/context/PlacesContext';
+
 export default function PlacesScreen() {
+    const { trendingPlaces: allPlaces, loading } = usePlaces();
     const [filterVisible, setFilterVisible] = useState(false);
     const [selectedType, setSelectedType] = useState('vacant');
     const [selectedDistance, setSelectedDistance] = useState('1-5 km');
     const [selectedCategory, setSelectedCategory] = useState('everything');
 
-    const renderReportCard = ({ item }: { item: typeof reports[0] }) => (
+    // Generate dynamic reports from fetched places
+    const dynamicReports = allPlaces.map((p, idx) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category.charAt(0).toUpperCase() + p.category.slice(1),
+        reportedBy: idx % 2 === 0 ? 'User123 reported' : 'Deva Cafe reported',
+        timeAgo: `${idx + 1}h ago`,
+        moodText: p.status === 'vacant' ? 'Smooth flow 😊' : p.status === 'medium' ? 'Getting busy ⏳' : 'Very crowded ❌',
+        type: p.status,
+        likes: Math.floor(Math.random() * 10),
+        comments: Math.floor(Math.random() * 5),
+        icon: p.category === 'restaurant' ? 'restaurant' : p.category === 'casino' ? 'cash-outline' : 'business',
+        avatar: `https://i.pravatar.cc/100?img=${(idx % 70) + 1}`,
+        bannerStyle: {
+            bg: p.status === 'vacant' ? '#F0FDF4' : p.status === 'medium' ? '#FFFBEB' : '#FEF2F2',
+            text: p.status === 'vacant' ? '#16A34A' : p.status === 'medium' ? '#D97706' : '#DC2626',
+            border: p.status === 'vacant' ? '#DCFCE7' : p.status === 'medium' ? '#FEF3C7' : '#FEE2E2'
+        }
+    }));
+
+    const renderReportCard = ({ item }: { item: any }) => (
         <TouchableOpacity style={styles.card} activeOpacity={0.9}>
             {/* Header: Icon, Name, Category, Status Dot */}
             <View style={styles.cardHeader}>
-                <View style={[styles.placeIconBox, { backgroundColor: item.type === 'vacant' ? '#F0FDF4' : '#FEF2F2' }]}>
+                <View style={[styles.placeIconBox, { backgroundColor: item.type === 'vacant' ? '#F0FDF4' : item.type === 'medium' ? '#FFFBEB' : '#FEF2F2' }]}>
                     <Ionicons
                         name={item.icon as any}
                         size={24}
-                        color={item.type === 'vacant' ? '#16A34A' : '#DC2626'}
+                        color={item.type === 'vacant' ? '#16A34A' : item.type === 'medium' ? '#D97706' : '#DC2626'}
                     />
                 </View>
                 <View style={styles.placeDetails}>
                     <View style={styles.nameRow}>
                         <Text style={styles.placeName} numberOfLines={1}>{item.name}</Text>
-                        <View style={[styles.inlineStatusDot, { backgroundColor: item.type === 'vacant' ? '#22C55E' : '#EF4444' }]} />
+                        <View style={[styles.inlineStatusDot, { backgroundColor: item.type === 'vacant' ? '#22C55E' : item.type === 'medium' ? '#F59E0B' : '#EF4444' }]} />
                     </View>
                     <Text style={styles.placeCategory}>{item.category}</Text>
                 </View>
@@ -126,7 +149,7 @@ export default function PlacesScreen() {
                         <Text style={styles.statLabel}>Details</Text>
                     </View>
                 </View>
-                <View style={[styles.typeBadge, { backgroundColor: item.type === 'vacant' ? '#22C55E' : '#EF4444' }]}>
+                <View style={[styles.typeBadge, { backgroundColor: item.type === 'vacant' ? '#22C55E' : item.type === 'medium' ? '#F59E0B' : '#EF4444' }]}>
                     <Text style={styles.typeBadgeText}>{item.type.toUpperCase()}</Text>
                 </View>
             </View>
@@ -135,9 +158,7 @@ export default function PlacesScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-
             <View style={styles.header}>
-
                 <Text style={styles.headerTitle}>Real-time reports</Text>
                 <TouchableOpacity style={styles.circularButton}>
                     <Ionicons name="search-outline" size={20} color="#1E293B" />
@@ -151,19 +172,25 @@ export default function PlacesScreen() {
                 </TouchableOpacity>
             </View>
 
-            <FlatList
-                data={reports}
-                renderItem={renderReportCard}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.scrollList}
-                showsVerticalScrollIndicator={false}
-                ListHeaderComponent={() => (
-                    <View style={styles.summaryBox}>
-                        <Text style={styles.summaryTitle}>Live Feed Updates</Text>
-                        <Text style={styles.summarySubtitle}>Check the latest crowd reports from neighboring spots</Text>
-                    </View>
-                )}
-            />
+            {loading && dynamicReports.length === 0 ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: '#666' }}>Fetching live reports...</Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={dynamicReports}
+                    renderItem={renderReportCard}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.scrollList}
+                    showsVerticalScrollIndicator={false}
+                    ListHeaderComponent={() => (
+                        <View style={styles.summaryBox}>
+                            <Text style={styles.summaryTitle}>Live Feed Updates</Text>
+                            <Text style={styles.summarySubtitle}>Check the latest crowd reports from neighboring spots</Text>
+                        </View>
+                    )}
+                />
+            )}
 
             {/* Queue Filtering Modal */}
             <Modal
