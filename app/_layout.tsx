@@ -27,7 +27,9 @@ function MainLayout() {
     const inMapRoute = segments[0] === 'map';
     const inFavoritesRoute = segments[0] === 'favorites';
     const inRewardsRoute = segments[0] === 'rewards';
-    const inAuthenticatedRoute = inTabsGroup || inPlaceRoute || inMapRoute || inFavoritesRoute || inRewardsRoute;
+    const inHelpRoute = segments[0] === 'help';
+    const inAboutRoute = segments[0] === 'about';
+    const inAuthenticatedRoute = inTabsGroup || inPlaceRoute || inMapRoute || inFavoritesRoute || inRewardsRoute || inHelpRoute || inAboutRoute;
 
     if (user && !inAuthenticatedRoute && segments[0] !== 'modal') {
       console.log('User logged in, redirecting to tabs...');
@@ -60,6 +62,8 @@ function MainLayout() {
         <Stack.Screen name="place" options={{ headerShown: false }} />
         <Stack.Screen name="favorites" options={{ headerShown: false }} />
         <Stack.Screen name="rewards" options={{ headerShown: false }} />
+        <Stack.Screen name="help" options={{ headerShown: false }} />
+        <Stack.Screen name="about" options={{ headerShown: false }} />
         <Stack.Screen
           name="map"
           options={{

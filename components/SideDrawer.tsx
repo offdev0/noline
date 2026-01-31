@@ -196,8 +196,22 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                         {/* Support */}
                         <SectionHeader title="Support" />
                         <View style={styles.menuGroup}>
-                            <MenuItem icon="help-circle" label="Help and support" />
-                            <MenuItem icon="information-circle" label="About" />
+                            <MenuItem
+                                icon="help-circle"
+                                label="Help and support"
+                                onPress={() => {
+                                    onClose();
+                                    router.push('/help');
+                                }}
+                            />
+                            <MenuItem
+                                icon="information-circle"
+                                label="About"
+                                onPress={() => {
+                                    onClose();
+                                    router.push('/about');
+                                }}
+                            />
                         </View>
 
                         {/* Entry/Exit */}
