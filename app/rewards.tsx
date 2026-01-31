@@ -18,7 +18,7 @@ const { width } = Dimensions.get('window');
 export default function RewardsScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const { user } = useUser();
+    const { user, completedTasksToday } = useUser();
 
     const points = parseInt(params.points as string) || 0;
     const streak = parseInt(params.streak as string) || 0;
@@ -87,50 +87,7 @@ export default function RewardsScreen() {
                     </View>
                 </View>
 
-                {/* Missions Header */}
-                <TouchableOpacity style={styles.missionsButton}>
-                    <Text style={styles.missionsButtonText}>Weekly & Special Missions</Text>
-                </TouchableOpacity>
 
-                {/* Task Categories */}
-                <View style={[styles.card, { padding: 0 }]}>
-                    <TouchableOpacity style={styles.taskItem}>
-                        <View style={styles.taskIconWrapper}>
-                            <Ionicons name="calendar" size={20} color="#6366F1" />
-                        </View>
-                        <View style={styles.taskContent}>
-                            <Text style={styles.taskTitle}>Daily Tasks</Text>
-                            <Text style={styles.taskSubtitle}>3 of 4 completed</Text>
-                        </View>
-                        <Ionicons name="chevron-down" size={20} color="#94A3B8" />
-                    </TouchableOpacity>
-
-                    <View style={styles.separator} />
-
-                    <TouchableOpacity style={styles.taskItem}>
-                        <View style={[styles.taskIconWrapper, { backgroundColor: '#F0E7FF' }]}>
-                            <Ionicons name="grid" size={20} color="#8B5CF6" />
-                        </View>
-                        <View style={styles.taskContent}>
-                            <Text style={styles.taskTitle}>Weekly Tasks</Text>
-                            <Text style={styles.taskSubtitle}>1 of 3 completed</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-                    </TouchableOpacity>
-
-                    <View style={styles.separator} />
-
-                    <TouchableOpacity style={styles.taskItem}>
-                        <View style={[styles.taskIconWrapper, { backgroundColor: '#FFF7ED' }]}>
-                            <Ionicons name="trophy" size={20} color="#F59E0B" />
-                        </View>
-                        <View style={styles.taskContent}>
-                            <Text style={styles.taskTitle}>Challenge Tasks</Text>
-                            <Text style={styles.taskSubtitle}>2 of 5 completed</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-                    </TouchableOpacity>
-                </View>
 
                 {/* Achievements */}
                 <View style={styles.achievementsSection}>

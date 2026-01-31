@@ -1,6 +1,7 @@
 import { PlaceData } from '@/services/MapsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useUser } from './UserContext';
 
 interface FavoritesContextType {
     favorites: PlaceData[];
@@ -19,6 +20,7 @@ export const useFavorites = () => useContext(FavoritesContext);
 const FAVORITES_STORAGE_KEY = '@jyoti_favorites';
 
 export const FavoritesProvider = ({ children }: { children: React.ReactNode }) => {
+    const { completeTask } = useUser();
     const [favorites, setFavorites] = useState<PlaceData[]>([]);
 
     // Load favorites from AsyncStorage on mount

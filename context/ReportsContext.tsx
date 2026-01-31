@@ -70,7 +70,7 @@ const ReportsContext = createContext<ReportsContextType>({
 export const useReports = () => useContext(ReportsContext);
 
 export const ReportsProvider = ({ children }: { children: React.ReactNode }) => {
-    const { user } = useUser();
+    const { user, addPoints, completeTask } = useUser();
     const [reports, setReports] = useState<ReportData[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -105,6 +105,8 @@ export const ReportsProvider = ({ children }: { children: React.ReactNode }) => 
                 commentsCount: 0,
                 HELPCOUNT: '0',
             });
+            await addPoints(10);
+            await completeTask('submit_report', 0); // Mark as done for daily mission but don't add extra points as we added 10 above
         } catch (error) {
             console.error('Error adding report:', error);
             throw error;

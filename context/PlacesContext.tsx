@@ -45,7 +45,7 @@ const PlacesContext = createContext<PlacesContextType>({
 export const usePlaces = () => useContext(PlacesContext);
 
 export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
-    const { user } = useUser();
+    const { user, completeTask } = useUser();
     const { address, location } = useLocation();
     const [allPlaces, setAllPlaces] = useState<PlaceData[]>([]);
     const [loading, setLoading] = useState(false);
@@ -79,9 +79,13 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+
     const recordPlaceClick = async (place: PlaceData) => {
         await saveSearchHistory(place.name, place.address, place.id, place.image, place.rating);
+
     };
+
+
 
     // Fetch places using coordinates (used for GPS-based and geocoded searches)
     const fetchByCoordinates = async (lat: number, lng: number, searchName?: string) => {
@@ -107,6 +111,8 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
     // Main search function - geocodes city name to coordinates first
     const searchLocation = async (locationName: string, isManual: boolean = true) => {
         console.log(`[PlacesContext] searchLocation: "${locationName}", isManual: ${isManual}`);
+
+
 
         if (isManual) {
             setIsManualSearch(true);
