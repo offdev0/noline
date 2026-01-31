@@ -1,38 +1,58 @@
 import { db } from '@/configs/firebaseConfig';
 import {
     addDoc,
+    arrayRemove,
+    arrayUnion,
     collection,
+    doc,
+    Timestamp as FirebaseTimestamp,
     GeoPoint,
+    increment,
     onSnapshot,
     orderBy,
     query,
-    serverTimestamp
+    runTransaction,
+    serverTimestamp,
+    updateDoc
 } from 'firebase/firestore';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useUser } from './UserContext';
+
+export interface CommentData {
+    id: string;
+    reportId: string;
+    userId: string;
+    userEmail: string;
+    text: string;
+    timestamp: FirebaseTimestamp;
+}
 
 export interface ReportData {
     id: string;
     placeName: string;
-    Timestamp: any; // Firestore serverTimestamp
+    Timestamp: FirebaseTimestamp;
     isOpen: boolean;
     location: GeoPoint;
     description: string;
-    likes: string[]; // List of user references or IDs
+    likes: string[]; // List of user emails or IDs
     commentsCount: number;
     HELPCOUNT: string;
     notes: string;
     irrelevant: string;
-    businessRef: string; // Reference to the place (as a string ID for simplicity or doc ref)
+    businessRef: string;
     reportNumberCount: number;
-    reportBy: string; // Reference to user
+    reportBy: string;
     Hplacename: string;
-    crowdLevel: number; // 1-Short, 2-Medium, 3-Long
+    crowdLevel: number;
     liveSituation: string;
 }
 
 interface ReportsContextType {
     reports: ReportData[];
     addReport: (report: Omit<ReportData, 'id' | 'Timestamp' | 'likes' | 'commentsCount' | 'HELPCOUNT'>) => Promise<void>;
+    toggleLike: (reportId: string) => Promise<void>;
+    addComment: (reportId: string, text: string) => Promise<void>;
+    getComments: (reportId: string, callback: (comments: CommentData[]) => void) => () => void;
     getReportsByPlace: (placeId: string) => ReportData[];
     loading: boolean;
 }
@@ -40,6 +60,9 @@ interface ReportsContextType {
 const ReportsContext = createContext<ReportsContextType>({
     reports: [],
     addReport: async () => { },
+    toggleLike: async () => { },
+    addComment: async () => { },
+    getComments: () => () => { },
     getReportsByPlace: () => [],
     loading: false,
 });
@@ -47,10 +70,10 @@ const ReportsContext = createContext<ReportsContextType>({
 export const useReports = () => useContext(ReportsContext);
 
 export const ReportsProvider = ({ children }: { children: React.ReactNode }) => {
+    const { user } = useUser();
     const [reports, setReports] = useState<ReportData[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Subscribe to ALL reports in real-time from Firebase
     useEffect(() => {
         const q = query(collection(db, 'REPRORT'), orderBy('Timestamp', 'desc'));
 
@@ -83,9 +106,70 @@ export const ReportsProvider = ({ children }: { children: React.ReactNode }) => 
                 HELPCOUNT: '0',
             });
         } catch (error) {
-            console.error('Error adding report to Firebase:', error);
+            console.error('Error adding report:', error);
             throw error;
         }
+    };
+
+    const toggleLike = async (reportId: string) => {
+        if (!user) return;
+        const report = reports.find(r => r.id === reportId);
+        if (!report) return;
+
+        const reportRef = doc(db, 'REPRORT', reportId);
+        const isLiked = report.likes?.includes(user.email || '');
+
+        try {
+            await updateDoc(reportRef, {
+                likes: isLiked ? arrayRemove(user.email) : arrayUnion(user.email)
+            });
+        } catch (error) {
+            console.error('Error toggling like:', error);
+        }
+    };
+
+    const addComment = async (reportId: string, text: string) => {
+        if (!user || !text.trim()) return;
+
+        const reportRef = doc(db, 'REPRORT', reportId);
+        const commentsColl = collection(db, 'COMMENTS');
+
+        try {
+            await runTransaction(db, async (transaction) => {
+                // Add the comment
+                const newCommentRef = doc(commentsColl);
+                transaction.set(newCommentRef, {
+                    reportId,
+                    userId: user.uid,
+                    userEmail: user.email,
+                    text: text.trim(),
+                    timestamp: serverTimestamp(),
+                });
+
+                // Increment comment count on report
+                transaction.update(reportRef, {
+                    commentsCount: increment(1)
+                });
+            });
+        } catch (error) {
+            console.error('Error adding comment:', error);
+        }
+    };
+
+    const getComments = (reportId: string, callback: (comments: CommentData[]) => void) => {
+        const q = query(
+            collection(db, 'COMMENTS'),
+            where('reportId', '==', reportId),
+            orderBy('timestamp', 'asc')
+        );
+
+        return onSnapshot(q, (snapshot) => {
+            const fetchedComments: CommentData[] = [];
+            snapshot.forEach((doc) => {
+                fetchedComments.push({ id: doc.id, ...doc.data() } as CommentData);
+            });
+            callback(fetchedComments);
+        });
     };
 
     const getReportsByPlace = (placeId: string) => {
@@ -93,8 +177,18 @@ export const ReportsProvider = ({ children }: { children: React.ReactNode }) => 
     };
 
     return (
-        <ReportsContext.Provider value={{ reports, addReport, getReportsByPlace, loading }}>
+        <ReportsContext.Provider value={{
+            reports,
+            addReport,
+            toggleLike,
+            addComment,
+            getComments,
+            getReportsByPlace,
+            loading
+        }}>
             {children}
         </ReportsContext.Provider>
     );
 };
+
+import { where } from 'firebase/firestore';

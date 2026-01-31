@@ -1,5 +1,7 @@
+import CommentsModal from '@/components/CommentsModal';
 import { usePlaces } from '@/context/PlacesContext';
-import { useReports } from '@/context/ReportsContext';
+import { ReportData, useReports } from '@/context/ReportsContext';
+import { useUser } from '@/context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
@@ -16,17 +18,20 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PlacesScreen() {
-    const { reports, loading: reportsLoading } = useReports();
+    const { reports, loading: reportsLoading, toggleLike } = useReports();
     const { loading: placesLoading } = usePlaces();
+    const { user } = useUser();
+
     const [filterVisible, setFilterVisible] = useState(false);
     const [selectedType, setSelectedType] = useState('vacant');
     const [selectedDistance, setSelectedDistance] = useState('1-5 km');
     const [selectedCategory, setSelectedCategory] = useState('everything');
 
+    const [isCommentsVisible, setIsCommentsVisible] = useState(false);
+    const [activeReport, setActiveReport] = useState<ReportData | null>(null);
+
     const formatTimeAgo = (timestamp: any) => {
         if (!timestamp) return 'Just now';
-
-        // Handle Firestore Timestamp
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
         const now = new Date();
         const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -43,7 +48,12 @@ export default function PlacesScreen() {
         return 'loaded';
     };
 
-    const renderReportCard = ({ item }: { item: any }) => {
+    const openComments = (report: ReportData) => {
+        setActiveReport(report);
+        setIsCommentsVisible(true);
+    };
+
+    const renderReportCard = ({ item }: { item: ReportData }) => {
         const type = getStatusType(item.crowdLevel);
         const bannerStyle = {
             bg: type === 'vacant' ? '#F0FDF4' : type === 'medium' ? '#FFFBEB' : '#FEF2F2',
@@ -51,18 +61,15 @@ export default function PlacesScreen() {
             border: type === 'vacant' ? '#DCFCE7' : type === 'medium' ? '#FEF3C7' : '#FEE2E2'
         };
 
+        const isLiked = item.likes?.includes(user?.email || '');
         const avatarId = (item.reportBy?.length || 0) % 70;
 
         return (
-            <TouchableOpacity style={styles.card} activeOpacity={0.9}>
+            <View style={styles.card}>
                 {/* Header: Icon, Name, Category, Status Dot */}
                 <View style={styles.cardHeader}>
                     <View style={[styles.placeIconBox, { backgroundColor: bannerStyle.bg }]}>
-                        <Ionicons
-                            name="location"
-                            size={24}
-                            color={bannerStyle.text}
-                        />
+                        <Ionicons name="location" size={24} color={bannerStyle.text} />
                     </View>
                     <View style={styles.placeDetails}>
                         <View style={styles.nameRow}>
@@ -90,24 +97,39 @@ export default function PlacesScreen() {
                 {/* Footer: Stats and Type Badge */}
                 <View style={styles.cardFooter}>
                     <View style={styles.statsContainer}>
-                        <TouchableOpacity style={styles.statItem}>
-                            <Ionicons name="thumbs-up-outline" size={18} color="#6366F1" />
-                            <Text style={styles.statLabel}>{item.likes?.length || 0}</Text>
+                        <TouchableOpacity
+                            style={styles.statItem}
+                            onPress={() => toggleLike(item.id)}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons
+                                name={isLiked ? "heart" : "heart-outline"}
+                                size={20}
+                                color={isLiked ? "#EF4444" : "#64748B"}
+                            />
+                            <Text style={[styles.statLabel, isLiked && { color: "#EF4444" }]}>
+                                {item.likes?.length || 0}
+                            </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.statItem}>
-                            <Ionicons name="chatbubble-outline" size={18} color="#94A3B8" />
+
+                        <TouchableOpacity
+                            style={styles.statItem}
+                            onPress={() => openComments(item)}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="chatbubble-outline" size={18} color="#64748B" />
                             <Text style={styles.statLabel}>{item.commentsCount || 0}</Text>
                         </TouchableOpacity>
+
                         <View style={styles.statItem}>
-                            <Ionicons name="information-circle-outline" size={18} color="#94A3B8" />
-                            <Text style={styles.statLabel}>Details</Text>
+                            <Text> </Text>
                         </View>
                     </View>
                     <View style={[styles.typeBadge, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]}>
                         <Text style={styles.typeBadgeText}>{type.toUpperCase()}</Text>
                     </View>
                 </View>
-            </TouchableOpacity>
+            </View>
         );
     };
 
@@ -153,6 +175,12 @@ export default function PlacesScreen() {
                     )}
                 />
             )}
+
+            <CommentsModal
+                isVisible={isCommentsVisible}
+                onClose={() => setIsCommentsVisible(false)}
+                report={activeReport}
+            />
 
             {/* Queue Filtering Modal */}
             <Modal
