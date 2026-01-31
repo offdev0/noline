@@ -24,8 +24,8 @@ export default function MapWidget() {
     };
 
     const handleOpenFullMap = () => {
-        // Navigate to the full map/places screen
-        router.push('/(tabs)/places');
+        // Navigate to the full-screen map modal
+        router.push('/map');
     };
 
     return (

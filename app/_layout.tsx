@@ -21,7 +21,8 @@ function MainLayout() {
 
     const inTabsGroup = segments[0] === '(tabs)';
     const inPlaceRoute = segments[0] === 'place';
-    const inAuthenticatedRoute = inTabsGroup || inPlaceRoute;
+    const inMapRoute = segments[0] === 'map';
+    const inAuthenticatedRoute = inTabsGroup || inPlaceRoute || inMapRoute;
 
     if (user && !inAuthenticatedRoute) {
       // Redirect to tabs if user is signed in and not in an authenticated route
@@ -54,6 +55,14 @@ function MainLayout() {
         <Stack.Screen name="index" options={{ headerShown: false, statusBarStyle: 'light' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="place" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="map"
+          options={{
+            headerShown: false,
+            presentation: 'fullScreenModal',
+            animation: 'slide_from_bottom',
+          }}
+        />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
