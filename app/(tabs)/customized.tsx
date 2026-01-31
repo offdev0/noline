@@ -3,9 +3,9 @@ import { usePlaces } from '@/context/PlacesContext';
 import { useUser } from '@/context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { collection, doc, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { collection, doc, getDocs, limit, query, where } from 'firebase/firestore';
+import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
@@ -69,61 +69,69 @@ export default function CustomizedScreen() {
     const [loadingHistory, setLoadingHistory] = useState(true);
 
     // Fetch search history from Firebase
-    useEffect(() => {
-        const fetchSearchHistory = async () => {
-            if (!user) {
-                setLoadingHistory(false);
-                return;
+    const fetchSearchHistory = async () => {
+        if (!user) {
+            setLoadingHistory(false);
+            return;
+        }
+
+        try {
+            const userRef = doc(db, 'users', user.uid);
+            const historyQuery = query(
+                collection(db, 'SearchHistory'),
+                where('searchedBy', '==', userRef),
+                limit(50)
+            );
+
+            const snapshot = await getDocs(historyQuery);
+
+            // Process everything in memory
+            const places: RecentPlace[] = [];
+            const seenPlaceIds = new Set<string>();
+
+            const processedData = snapshot.docs
+                .map(d => ({ id: d.id, ...d.data() } as any))
+                // Filter by user UID
+                .filter(d => {
+                    const uid = d.searchedBy?.id || d.searchedBy?.path?.split('/').pop();
+                    return uid === user.uid && d.businessRef;
+                })
+                // Sort by time
+                .sort((a, b) => (b.searchedOn?.seconds || 0) - (a.searchedOn?.seconds || 0));
+
+            for (const data of processedData) {
+                const businessRef = data.businessRef;
+                const placeId = businessRef.id || businessRef.path?.split('/').pop();
+
+                if (!placeId || seenPlaceIds.has(placeId)) continue;
+                seenPlaceIds.add(placeId);
+
+                const placeFromContext = getPlaceById(placeId);
+
+                places.push({
+                    id: placeId,
+                    name: data.searchedString || 'Unknown Place',
+                    address: data.searchedAddress || 'Address not available',
+                    rating: placeFromContext?.rating || 4.2,
+                    image: placeFromContext?.image || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400',
+                    searchedOn: data.searchedOn?.toDate() || new Date(),
+                });
+
+                if (places.length >= 10) break;
             }
 
-            try {
-                const userRef = doc(db, 'users', user.uid);
-                const historyQuery = query(
-                    collection(db, 'SearchHistory'),
-                    where('searchedBy', '==', userRef),
-                    where('businessRef', '!=', null), // Only get place clicks, not text searches
-                    orderBy('businessRef'), // Required for != query
-                    orderBy('searchedOn', 'desc'),
-                    limit(10)
-                );
-
-                const snapshot = await getDocs(historyQuery);
-                const seenPlaceIds = new Set<string>();
-                const places: RecentPlace[] = [];
-
-                for (const docSnap of snapshot.docs) {
-                    const data = docSnap.data();
-                    const businessRef = data.businessRef;
-
-                    // Extract place ID from the reference path
-                    const placeId = businessRef?.id || businessRef?.path?.split('/').pop();
-
-                    if (!placeId || seenPlaceIds.has(placeId)) continue;
-                    seenPlaceIds.add(placeId);
-
-                    // Try to get place details from context first
-                    const placeFromContext = getPlaceById(placeId);
-
-                    places.push({
-                        id: placeId,
-                        name: data.searchedString || 'Unknown Place',
-                        address: data.searchedAddress || 'Address not available',
-                        rating: placeFromContext?.rating || 4.0,
-                        image: placeFromContext?.image || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=200',
-                        searchedOn: data.searchedOn?.toDate() || new Date(),
-                    });
-                }
-
-                setRecentlyVisited(places);
-            } catch (error) {
-                console.error('Error fetching search history:', error);
-            } finally {
-                setLoadingHistory(false);
-            }
-        };
-
-        fetchSearchHistory();
-    }, [user, allPlaces]);
+            setRecentlyVisited(places);
+        } catch (error) {
+            console.error('Error fetching search history:', error);
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
+    useFocusEffect(
+        useCallback(() => {
+            fetchSearchHistory();
+        }, [user])
+    );
 
     const handleOpenRoute = () => {
         router.push('/map');

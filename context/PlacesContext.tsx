@@ -2,7 +2,7 @@ import { db } from '@/configs/firebaseConfig';
 import { MapsService, PlaceData } from '@/services/MapsService';
 import * as ExpoLocation from 'expo-location';
 import { addDoc, collection, doc, serverTimestamp } from 'firebase/firestore';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocation } from './LocationContext';
 import { useUser } from './UserContext';
 
@@ -176,12 +176,13 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [location, isManualSearch, currentSearchName]);
 
-    const mustVisitPlaces = allPlaces.filter(p => p.category === 'mustVisit');
-    const restaurants = allPlaces.filter(p => p.category === 'restaurant');
-    const casinos = allPlaces.filter(p => p.category === 'casino');
-    const hotPlaces = allPlaces.filter(p => p.category === 'hot');
-    const shopping = allPlaces.filter(p => p.category === 'shopping');
-    const funPlaces = allPlaces.filter(p => p.category === 'fun');
+    // Memoize filtered arrays to prevent re-renders
+    const mustVisitPlaces = useMemo(() => allPlaces.filter(p => p.category === 'mustVisit'), [allPlaces]);
+    const restaurants = useMemo(() => allPlaces.filter(p => p.category === 'restaurant'), [allPlaces]);
+    const casinos = useMemo(() => allPlaces.filter(p => p.category === 'casino'), [allPlaces]);
+    const hotPlaces = useMemo(() => allPlaces.filter(p => p.category === 'hot'), [allPlaces]);
+    const shopping = useMemo(() => allPlaces.filter(p => p.category === 'shopping'), [allPlaces]);
+    const funPlaces = useMemo(() => allPlaces.filter(p => p.category === 'fun'), [allPlaces]);
     const trendingPlaces = allPlaces;
 
     return (
