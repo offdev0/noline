@@ -1,8 +1,13 @@
+import { db } from '@/configs/firebaseConfig';
+import { usePlaces } from '@/context/PlacesContext';
+import { useUser } from '@/context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import { collection, doc, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     Dimensions,
     Image,
     ImageBackground,
@@ -46,33 +51,79 @@ const hotTips = [
     },
 ];
 
-// Sample recently visited places
-const recentlyVisited = [
-    {
-        id: '1',
-        name: 'Café Nordoy',
-        rating: 4.5,
-        isAvailable: true,
-        image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=200',
-    },
-    {
-        id: '2',
-        name: 'Sacher Garden',
-        rating: 4.8,
-        isAvailable: true,
-        image: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=200',
-    },
-    {
-        id: '3',
-        name: 'Central Market',
-        rating: 4.2,
-        isAvailable: false,
-        image: 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=200',
-    },
-];
+// Interface for search history items
+interface RecentPlace {
+    id: string;
+    name: string;
+    address: string;
+    rating: number;
+    image: string;
+    searchedOn: Date;
+}
 
 export default function CustomizedScreen() {
     const router = useRouter();
+    const { user } = useUser();
+    const { getPlaceById, allPlaces } = usePlaces();
+    const [recentlyVisited, setRecentlyVisited] = useState<RecentPlace[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(true);
+
+    // Fetch search history from Firebase
+    useEffect(() => {
+        const fetchSearchHistory = async () => {
+            if (!user) {
+                setLoadingHistory(false);
+                return;
+            }
+
+            try {
+                const userRef = doc(db, 'users', user.uid);
+                const historyQuery = query(
+                    collection(db, 'SearchHistory'),
+                    where('searchedBy', '==', userRef),
+                    where('businessRef', '!=', null), // Only get place clicks, not text searches
+                    orderBy('businessRef'), // Required for != query
+                    orderBy('searchedOn', 'desc'),
+                    limit(10)
+                );
+
+                const snapshot = await getDocs(historyQuery);
+                const seenPlaceIds = new Set<string>();
+                const places: RecentPlace[] = [];
+
+                for (const docSnap of snapshot.docs) {
+                    const data = docSnap.data();
+                    const businessRef = data.businessRef;
+
+                    // Extract place ID from the reference path
+                    const placeId = businessRef?.id || businessRef?.path?.split('/').pop();
+
+                    if (!placeId || seenPlaceIds.has(placeId)) continue;
+                    seenPlaceIds.add(placeId);
+
+                    // Try to get place details from context first
+                    const placeFromContext = getPlaceById(placeId);
+
+                    places.push({
+                        id: placeId,
+                        name: data.searchedString || 'Unknown Place',
+                        address: data.searchedAddress || 'Address not available',
+                        rating: placeFromContext?.rating || 4.0,
+                        image: placeFromContext?.image || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=200',
+                        searchedOn: data.searchedOn?.toDate() || new Date(),
+                    });
+                }
+
+                setRecentlyVisited(places);
+            } catch (error) {
+                console.error('Error fetching search history:', error);
+            } finally {
+                setLoadingHistory(false);
+            }
+        };
+
+        fetchSearchHistory();
+    }, [user, allPlaces]);
 
     const handleOpenRoute = () => {
         router.push('/map');
@@ -167,45 +218,51 @@ export default function CustomizedScreen() {
                 {/* Recently Visited Section */}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Recently visited</Text>
-                    <TouchableOpacity>
-                        <Text style={styles.showAllText}>Show all</Text>
-                    </TouchableOpacity>
+                    {recentlyVisited.length > 0 && (
+                        <TouchableOpacity>
+                            <Text style={styles.showAllText}>Show all</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
-                {recentlyVisited.map((place) => (
-                    <View key={place.id} style={styles.recentCard}>
-                        <Image
-                            source={{ uri: place.image }}
-                            style={styles.recentImage}
-                        />
-                        <View style={styles.recentContent}>
-                            <Text style={styles.recentName}>{place.name}</Text>
-                            <View style={styles.ratingRow}>
-                                <Ionicons name="star" size={14} color="#FFD700" />
-                                <Text style={styles.ratingText}>{place.rating}</Text>
-                            </View>
-                            <View style={styles.availabilityRow}>
-                                {place.isAvailable ? (
-                                    <>
-                                        <Ionicons name="checkbox" size={16} color="#22C55E" />
-                                        <Text style={styles.availableText}>Available now</Text>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Ionicons name="time" size={16} color="#F59E0B" />
-                                        <Text style={styles.unavailableText}>Busy now</Text>
-                                    </>
-                                )}
-                            </View>
-                        </View>
-                        <TouchableOpacity
-                            style={styles.navigateButton}
-                            onPress={() => handleNavigate(place.id)}
-                        >
-                            <Text style={styles.navigateText}>Navigate there</Text>
-                        </TouchableOpacity>
+                {loadingHistory ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="small" color="#5356FF" />
+                        <Text style={styles.loadingText}>Loading history...</Text>
                     </View>
-                ))}
+                ) : recentlyVisited.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <Ionicons name="location-outline" size={48} color="#ccc" />
+                        <Text style={styles.emptyText}>No places visited yet</Text>
+                        <Text style={styles.emptySubtext}>Explore places and they'll appear here</Text>
+                    </View>
+                ) : (
+                    recentlyVisited.map((place) => (
+                        <View key={place.id} style={styles.recentCard}>
+                            <Image
+                                source={{ uri: place.image }}
+                                style={styles.recentImage}
+                            />
+                            <View style={styles.recentContent}>
+                                <Text style={styles.recentName} numberOfLines={1}>{place.name}</Text>
+                                <View style={styles.ratingRow}>
+                                    <Ionicons name="star" size={14} color="#FFD700" />
+                                    <Text style={styles.ratingText}>{place.rating.toFixed(1)}</Text>
+                                </View>
+                                <View style={styles.availabilityRow}>
+                                    <Ionicons name="location-outline" size={14} color="#666" />
+                                    <Text style={styles.addressText} numberOfLines={1}>{place.address}</Text>
+                                </View>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.navigateButton}
+                                onPress={() => handleNavigate(place.id)}
+                            >
+                                <Text style={styles.navigateText}>View</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))
+                )}
 
                 {/* Bottom Spacing */}
                 <View style={styles.bottomSpacing} />
@@ -454,5 +511,38 @@ const styles = StyleSheet.create({
     },
     bottomSpacing: {
         height: 100,
+    },
+    // New styles for search history
+    loadingContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 40,
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize: 14,
+        color: '#666',
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 40,
+    },
+    emptyText: {
+        marginTop: 12,
+        fontSize: 16,
+        color: '#666',
+        fontWeight: '500',
+    },
+    emptySubtext: {
+        marginTop: 4,
+        fontSize: 13,
+        color: '#999',
+    },
+    addressText: {
+        marginLeft: 4,
+        fontSize: 12,
+        color: '#666',
+        flex: 1,
     },
 });
