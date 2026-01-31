@@ -20,6 +20,12 @@ function MainLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
+    console.log('Current Auth State:', {
+      isLoggedIn: !!user,
+      segments,
+      inAuthenticatedRoute: !!(segments[0] === '(tabs)' || segments[0] === 'place' || segments[0] === 'map' || segments[0] === 'favorites' || segments[0] === 'rewards' || segments[0] === 'help' || segments[0] === 'about')
+    });
+
     if (loading) return;
 
     const inTabsGroup = segments[0] === '(tabs)';
@@ -29,13 +35,13 @@ function MainLayout() {
     const inRewardsRoute = segments[0] === 'rewards';
     const inHelpRoute = segments[0] === 'help';
     const inAboutRoute = segments[0] === 'about';
-    const inAuthenticatedRoute = inTabsGroup || inPlaceRoute || inMapRoute || inFavoritesRoute || inRewardsRoute || inHelpRoute || inAboutRoute;
+    const inAuthenticatedRoute = segments.some(s => ['(tabs)', 'place', 'map', 'favorites', 'rewards', 'help', 'about'].includes(s));
 
     if (user && !inAuthenticatedRoute && segments[0] !== 'modal') {
-      console.log('User logged in, redirecting to tabs...');
+      console.log('User logged in, redirecting to tabs... Segments:', segments);
       router.replace('/(tabs)');
     } else if (!user && inAuthenticatedRoute) {
-      console.log('User logged out, redirecting to login...');
+      console.log('User logged out, redirecting to login... Segments:', segments);
       setTimeout(() => {
         router.replace('/');
       }, 0);
