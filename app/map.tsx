@@ -27,7 +27,7 @@ export default function FullMapScreen() {
     }>();
     const insets = useSafeAreaInsets();
     const { location, address, refreshLocation, loading: locationLoading } = useLocation();
-    const { allPlaces, loading: placesLoading } = usePlaces();
+    const { allPlaces, recordPlaceClick, loading: placesLoading } = usePlaces();
     const mapRef = useRef<MapView>(null);
     const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
     const [searchedLocation, setSearchedLocation] = useState<{
@@ -138,6 +138,7 @@ export default function FullMapScreen() {
 
     const handleViewPlace = () => {
         if (selectedPlace) {
+            recordPlaceClick(selectedPlace);
             router.push({
                 pathname: '/place/[id]',
                 params: { id: selectedPlace.id }

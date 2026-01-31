@@ -47,7 +47,12 @@ export class MapsService {
         console.log(`Fetching comprehensive real places for: ${locationName}`);
 
         try {
-            // Updated query to be more inclusive of different categories
+            // Improved query logic: If the query is short, it's likely a city, so we add context.
+            // If it's longer/specific, we use it as is to allow "Pizza in Delhi" style searches.
+            const query = locationName.split(' ').length > 3 
+                ? locationName 
+                : `top attractions, restaurants, and spots in ${locationName}`;
+
             const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
                 method: 'POST',
                 headers: {
@@ -56,7 +61,7 @@ export class MapsService {
                     'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.types,places.photos,places.editorialSummary,places.location'
                 },
                 body: JSON.stringify({
-                    textQuery: `top attractions, restaurants, shopping malls, and entertainment in ${locationName}`,
+                    textQuery: query,
                     maxResultCount: 20
                 })
             });
@@ -72,32 +77,30 @@ export class MapsService {
 
             return places.map((p: any, index: number) => {
                 // Determine category based on Google's provided types
-                let category: PlaceData['category'] = 'mustVisit'; // Default
+                let category: PlaceData['category'] = 'mustVisit'; 
                 
                 if (p.types) {
-                    // Find the first matching category in our mapping
                     const foundType = p.types.find((t: string) => CATEGORY_MAPPING[t]);
                     if (foundType) {
                         category = CATEGORY_MAPPING[foundType];
                     }
                 }
 
-                // Get photo URL with priority to larger images
-                let imageUrl = `https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800`; // Better default
+                // Get photo URL
+                let imageUrl = `https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800`;
                 if (p.photos && p.photos.length > 0) {
                     imageUrl = `https://places.googleapis.com/v1/${p.photos[0].name}/media?key=${GOOGLE_MAPS_API_KEY}&maxWidthPx=800`;
-                } else if (category === 'restaurant') {
-                    imageUrl = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800';
-                } else if (category === 'shopping') {
-                    imageUrl = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800';
                 }
 
-                // Status randomization for app demonstration
                 const statusOptions: PlaceData['status'][] = ['vacant', 'medium', 'loaded'];
                 const status = statusOptions[index % statusOptions.length];
 
                 const description = p.editorialSummary?.text || 
-                    `${p.displayName?.text || 'A popular spot'} in ${locationName}, known for its ${category} experience.`;
+                    `${p.displayName?.text || 'A popular spot'} in this area, known for its ${category} experience.`;
+
+                // CRITICAL: Ensure we use the actual location from the place result
+                const lat = p.location?.latitude;
+                const lng = p.location?.longitude;
 
                 return {
                     id: p.id,
@@ -110,8 +113,8 @@ export class MapsService {
                     rating: p.rating || 4.2,
                     address: p.formattedAddress || 'Address not available',
                     location: {
-                        latitude: p.location?.latitude ?? (locationName === 'Kolkata' ? 22.5726 : 0),
-                        longitude: p.location?.longitude ?? (locationName === 'Kolkata' ? 88.3639 : 0),
+                        latitude: lat,
+                        longitude: lng,
                     }
                 };
             });

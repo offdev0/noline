@@ -87,10 +87,16 @@ export default function PlacesSection() {
         hotPlaces,
         shopping,
         funPlaces,
-        loading
+        allPlaces,
+        loading,
+        recordPlaceClick
     } = usePlaces();
 
     const handlePlacePress = (id: string) => {
+        const place = allPlaces.find(p => p.id === id);
+        if (place) {
+            recordPlaceClick(place);
+        }
         router.push({ pathname: '/place/[id]', params: { id } });
     };
 

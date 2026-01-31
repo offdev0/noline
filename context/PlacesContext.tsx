@@ -18,6 +18,7 @@ interface PlacesContextType {
     loading: boolean;
     searchLocation: (locationName: string) => Promise<void>;
     resetSearch: () => void;
+    recordPlaceClick: (place: PlaceData) => Promise<void>;
     getPlaceById: (id: string) => PlaceData | undefined;
     currentSearchCenter: { latitude: number; longitude: number } | null;
     currentSearchName: string | null;
@@ -35,6 +36,7 @@ const PlacesContext = createContext<PlacesContextType>({
     loading: false,
     searchLocation: async () => { },
     resetSearch: () => { },
+    recordPlaceClick: async () => { },
     getPlaceById: () => undefined,
     currentSearchCenter: null,
     currentSearchName: null,
@@ -50,7 +52,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
     const [currentSearchCenter, setCurrentSearchCenter] = useState<{ latitude: number; longitude: number } | null>(null);
     const [currentSearchName, setCurrentSearchName] = useState<string | null>(null);
 
-    const saveSearchHistory = async (query: string, searchAddress: string | null) => {
+    const saveSearchHistory = async (query: string, searchAddress: string | null, businessId: string | null = null) => {
         if (!user) return;
 
         try {
@@ -58,7 +60,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                 searchedString: query,
                 searchedOn: serverTimestamp(),
                 searchedBy: doc(db, 'users', user.uid),
-                businessRef: null, // Default to null for general location search
+                businessRef: businessId ? doc(db, 'Business', businessId) : null,
                 searchedAddress: searchAddress || query,
                 HsearchedString: query.toLowerCase(),
             });
@@ -66,6 +68,10 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (error) {
             console.error('Error saving search history:', error);
         }
+    };
+
+    const recordPlaceClick = async (place: PlaceData) => {
+        await saveSearchHistory(place.name, place.address, place.id);
     };
 
     const searchLocation = async (locationName: string) => {
@@ -153,6 +159,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                 funPlaces,
                 loading,
                 searchLocation,
+                recordPlaceClick,
                 resetSearch,
                 getPlaceById,
                 currentSearchCenter,
