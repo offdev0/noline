@@ -74,7 +74,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
             // Small delay to let the modal close animation complete
             await new Promise(resolve => setTimeout(resolve, 100));
             await logout();
-            // Navigation will happen automatically via UserContext/MainLayout
+            router.replace('/'); // Explicitly navigate to the root (login screen)
         } catch (error) {
             console.error("Error signing out: ", error);
             setIsLoggingOut(false);

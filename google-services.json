@@ -12,7 +12,28 @@
           "package_name": "com.noline.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "83234148402-7gio07kh1ce8p6ik701mgsat7lef9jh7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.noline.app",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "83234148402-dokebaaehoq90tv3aae5rb55m1o99rjn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.noline.app",
+            "certificate_hash": "5252f5e47159d9623ce205044b131d1f50f9beb3"
+          }
+        },
+        {
+          "client_id": "83234148402-llr9kih19oh0hmmadf1pl916rrkn90go.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAL6pEBxX1BzVeDugIeHtyqzkeVNoNBloU"
@@ -20,7 +41,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "83234148402-llr9kih19oh0hmmadf1pl916rrkn90go.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -1,9 +1,9 @@
 import { auth, db } from '@/configs/firebaseConfig';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, Timestamp } from 'firebase/firestore';
-import React, { useState } from 'react';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import {
     Alert,
     Animated,
@@ -13,11 +13,19 @@ import {
     Text,
     View
 } from 'react-native';
+// Safe import for GoogleSignin to prevent crashes in Expo Go
+let GoogleSignin: any;
+try {
+    GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+} catch (e) {
+    console.log('GoogleSignin not available in this environment');
+}
 
 import AuthButton from '@/components/auth/AuthButton';
 import AuthHeader from '@/components/auth/AuthHeader';
 import AuthInput from '@/components/auth/AuthInput';
 import AuthLinks from '@/components/auth/AuthLinks';
+import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import TermsCheckbox from '@/components/auth/TermsCheckbox';
 import { AUTH_GRADIENT_COLORS, authStyles } from '@/components/auth/authStyles';
 
@@ -31,6 +39,20 @@ export default function LoginScreen() {
     const [isChecked, setChecked] = useState(false);
     const [isLoginMode, setIsLoginMode] = useState(false); // Default to Signup
     const [isLoading, setIsLoading] = useState(false);
+
+    // Initialize Google Sign-In
+    useEffect(() => {
+        if (GoogleSignin) {
+            try {
+                GoogleSignin.configure({
+                    webClientId: '83234148402-llr9kih19oh0hmmadf1pl916rrkn90go.apps.googleusercontent.com',
+                    offlineAccess: true,
+                });
+            } catch (e) {
+                console.error('GoogleSignin configuration failed:', e);
+            }
+        }
+    }, []);
 
     // Animation for button
     const buttonScale = React.useRef(new Animated.Value(1)).current;
@@ -168,6 +190,75 @@ export default function LoginScreen() {
         }
     };
 
+    const handleGoogleAuth = async () => {
+        animateButtonPress();
+        setIsLoading(true);
+        startLoadingAnimation();
+
+        try {
+            if (!GoogleSignin) {
+                Alert.alert(
+                    "Development Build Required",
+                    "Native Google Sign-In requires a development build. For now, please use Email/Password sign-in.",
+                    [{ text: "OK", onPress: () => setIsLoading(false) }]
+                );
+                return;
+            }
+
+            await GoogleSignin.hasPlayServices();
+            const response = await GoogleSignin.signIn();
+            const idToken = response.data?.idToken;
+
+            if (!idToken) throw new Error("No ID Token found");
+
+            const credential = GoogleAuthProvider.credential(idToken);
+
+            // Sign in to Firebase with the Google credential
+            const userCredential = await signInWithCredential(auth, credential);
+            const user = userCredential.user;
+
+            // Check if user document exists in Firestore
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+
+            if (!userDoc.exists()) {
+                // Create user document if it doesn't exist (First time Google Login)
+                console.log('Creating new user document for Google user...');
+                await setDoc(doc(db, "users", user.uid), {
+                    uid: user.uid,
+                    email: user.email || '',
+                    display_name: user.displayName || "",
+                    photo_url: user.photoURL || "",
+                    phone_number: user.phoneNumber || "",
+                    username: user.email?.split('@')[0] || "",
+                    created_time: Timestamp.now(),
+                    joinedAt: Timestamp.now(),
+                    isGuest: false,
+                    darkMode: false,
+                    enableNotification: false,
+                    enableLocation: false,
+                    Language: true,
+                    xp: 0,
+                    favourite: [],
+                    currentLocaton: null
+                });
+            }
+
+            // Navigation happens automatically via auth state observer
+        } catch (error: any) {
+            setIsLoading(false);
+            console.error("Google Auth error:", error);
+
+            if (error.code === 'DEVELOPER_ERROR') {
+                Alert.alert(
+                    "Configuration Error",
+                    "Google Sign-In is not configured correctly. Please check your Web Client ID and SHA-1 certificate fingerprint in Firebase Console."
+                );
+            } else if (error.code !== 'SIGN_IN_CANCELLED') {
+                Alert.alert("Google Login Error", error.message);
+            }
+        }
+    };
+
     const toggleMode = () => {
         // Animate mode switch
         setIsLoginMode(!isLoginMode);
@@ -228,6 +319,12 @@ export default function LoginScreen() {
                             isLoginMode={isLoginMode}
                             buttonScale={buttonScale}
                             onPress={handleAuth}
+                        />
+
+                        <SocialAuthButtons
+                            onGooglePress={handleGoogleAuth}
+                            isLoading={isLoading}
+                            mode={isLoginMode ? 'login' : 'signup'}
                         />
 
                         {/* Terms Checkbox - Only for Signup */}

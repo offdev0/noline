@@ -36,7 +36,9 @@ function MainLayout() {
       router.replace('/(tabs)');
     } else if (!user && inAuthenticatedRoute) {
       console.log('User logged out, redirecting to login...');
-      router.replace('/');
+      setTimeout(() => {
+        router.replace('/');
+      }, 0);
     }
   }, [user, loading, segments]);
 
