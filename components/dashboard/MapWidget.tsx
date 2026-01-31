@@ -82,23 +82,28 @@ export default function MapWidget() {
                         </MapView>
 
                         {/* Location Info Overlay */}
-                        <View style={[styles.mapOverlayBox, { zIndex: 2 }]}>
-                            <View style={styles.overlayHeader}>
-                                <Ionicons name="location" size={20} color="#5356FF" />
-                                <Text style={styles.overlayTitle}>Your Location</Text>
+                        <View style={[styles.mapOverlayBox, { zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexDirection: 'row' }]}>
+                            <View>
+                                <View style={styles.overlayHeader}>
+                                    <Ionicons name="location" size={20} color="#5356FF" />
+                                    <Text style={styles.overlayTitle}>Your Location</Text>
+                                </View>
+                                <Text style={styles.overlayText} numberOfLines={2}>
+                                    {address || 'Detecting location...'}
+                                </Text>
                             </View>
-                            <Text style={styles.overlayText} numberOfLines={2}>
-                                {address || 'Detecting location...'}
-                            </Text>
-                            {location && (
-                                <TouchableOpacity
-                                    style={styles.refreshButton}
-                                    onPress={refreshLocation}
-                                >
-                                    <Ionicons name="refresh" size={14} color="#5356FF" />
-                                    <Text style={styles.refreshText}>Refresh</Text>
-                                </TouchableOpacity>
-                            )}
+                            <View>
+                                {location && (
+                                    <TouchableOpacity
+                                        style={styles.refreshButton}
+                                        onPress={refreshLocation}
+                                    >
+                                        <Ionicons name="refresh" size={14} color="#5356FF" />
+                                        <Text style={styles.refreshText}>Refresh</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+
                         </View>
 
                         {/* Open Full Map Button */}
@@ -109,7 +114,7 @@ export default function MapWidget() {
                                 activeOpacity={0.8}
                             >
                                 <LinearGradient
-                                    colors={['#5356FF', '#3787FF']}
+                                    colors={['#6366F1', '#4F46E5']}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 0 }}
                                     style={styles.openMapGradient}
@@ -190,7 +195,7 @@ const styles = StyleSheet.create({
         top: 12,
         left: 12,
         right: 12,
-        backgroundColor: 'white',
+        backgroundColor: 'white/30',
         padding: 14,
         borderRadius: 12,
         shadowColor: '#000',
@@ -241,7 +246,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
-        elevation: 4,
+        elevation: 1,
     },
     markerPulse: {
         position: 'absolute',

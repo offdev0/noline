@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Dimensions,
     Image,
@@ -22,38 +22,16 @@ const moods = [
     { id: '4', label: 'freedom', icon: 'aperture-outline', colors: ['#F0FDF4', '#DCFCE7'], iconColor: '#16A34A' },
 ];
 
-const trendingPlaces = [
-    {
-        id: '1',
-        name: 'Sacher Garden',
-        description: 'Vibrant urban park space',
-        distance: '0.8 km away',
-        status: 'vacant',
-        icon: 'leaf',
-        image: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500'
-    },
-    {
-        id: '2',
-        name: 'The Social Club',
-        description: 'Premier nightlife & drinks',
-        distance: '1.5 km away',
-        status: 'vacant',
-        icon: 'beer',
-        image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500'
-    },
-];
 
-const favorites = [
-    { id: '1', name: 'Coffee House', image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400' },
-    { id: '2', name: 'Uniqlo Store', image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400' },
-    { id: '3', name: 'Tech Store', image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400' },
-];
 
+import { useFavorites } from '@/context/FavoritesContext';
 import { usePlaces } from '@/context/PlacesContext';
 
 export default function TrendsScreen() {
     const router = useRouter();
     const { trendingPlaces, loading } = usePlaces();
+    const { favorites } = useFavorites();
+    const [showAllTrending, setShowAllTrending] = useState(false);
 
     const handlePlacePress = (id: string) => {
         router.push({
@@ -94,9 +72,13 @@ export default function TrendsScreen() {
                 {/* Trending Section */}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Trending Near You</Text>
-                    <TouchableOpacity>
-                        <Text style={styles.seeAllText}>See all</Text>
-                    </TouchableOpacity>
+                    {trendingPlaces.length > 3 && (
+                        <TouchableOpacity onPress={() => setShowAllTrending(!showAllTrending)}>
+                            <Text style={styles.seeAllText}>
+                                {showAllTrending ? 'Show less' : 'See all'}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 <View style={styles.trendingContainer}>
@@ -105,7 +87,10 @@ export default function TrendsScreen() {
                             <Text style={{ color: '#666', textAlign: 'center' }}>Updating live trends...</Text>
                         </View>
                     ) : (
-                        (trendingPlaces.length > 0 ? trendingPlaces : []).map((place) => (
+                        (trendingPlaces.length > 0
+                            ? (showAllTrending ? trendingPlaces : trendingPlaces.slice(0, 3))
+                            : []
+                        ).map((place) => (
                             <TouchableOpacity
                                 key={place.id}
                                 style={styles.premiumCard}
@@ -151,6 +136,11 @@ export default function TrendsScreen() {
                             <Ionicons name="heart" size={20} color="#EF4444" />
                             <Text style={styles.sectionTitle}> Your Favorites</Text>
                         </View>
+                        {favorites.length > 0 && (
+                            <TouchableOpacity onPress={() => router.push('/favorites')}>
+                                <Text style={styles.seeAllText}>See all</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
 
                     <ScrollView
@@ -159,23 +149,30 @@ export default function TrendsScreen() {
                         style={styles.favoritesScroll}
                         contentContainerStyle={styles.favScrollContent}
                     >
-                        {favorites.map((fav) => (
-                            <TouchableOpacity
-                                key={fav.id}
-                                style={styles.favCompactCard}
-                                onPress={() => handlePlacePress(fav.id)}
-                                activeOpacity={0.85}
-                            >
-                                <Image source={{ uri: fav.image }} style={styles.favThumb} />
-                                <View style={styles.favInfo}>
-                                    <Text style={styles.favName} numberOfLines={1}>{fav.name}</Text>
-                                    <View style={styles.goBackBadge}>
-                                        <Text style={styles.goBackText}>Go back</Text>
-                                        <Ionicons name="chevron-forward" size={10} color="#fff" />
+                        {favorites.length === 0 ? (
+                            <View style={styles.emptyFavBox}>
+                                <Ionicons name="heart-outline" size={32} color="#CBD5E1" />
+                                <Text style={styles.emptyFavText}>Places you heart will appear here</Text>
+                            </View>
+                        ) : (
+                            favorites.map((fav) => (
+                                <TouchableOpacity
+                                    key={fav.id}
+                                    style={styles.favCompactCard}
+                                    onPress={() => handlePlacePress(fav.id)}
+                                    activeOpacity={0.85}
+                                >
+                                    <Image source={{ uri: fav.image }} style={styles.favThumb} />
+                                    <View style={styles.favInfo}>
+                                        <Text style={styles.favName} numberOfLines={1}>{fav.name}</Text>
+                                        <View style={styles.goBackBadge}>
+                                            <Text style={styles.goBackText}>Go back</Text>
+                                            <Ionicons name="chevron-forward" size={10} color="#fff" />
+                                        </View>
                                     </View>
-                                </View>
-                            </TouchableOpacity>
-                        ))}
+                                </TouchableOpacity>
+                            ))
+                        )}
                     </ScrollView>
                 </View>
 
@@ -422,6 +419,23 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 11,
         fontWeight: '800',
+    },
+    emptyFavBox: {
+        width: 300,
+        height: 100,
+        backgroundColor: '#F8FAFC',
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderStyle: 'dashed',
+        borderWidth: 2,
+        borderColor: '#E2E8F0',
+    },
+    emptyFavText: {
+        fontSize: 13,
+        color: '#94A3B8',
+        fontWeight: '600',
+        marginTop: 8,
     },
     bottomSpace: {
         height: 120,

@@ -10,7 +10,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   // Color Palette extraction from the user's dashboard image
-  const ACTIVE_COLOR = '#474747ff'; // Black/Dark for active state
+  const ACTIVE_COLOR = '#4F46E5'; // Black/Dark for active state
   const INACTIVE_COLOR = '#999999'; // Grey for inactive state
 
   return (
