@@ -1,7 +1,10 @@
+import { db } from '@/configs/firebaseConfig';
 import { MapsService, PlaceData } from '@/services/MapsService';
 import * as ExpoLocation from 'expo-location';
+import { addDoc, collection, doc, serverTimestamp } from 'firebase/firestore';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useLocation } from './LocationContext';
+import { useUser } from './UserContext';
 
 interface PlacesContextType {
     allPlaces: PlaceData[];
@@ -40,11 +43,30 @@ const PlacesContext = createContext<PlacesContextType>({
 export const usePlaces = () => useContext(PlacesContext);
 
 export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
+    const { user } = useUser();
     const { address } = useLocation();
     const [allPlaces, setAllPlaces] = useState<PlaceData[]>([]);
     const [loading, setLoading] = useState(false);
     const [currentSearchCenter, setCurrentSearchCenter] = useState<{ latitude: number; longitude: number } | null>(null);
     const [currentSearchName, setCurrentSearchName] = useState<string | null>(null);
+
+    const saveSearchHistory = async (query: string, searchAddress: string | null) => {
+        if (!user) return;
+
+        try {
+            await addDoc(collection(db, 'SearchHistory'), {
+                searchedString: query,
+                searchedOn: serverTimestamp(),
+                searchedBy: doc(db, 'users', user.uid),
+                businessRef: null, // Default to null for general location search
+                searchedAddress: searchAddress || query,
+                HsearchedString: query.toLowerCase(),
+            });
+            console.log('Search history saved to Firebase');
+        } catch (error) {
+            console.error('Error saving search history:', error);
+        }
+    };
 
     const searchLocation = async (locationName: string) => {
         setLoading(true);
@@ -55,15 +77,23 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
             setAllPlaces(data);
 
             // 2. Try to geocode for the exact city center
+            let finalAddress = locationName;
             try {
                 const geocodeResults = await ExpoLocation.geocodeAsync(locationName);
                 if (geocodeResults && geocodeResults.length > 0) {
-                    setCurrentSearchCenter({
+                    const coords = {
                         latitude: geocodeResults[0].latitude,
                         longitude: geocodeResults[0].longitude,
-                    });
+                    };
+                    setCurrentSearchCenter(coords);
+
+                    // Try to get a cleaner address from geocode
+                    const reverseGeo = await ExpoLocation.reverseGeocodeAsync(coords);
+                    if (reverseGeo && reverseGeo.length > 0) {
+                        const r = reverseGeo[0];
+                        finalAddress = [r.city, r.region, r.country].filter(Boolean).join(', ');
+                    }
                 } else if (data.length > 0) {
-                    // Fallback to first place location if geocoding yields no results
                     setCurrentSearchCenter(data[0].location);
                 }
             } catch (geocodeError) {
@@ -72,6 +102,10 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                     setCurrentSearchCenter(data[0].location);
                 }
             }
+
+            // 3. Save to Firebase Search History
+            await saveSearchHistory(locationName, finalAddress);
+
         } catch (error) {
             console.error('Error searching location:', error);
         } finally {
