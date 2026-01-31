@@ -1,9 +1,11 @@
 import CommentsModal from '@/components/CommentsModal';
+import { useLocation } from '@/context/LocationContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { ReportData, useReports } from '@/context/ReportsContext';
 import { useUser } from '@/context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
@@ -13,22 +15,41 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PlacesScreen() {
+    const router = useRouter();
     const { reports, loading: reportsLoading, toggleLike } = useReports();
-    const { loading: placesLoading } = usePlaces();
+    const { trendingPlaces: allPlaces, getPlaceById } = usePlaces();
     const { user } = useUser();
+    const { location: userLocation } = useLocation();
 
     const [filterVisible, setFilterVisible] = useState(false);
-    const [selectedType, setSelectedType] = useState('vacant');
-    const [selectedDistance, setSelectedDistance] = useState('1-5 km');
-    const [selectedCategory, setSelectedCategory] = useState('everything');
+
+    // Filter States
+    const [selectedType, setSelectedType] = useState('All');
+    const [selectedDistance, setSelectedDistance] = useState('Any');
+    const [selectedCategory, setSelectedCategory] = useState('All');
 
     const [isCommentsVisible, setIsCommentsVisible] = useState(false);
     const [activeReport, setActiveReport] = useState<ReportData | null>(null);
+
+    // Helper to calculate distance in km
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371; // Radius of the earth in km
+        const dLat = deg2rad(lat2 - lat1);
+        const dLon = deg2rad(lon2 - lon1);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    };
+
+    const deg2rad = (deg: number) => deg * (Math.PI / 180);
 
     const formatTimeAgo = (timestamp: any) => {
         if (!timestamp) return 'Just now';
@@ -52,6 +73,46 @@ export default function PlacesScreen() {
         setActiveReport(report);
         setIsCommentsVisible(true);
     };
+
+    // Main Filtering Logic
+    const filteredReports = useMemo(() => {
+        return reports.filter(report => {
+            // 1. Filter by Crowd Level
+            if (selectedType !== 'All') {
+                const type = getStatusType(report.crowdLevel);
+                if (type !== selectedType) return false;
+            }
+
+            // 2. Filter by Category
+            if (selectedCategory !== 'All') {
+                const place = getPlaceById(report.businessRef);
+                const cat = place?.category?.toLowerCase() || '';
+
+                const filterCat = selectedCategory.toLowerCase();
+                if (filterCat === 'food' && cat !== 'restaurant') return false;
+                if (filterCat === 'fun' && !['fun', 'casino', 'hot'].includes(cat)) return false;
+                if (filterCat === 'shopping' && cat !== 'shopping') return false;
+                if (filterCat === 'medical' && cat !== 'medical') return false; // Mock data doesn't have medical yet
+            }
+
+            // 3. Filter by Distance
+            if (selectedDistance !== 'Any' && userLocation && report.location) {
+                const dist = calculateDistance(
+                    userLocation.latitude,
+                    userLocation.longitude,
+                    report.location.latitude,
+                    report.location.longitude
+                );
+
+                if (selectedDistance === '1-5 km' && (dist < 1 || dist > 5)) return false;
+                if (selectedDistance === '5-10 km' && (dist < 5 || dist > 10)) return false;
+                if (selectedDistance === '10-20 km' && (dist < 10 || dist > 20)) return false;
+                if (selectedDistance === '20+ km' && dist < 20) return false;
+            }
+
+            return true;
+        });
+    }, [reports, selectedType, selectedDistance, selectedCategory, userLocation, getPlaceById]);
 
     const renderReportCard = ({ item }: { item: ReportData }) => {
         const type = getStatusType(item.crowdLevel);
@@ -121,9 +182,13 @@ export default function PlacesScreen() {
                             <Text style={styles.statLabel}>{item.commentsCount || 0}</Text>
                         </TouchableOpacity>
 
-                        <View style={styles.statItem}>
-                            <Text> </Text>
-                        </View>
+                        <TouchableOpacity
+                            style={styles.statItem}
+                            onPress={() => router.push(`/place/${item.businessRef}`)}
+                        >
+                            <Ionicons name="information-circle-outline" size={18} color="#64748B" />
+                            <Text style={styles.statLabel}>Details</Text>
+                        </TouchableOpacity>
                     </View>
                     <View style={[styles.typeBadge, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]}>
                         <Text style={styles.typeBadgeText}>{type.toUpperCase()}</Text>
@@ -154,23 +219,23 @@ export default function PlacesScreen() {
                     <ActivityIndicator size="large" color="#6366F1" />
                     <Text style={{ color: '#666', marginTop: 12 }}>Syncing community reports...</Text>
                 </View>
-            ) : reports.length === 0 ? (
+            ) : filteredReports.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <Ionicons name="chatbubbles-outline" size={64} color="#CBD5E1" />
-                    <Text style={styles.emptyTitle}>No reports yet</Text>
-                    <Text style={styles.emptySubtitle}>Be the first to report a crowd situation near you!</Text>
+                    <Text style={styles.emptyTitle}>No matching reports</Text>
+                    <Text style={styles.emptySubtitle}>Try adjusting your filters or be the first to report!</Text>
                 </View>
             ) : (
                 <FlatList
-                    data={reports}
+                    data={filteredReports}
                     renderItem={renderReportCard}
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.scrollList}
                     showsVerticalScrollIndicator={false}
                     ListHeaderComponent={() => (
                         <View style={styles.summaryBox}>
-                            <Text style={styles.summaryTitle}>Live Feed Updates</Text>
-                            <Text style={styles.summarySubtitle}>Check the latest crowd reports from neighboring spots</Text>
+                            <Text style={styles.summaryTitle}>{selectedType === 'All' ? 'Live Feed Updates' : `${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} Sports`}</Text>
+                            <Text style={styles.summarySubtitle}>Showing {filteredReports.length} reports matching your criteria</Text>
                         </View>
                     )}
                 />
@@ -207,7 +272,7 @@ export default function PlacesScreen() {
                         <ScrollView showsVerticalScrollIndicator={false}>
                             <Text style={styles.filterLabel}>Distance</Text>
                             <View style={styles.filterOptions}>
-                                {['1-5 km', '5-10 km', '10-20 km', '20+ km'].map(d => (
+                                {['Any', '1-5 km', '5-10 km', '10-20 km', '20+ km'].map(d => (
                                     <TouchableOpacity
                                         key={d}
                                         style={[styles.optionChip, selectedDistance === d && styles.activeChip]}
@@ -220,28 +285,29 @@ export default function PlacesScreen() {
 
                             <Text style={styles.filterLabel}>Crowd Level</Text>
                             <View style={styles.filterOptions}>
-                                {[
-                                    { id: 'vacant', color: '#22C55E', icon: 'leaf-outline' },
-                                    { id: 'medium', color: '#F59E0B', icon: 'people-outline' },
-                                    { id: 'loaded', color: '#EF4444', icon: 'flame-outline' }
-                                ].map(s => (
-                                    <TouchableOpacity
-                                        key={s.id}
-                                        style={[
-                                            styles.statusChip,
-                                            selectedType === s.id && { backgroundColor: s.color, borderColor: s.color }
-                                        ]}
-                                        onPress={() => setSelectedType(s.id)}
-                                    >
-                                        <Ionicons name={s.icon as any} size={16} color={selectedType === s.id ? '#fff' : s.color} />
-                                        <Text style={[styles.statusChipText, { color: selectedType === s.id ? '#fff' : s.color }]}>{s.id.charAt(0).toUpperCase() + s.id.slice(1)}</Text>
-                                    </TouchableOpacity>
-                                ))}
+                                {['All', 'vacant', 'medium', 'loaded'
+                                ].map(s => {
+                                    const color = s === 'vacant' ? '#22C55E' : s === 'medium' ? '#F59E0B' : s === 'loaded' ? '#EF4444' : '#64748B';
+                                    const icon = s === 'vacant' ? 'leaf-outline' : s === 'medium' ? 'people-outline' : s === 'loaded' ? 'flame-outline' : 'apps-outline';
+                                    return (
+                                        <TouchableOpacity
+                                            key={s}
+                                            style={[
+                                                styles.statusChip,
+                                                selectedType === s && { backgroundColor: color, borderColor: color }
+                                            ]}
+                                            onPress={() => setSelectedType(s)}
+                                        >
+                                            <Ionicons name={icon as any} size={16} color={selectedType === s ? '#fff' : color} />
+                                            <Text style={[styles.statusChipText, { color: selectedType === s ? '#fff' : color }]}>{s.charAt(0).toUpperCase() + s.slice(1)}</Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
                             </View>
 
                             <Text style={styles.filterLabel}>Store Type</Text>
                             <View style={styles.filterOptions}>
-                                {['Food', 'Fun', 'Medical', 'Shopping', 'All'].map(c => (
+                                {['All', 'Food', 'Fun', 'Medical', 'Shopping'].map(c => (
                                     <TouchableOpacity
                                         key={c}
                                         style={[styles.optionChip, selectedCategory === c && styles.activeChip]}
@@ -257,8 +323,8 @@ export default function PlacesScreen() {
                             </TouchableOpacity>
 
                             <TouchableOpacity style={styles.resetBtn} onPress={() => {
-                                setSelectedDistance('1-5 km');
-                                setSelectedType('vacant');
+                                setSelectedDistance('Any');
+                                setSelectedType('All');
                                 setSelectedCategory('All');
                             }}>
                                 <Text style={styles.resetBtnText}>Reset to default</Text>
