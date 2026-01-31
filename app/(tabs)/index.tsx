@@ -14,7 +14,7 @@ import { useUser } from '@/context/UserContext';
 export default function DashboardScreen() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
-  const { user } = useUser();
+  const { user, streak, points } = useUser();
 
   // Effect to hide tab bar when drawer is open
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function DashboardScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-          <DashboardHeader onMenuPress={() => setIsDrawerOpen(true)} points={0} />
+          <DashboardHeader onMenuPress={() => setIsDrawerOpen(true)} points={points} streak={streak} />
 
           <View style={styles.titleContainer}>
             <Text style={styles.titleBlue}>Before you leave</Text>

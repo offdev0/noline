@@ -26,9 +26,10 @@ function MainLayout() {
     const inPlaceRoute = segments[0] === 'place';
     const inMapRoute = segments[0] === 'map';
     const inFavoritesRoute = segments[0] === 'favorites';
-    const inAuthenticatedRoute = inTabsGroup || inPlaceRoute || inMapRoute || inFavoritesRoute;
+    const inRewardsRoute = segments[0] === 'rewards';
+    const inAuthenticatedRoute = inTabsGroup || inPlaceRoute || inMapRoute || inFavoritesRoute || inRewardsRoute;
 
-    if (user && !inAuthenticatedRoute) {
+    if (user && !inAuthenticatedRoute && segments[0] !== 'modal') {
       console.log('User logged in, redirecting to tabs...');
       router.replace('/(tabs)');
     } else if (!user && inAuthenticatedRoute) {
@@ -58,6 +59,7 @@ function MainLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false, statusBarHidden: false, statusBarStyle: 'dark', statusBarTranslucent: true }} />
         <Stack.Screen name="place" options={{ headerShown: false }} />
         <Stack.Screen name="favorites" options={{ headerShown: false }} />
+        <Stack.Screen name="rewards" options={{ headerShown: false }} />
         <Stack.Screen
           name="map"
           options={{
