@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Dimensions,
+    ImageBackground,
     Linking,
     Platform,
     ScrollView,
@@ -27,7 +28,7 @@ const placesData: Record<string, any> = {
         category: 'Fashion',
         queueStatus: 'Short queue',
         peopleInQueue: 3,
-        imageColors: ['#e8d5f0', '#c5b3e0'],
+        image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800',
         address: '123 Main Street, Downtown',
         phone: '+1 234 567 8900',
         openingHours: 'Monday - Sunday [10AM]-[9PM]',
@@ -50,7 +51,7 @@ const placesData: Record<string, any> = {
         category: 'Cafe',
         queueStatus: 'Short queue',
         peopleInQueue: 1,
-        imageColors: ['#d5e8f0', '#b3c5e0'],
+        image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800',
         address: '456 Oak Avenue, Midtown',
         phone: '+1 234 567 8901',
         openingHours: 'Monday - Sunday [7AM]-[8PM]',
@@ -72,7 +73,7 @@ const placesData: Record<string, any> = {
         category: 'Electronics',
         queueStatus: 'Medium queue',
         peopleInQueue: 8,
-        imageColors: ['#f0e8d5', '#e0c5b3'],
+        image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=800',
         address: '789 Tech Boulevard',
         phone: '+1 234 567 8902',
         openingHours: 'Monday - Sunday [9AM]-[10PM]',
@@ -94,7 +95,7 @@ const placesData: Record<string, any> = {
         category: 'Restaurant',
         queueStatus: 'Long queue',
         peopleInQueue: 15,
-        imageColors: ['#d5f0e8', '#b3e0c5'],
+        image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800',
         address: '321 Food Plaza',
         phone: '+1 234 567 8903',
         openingHours: 'Monday - Sunday [11AM]-[10PM]',
@@ -169,46 +170,51 @@ export default function PlaceDetailScreen() {
     return (
         <View style={styles.container}>
             {/* Header Image */}
-            <LinearGradient
-                colors={place.imageColors}
+            <ImageBackground
+                source={{ uri: place.image || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800' }}
                 style={styles.headerImage}
             >
-                <SafeAreaView style={styles.headerOverlay}>
-                    <View style={styles.headerActions}>
-                        <TouchableOpacity
-                            style={styles.headerButton}
-                            onPress={() => router.back()}
-                        >
-                            <Ionicons name="arrow-back" size={24} color="#fff" />
-                        </TouchableOpacity>
-
-                        <View style={styles.headerRightActions}>
-                            <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
-                                <Ionicons name="share-outline" size={24} color="#fff" />
-                            </TouchableOpacity>
+                <LinearGradient
+                    colors={['rgba(0,0,0,0.5)', 'transparent', 'rgba(0,0,0,0.3)']}
+                    style={styles.headerOverlay}
+                >
+                    <SafeAreaView style={styles.safeArea}>
+                        <View style={styles.headerActions}>
                             <TouchableOpacity
-                                style={[styles.headerButton, styles.favoriteButton]}
-                                onPress={() => setIsFavorite(!isFavorite)}
+                                style={styles.headerButton}
+                                onPress={() => router.back()}
                             >
-                                <Ionicons
-                                    name={isFavorite ? 'heart' : 'heart-outline'}
-                                    size={24}
-                                    color={isFavorite ? '#EF4444' : '#fff'}
-                                />
+                                <Ionicons name="arrow-back" size={24} color="#fff" />
                             </TouchableOpacity>
-                        </View>
-                    </View>
 
-                    {/* Status Badge */}
-                    <View style={styles.statusBadgeContainer}>
-                        <View style={styles.statusBadge}>
-                            {getStatusDot('vacant')}
-                            <Text style={styles.statusText}>vacant</Text>
+                            <View style={styles.headerRightActions}>
+                                <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
+                                    <Ionicons name="share-outline" size={24} color="#fff" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.headerButton, styles.favoriteButton]}
+                                    onPress={() => setIsFavorite(!isFavorite)}
+                                >
+                                    <Ionicons
+                                        name={isFavorite ? 'heart' : 'heart-outline'}
+                                        size={24}
+                                        color={isFavorite ? '#EF4444' : '#fff'}
+                                    />
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                        <Text style={styles.updatedText}>Updated [1]</Text>
-                    </View>
-                </SafeAreaView>
-            </LinearGradient>
+
+                        {/* Status Badge */}
+                        <View style={styles.statusBadgeContainer}>
+                            <View style={styles.statusBadge}>
+                                {getStatusDot('vacant')}
+                                <Text style={styles.statusText}>vacant</Text>
+                            </View>
+                            <Text style={styles.updatedText}>Updated [1]</Text>
+                        </View>
+                    </SafeAreaView>
+                </LinearGradient>
+            </ImageBackground>
 
             {/* Content */}
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -355,6 +361,9 @@ const styles = StyleSheet.create({
         height: 280,
     },
     headerOverlay: {
+        flex: 1,
+    },
+    safeArea: {
         flex: 1,
         justifyContent: 'space-between',
     },

@@ -14,7 +14,7 @@ interface Place {
     rating: number;
     category: string;
     queueStatus: 'Short queue' | 'Medium queue' | 'Long queue';
-    peopleInQueue: number;
+    distance: string;
     image: string;
 }
 
@@ -26,7 +26,7 @@ const specialPlaces: Place[] = [
         rating: 4.5,
         category: 'Fashion',
         queueStatus: 'Short queue',
-        peopleInQueue: 3,
+        distance: '0.8 km',
         image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400'
     },
     {
@@ -35,7 +35,25 @@ const specialPlaces: Place[] = [
         rating: 4.2,
         category: 'Cafe',
         queueStatus: 'Short queue',
-        peopleInQueue: 1,
+        distance: '1.2 km',
+        image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400'
+    },
+    {
+        id: '3',
+        name: 'Uniqlo Store',
+        rating: 4.5,
+        category: 'Fashion',
+        queueStatus: 'Short queue',
+        distance: '0.8 km',
+        image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400'
+    },
+    {
+        id: '4',
+        name: 'Coffee House',
+        rating: 4.2,
+        category: 'Cafe',
+        queueStatus: 'Short queue',
+        distance: '1.2 km',
         image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400'
     },
 ];
@@ -47,7 +65,7 @@ const hotPlaces: Place[] = [
         rating: 4.8,
         category: 'Electronics',
         queueStatus: 'Medium queue',
-        peopleInQueue: 8,
+        distance: '2.5 km',
         image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400'
     },
     {
@@ -56,7 +74,7 @@ const hotPlaces: Place[] = [
         rating: 4.0,
         category: 'Restaurant',
         queueStatus: 'Long queue',
-        peopleInQueue: 15,
+        distance: '3.1 km',
         image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400'
     },
 ];
@@ -72,6 +90,15 @@ const PlaceCard = ({ place, onPress }: { place: Place; onPress: () => void }) =>
         }
     };
 
+    const getQueueBgColor = (status: string) => {
+        switch (status) {
+            case 'Short queue': return 'rgba(34, 197, 94, 0.15)';
+            case 'Medium queue': return 'rgba(245, 158, 11, 0.15)';
+            case 'Long queue': return 'rgba(239, 68, 68, 0.15)';
+            default: return 'rgba(34, 197, 94, 0.15)';
+        }
+    };
+
     const handlePress = () => {
         console.log('Navigating to place:', place.id);
         onPress();
@@ -81,48 +108,61 @@ const PlaceCard = ({ place, onPress }: { place: Place; onPress: () => void }) =>
         <TouchableOpacity
             style={styles.card}
             onPress={handlePress}
-            activeOpacity={0.85}
+            activeOpacity={0.9}
         >
-            {/* Place Image */}
-            <Image
-                source={{ uri: place.image }}
-                style={styles.cardImage}
-                resizeMode="cover"
-            />
+            {/* Place Image with Overlay */}
+            <View style={styles.imageContainer}>
+                <Image
+                    source={{ uri: place.image }}
+                    style={styles.cardImage}
+                    resizeMode="cover"
+                />
+                {/* Category Badge */}
+                <View style={styles.categoryBadge}>
+                    <Ionicons
+                        name={
+                            place.category === 'Fashion' ? 'shirt-outline' :
+                                place.category === 'Cafe' ? 'cafe-outline' :
+                                    place.category === 'Electronics' ? 'phone-portrait-outline' :
+                                        'restaurant-outline'
+                        }
+                        size={10}
+                        color="#fff"
+                    />
+                    <Text style={styles.categoryBadgeText}>{place.category}</Text>
+                </View>
+                {/* Rating Badge */}
+                <View style={styles.ratingBadge}>
+                    <Ionicons name="star" size={10} color="#FFD700" />
+                    <Text style={styles.ratingBadgeText}>{place.rating}</Text>
+                </View>
+            </View>
 
             {/* Card Content */}
             <View style={styles.cardContent}>
                 <Text style={styles.cardName} numberOfLines={1}>{place.name}</Text>
 
-                {/* Rating and Category Row */}
-                <View style={styles.ratingRow}>
-                    <Text style={styles.ratingText}>[{place.rating}]</Text>
-                    <Ionicons name="star" size={12} color="#FFD700" />
-                    <Text style={styles.categoryText} numberOfLines={1}>[{place.category}]</Text>
-                </View>
-
-                {/* Queue Status Row */}
-                <View style={styles.queueRow}>
-                    <Text style={[styles.queueStatus, { color: getQueueColor(place.queueStatus) }]}>
+                {/* Queue Status Badge */}
+                <View style={[styles.queueBadge, { backgroundColor: getQueueBgColor(place.queueStatus) }]}>
+                    {/* <View style={[styles.queueDot, { backgroundColor: getQueueColor(place.queueStatus) }]} /> */}
+                    <Text style={[styles.queueText, { color: getQueueColor(place.queueStatus) }]}>
                         {place.queueStatus}
                     </Text>
-                    <View style={styles.peopleCount}>
-                        <Text style={styles.peopleText}>[{place.peopleInQueue}]</Text>
-                        <Ionicons name="person" size={12} color="#666" />
-                    </View>
+                    <Text style={styles.distanceBadgeText}>· {place.distance}</Text>
                 </View>
 
                 {/* CTA Button */}
-                <View style={styles.ctaButton}>
+                <TouchableOpacity style={styles.ctaButton} activeOpacity={0.8} onPress={handlePress}>
                     <LinearGradient
-                        colors={['#5356FF', '#5A46E5']}
+                        colors={['#5356FF', '#3787FF']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={styles.ctaGradient}
                     >
-                        <Text style={styles.ctaText}>Let's find out</Text>
+                        <Text style={styles.ctaText}>View details</Text>
+                        <Ionicons name="arrow-forward" size={14} color="#fff" style={{ marginLeft: 4 }} />
                     </LinearGradient>
-                </View>
+                </TouchableOpacity>
             </View>
         </TouchableOpacity>
     );
@@ -216,73 +256,104 @@ const styles = StyleSheet.create({
     card: {
         width: CARD_WIDTH,
         backgroundColor: '#fff',
-        borderRadius: 16,
+        borderRadius: 18,
         marginRight: 16,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 5,
         overflow: 'hidden',
+    },
+    imageContainer: {
+        position: 'relative',
     },
     cardImage: {
         width: '100%',
-        height: 100,
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
+        height: 110,
+    },
+    categoryBadge: {
+        position: 'absolute',
+        top: 10,
+        left: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    categoryBadgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: '600',
+        marginLeft: 4,
+    },
+    ratingBadge: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.95)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    ratingBadgeText: {
+        color: '#333',
+        fontSize: 11,
+        fontWeight: '700',
+        marginLeft: 3,
     },
     cardContent: {
-        padding: 12,
+        padding: 14,
     },
     cardName: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 6,
-    },
-    ratingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 6,
-    },
-    ratingText: {
-        fontSize: 12,
-        color: '#666',
-        marginRight: 2,
-    },
-    categoryText: {
-        fontSize: 12,
-        color: '#999',
-        marginLeft: 8,
-        flex: 1,
-    },
-    queueRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#1a1a1a',
         marginBottom: 10,
     },
-    queueStatus: {
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    peopleCount: {
+    queueBadge: {
         flexDirection: 'row',
         alignItems: 'center',
+        alignSelf: 'flex-start',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
+        marginBottom: 12,
     },
-    peopleText: {
-        fontSize: 12,
+    queueDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        marginRight: 6,
+    },
+    queueText: {
+        fontSize: 11,
+        fontWeight: '600',
+    },
+    distanceBadgeText: {
+        fontSize: 11,
         color: '#666',
-        marginRight: 2,
+        marginLeft: 2,
     },
     ctaButton: {
-        borderRadius: 20,
+        borderRadius: 14,
         overflow: 'hidden',
+        shadowColor: '#5356FF',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
     },
     ctaGradient: {
-        paddingVertical: 10,
+        flexDirection: 'row',
+        paddingVertical: 11,
         paddingHorizontal: 16,
         alignItems: 'center',
+        justifyContent: 'center',
     },
     ctaText: {
         color: '#fff',
@@ -290,3 +361,4 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
 });
+
