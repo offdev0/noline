@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useLocation } from './LocationContext';
 
 interface PlacesContextType {
+    allPlaces: PlaceData[];
     trendingPlaces: PlaceData[];
     mustVisitPlaces: PlaceData[];
     restaurants: PlaceData[];
@@ -12,9 +13,11 @@ interface PlacesContextType {
     funPlaces: PlaceData[];
     loading: boolean;
     searchLocation: (locationName: string) => Promise<void>;
+    getPlaceById: (id: string) => PlaceData | undefined;
 }
 
 const PlacesContext = createContext<PlacesContextType>({
+    allPlaces: [],
     trendingPlaces: [],
     mustVisitPlaces: [],
     restaurants: [],
@@ -24,6 +27,7 @@ const PlacesContext = createContext<PlacesContextType>({
     funPlaces: [],
     loading: false,
     searchLocation: async () => { },
+    getPlaceById: () => undefined,
 });
 
 export const usePlaces = () => useContext(PlacesContext);
@@ -45,6 +49,10 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+    const getPlaceById = (id: string) => {
+        return allPlaces.find(p => p.id === id);
+    };
+
     // Auto-search when location address changes
     useEffect(() => {
         if (address && address !== 'Location available' && address !== 'Unknown location') {
@@ -63,6 +71,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
     return (
         <PlacesContext.Provider
             value={{
+                allPlaces,
                 trendingPlaces,
                 mustVisitPlaces,
                 restaurants,
@@ -72,6 +81,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                 funPlaces,
                 loading,
                 searchLocation,
+                getPlaceById,
             }}
         >
             {children}

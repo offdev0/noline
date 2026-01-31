@@ -1,9 +1,12 @@
+import { usePlaces } from '@/context/PlacesContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
+    ActivityIndicator,
     Dimensions,
+    Image,
     ImageBackground,
     Linking,
     Platform,
@@ -18,124 +21,52 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
-// Mock place data - in a real app, this would come from API/Firebase
-const placesData: Record<string, any> = {
-    '1': {
-        id: '1',
-        name: 'Uniqlo Store',
-        description: 'Premium fashion retail store with minimalist Japanese aesthetics',
-        rating: 4.5,
-        category: 'Fashion',
-        queueStatus: 'Short queue',
-        peopleInQueue: 3,
-        image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800',
-        address: '123 Main Street, Downtown',
-        phone: '+1 234 567 8900',
-        openingHours: 'Monday - Sunday [10AM]-[9PM]',
-        coordinates: { latitude: 37.78825, longitude: -122.4324 },
-        reviews: [
-            { id: 'r1', reviewerName: 'John D.', rating: 5, review: 'Great selection and no wait time!' },
-            { id: 'r2', reviewerName: 'Sarah M.', rating: 4, review: 'Love the clothes, quick service' },
-            { id: 'r3', reviewerName: 'Mike R.', rating: 4, review: 'Clean store, friendly staff' },
-        ],
-        similarPlaces: [
-            { id: '5', name: 'Zara', rating: 4.3, queueStatus: 'Short queue' },
-            { id: '6', name: 'H&M', rating: 4.1, queueStatus: 'Short queue' },
-        ]
-    },
-    '2': {
-        id: '2',
-        name: 'Coffee House',
-        description: 'Cozy cafe with artisan coffee and fresh pastries',
-        rating: 4.2,
-        category: 'Cafe',
-        queueStatus: 'Short queue',
-        peopleInQueue: 1,
-        image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800',
-        address: '456 Oak Avenue, Midtown',
-        phone: '+1 234 567 8901',
-        openingHours: 'Monday - Sunday [7AM]-[8PM]',
-        coordinates: { latitude: 37.78925, longitude: -122.4334 },
-        reviews: [
-            { id: 'r4', reviewerName: 'Emma L.', rating: 5, review: 'Best espresso in town!' },
-            { id: 'r5', reviewerName: 'David K.', rating: 4, review: 'Great atmosphere for working' },
-        ],
-        similarPlaces: [
-            { id: '7', name: 'Starbucks', rating: 4.0, queueStatus: 'Medium queue' },
-            { id: '8', name: 'Blue Bottle', rating: 4.4, queueStatus: 'Short queue' },
-        ]
-    },
-    '3': {
-        id: '3',
-        name: 'Tech Store',
-        description: 'Latest electronics and gadgets with expert staff',
-        rating: 4.8,
-        category: 'Electronics',
-        queueStatus: 'Medium queue',
-        peopleInQueue: 8,
-        image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=800',
-        address: '789 Tech Boulevard',
-        phone: '+1 234 567 8902',
-        openingHours: 'Monday - Sunday [9AM]-[10PM]',
-        coordinates: { latitude: 37.79025, longitude: -122.4344 },
-        reviews: [
-            { id: 'r6', reviewerName: 'Alex P.', rating: 5, review: 'Amazing products and knowledgeable staff' },
-            { id: 'r7', reviewerName: 'Lisa T.', rating: 5, review: 'Worth the wait, great deals!' },
-        ],
-        similarPlaces: [
-            { id: '9', name: 'Best Buy', rating: 4.2, queueStatus: 'Medium queue' },
-            { id: '10', name: 'Apple Store', rating: 4.6, queueStatus: 'Long queue' },
-        ]
-    },
-    '4': {
-        id: '4',
-        name: 'Food Court',
-        description: 'Diverse food options under one roof',
-        rating: 4.0,
-        category: 'Restaurant',
-        queueStatus: 'Long queue',
-        peopleInQueue: 15,
-        image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800',
-        address: '321 Food Plaza',
-        phone: '+1 234 567 8903',
-        openingHours: 'Monday - Sunday [11AM]-[10PM]',
-        coordinates: { latitude: 37.79125, longitude: -122.4354 },
-        reviews: [
-            { id: 'r8', reviewerName: 'Tom B.', rating: 4, review: 'Great variety of cuisines' },
-            { id: 'r9', reviewerName: 'Nina C.', rating: 3, review: 'Can get crowded but food is good' },
-        ],
-        similarPlaces: [
-            { id: '11', name: 'Chipotle', rating: 4.1, queueStatus: 'Medium queue' },
-            { id: '12', name: 'Panda Express', rating: 3.9, queueStatus: 'Short queue' },
-        ]
-    }
-};
-
 export default function PlaceDetailScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { getPlaceById, allPlaces, loading: globalLoading } = usePlaces();
     const [isFavorite, setIsFavorite] = useState(false);
 
-    const place = placesData[id || '1'] || placesData['1'];
+    // Get dynamic data from context
+    const place = useMemo(() => getPlaceById(id), [id, getPlaceById]);
 
-    const getQueueColor = (status: string) => {
-        switch (status) {
-            case 'Short queue': return '#22C55E';
-            case 'Medium queue': return '#F59E0B';
-            case 'Long queue': return '#EF4444';
-            default: return '#22C55E';
-        }
+    // Derived coordinates (using mock defaults if API doesn't provide lat/lng yet)
+    // Note: In the next step, we could update MapsService to include real lat/lng
+    const coordinates = {
+        latitude: 22.5726,
+        longitude: 88.3639,
     };
 
-    const getStatusDot = (status: string) => {
-        const color = status === 'vacant' ? '#22C55E' : '#F59E0B';
-        return <View style={[styles.statusDot, { backgroundColor: color }]} />;
+    if (globalLoading && !place) {
+        return (
+            <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color="#5356FF" />
+                <Text style={styles.loaderText}>Loading venue details...</Text>
+            </View>
+        );
+    }
+
+    if (!place) {
+        return (
+            <SafeAreaView style={styles.errorContainer}>
+                <Ionicons name="alert-circle-outline" size={64} color="#64748B" />
+                <Text style={styles.errorText}>Venue not found</Text>
+                <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+                    <Text style={styles.backBtnText}>Go Back</Text>
+                </TouchableOpacity>
+            </SafeAreaView>
+        );
+    }
+
+    const getQueueColor = (status: string) => {
+        if (status === 'vacant') return '#22C55E';
+        if (status === 'medium') return '#F59E0B';
+        return '#EF4444';
     };
 
     const handleMapNavigation = () => {
-        const { latitude, longitude } = place.coordinates;
         const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
-        const latLng = `${latitude},${longitude}`;
+        const latLng = `${coordinates.latitude},${coordinates.longitude}`;
         const label = place.name;
         const url = Platform.select({
             ios: `${scheme}${label}@${latLng}`,
@@ -145,20 +76,17 @@ export default function PlaceDetailScreen() {
     };
 
     const handleCall = () => {
-        Linking.openURL(`tel:${place.phone}`);
-    };
-
-    const handleShare = () => {
-        // Share functionality
+        // Linking.openURL(`tel:${place.phone}`);
     };
 
     const renderStars = (rating: number) => {
         const stars = [];
+        const fullStars = Math.floor(rating);
         for (let i = 1; i <= 5; i++) {
             stars.push(
                 <Ionicons
                     key={i}
-                    name={i <= rating ? 'star' : 'star-outline'}
+                    name={i <= fullStars ? 'star' : 'star-outline'}
                     size={16}
                     color="#FFD700"
                 />
@@ -167,18 +95,22 @@ export default function PlaceDetailScreen() {
         return stars;
     };
 
+    const similarPlaces = allPlaces
+        .filter(p => p.category === place.category && p.id !== place.id)
+        .slice(0, 4);
+
     return (
         <View style={styles.container}>
             {/* Header Image */}
             <ImageBackground
-                source={{ uri: place.image || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800' }}
+                source={{ uri: place.image }}
                 style={styles.headerImage}
             >
                 <LinearGradient
-                    colors={['rgba(0,0,0,0.5)', 'transparent', 'rgba(0,0,0,0.3)']}
+                    colors={['rgba(0,0,0,0.6)', 'transparent', 'rgba(0,0,0,0.4)']}
                     style={styles.headerOverlay}
                 >
-                    <SafeAreaView style={styles.safeArea}>
+                    <SafeAreaView style={styles.safeArea} edges={['top']}>
                         <View style={styles.headerActions}>
                             <TouchableOpacity
                                 style={styles.headerButton}
@@ -188,11 +120,11 @@ export default function PlaceDetailScreen() {
                             </TouchableOpacity>
 
                             <View style={styles.headerRightActions}>
-                                <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
+                                <TouchableOpacity style={styles.headerButton}>
                                     <Ionicons name="share-outline" size={24} color="#fff" />
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    style={[styles.headerButton, styles.favoriteButton]}
+                                    style={[styles.headerButton, isFavorite && { backgroundColor: 'rgba(239, 68, 68, 0.2)' }]}
                                     onPress={() => setIsFavorite(!isFavorite)}
                                 >
                                     <Ionicons
@@ -207,145 +139,129 @@ export default function PlaceDetailScreen() {
                         {/* Status Badge */}
                         <View style={styles.statusBadgeContainer}>
                             <View style={styles.statusBadge}>
-                                {getStatusDot('vacant')}
-                                <Text style={styles.statusText}>vacant</Text>
+                                <View style={[styles.statusDot, { backgroundColor: getQueueColor(place.status) }]} />
+                                <Text style={styles.statusText}>{place.status}</Text>
                             </View>
-                            <Text style={styles.updatedText}>Updated [1]</Text>
+                            <Text style={styles.updatedText}>Updated just now</Text>
                         </View>
                     </SafeAreaView>
                 </LinearGradient>
             </ImageBackground>
 
             {/* Content */}
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Name and Description */}
-                <Text style={styles.placeName}>{place.name}</Text>
-                <View style={styles.divider} />
-                <Text style={styles.description}>{place.description}</Text>
+            <ScrollView style={styles.contentSection} showsVerticalScrollIndicator={false}>
+                <View style={styles.titleRow}>
+                    <Text style={styles.placeName}>{place.name}</Text>
+                    <View style={styles.ratingRow}>
+                        <Ionicons name="star" size={16} color="#FFD700" />
+                        <Text style={styles.ratingText}>{place.rating}</Text>
+                    </View>
+                </View>
+                <View style={styles.accentDivider} />
+                <Text style={styles.descriptionText}>{place.description}</Text>
 
                 {/* Useful Information Section */}
                 <Text style={styles.sectionTitle}>Useful information</Text>
 
                 {/* Opening Hours */}
-                <View style={styles.infoRow}>
-                    <View style={styles.infoIconContainer}>
-                        <Ionicons name="time-outline" size={20} color="#5356FF" />
+                <View style={styles.infoBox}>
+                    <View style={styles.iconCircle}>
+                        <Ionicons name="time-outline" size={18} color="#5356FF" />
                     </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>Open now</Text>
-                        <Text style={styles.infoValue}>{place.openingHours}</Text>
+                    <View style={styles.infoTextContainer}>
+                        <Text style={styles.infoLabel}>General Hours</Text>
+                        <Text style={styles.infoValue}>Open now · Closes 10:00 PM</Text>
                     </View>
                 </View>
 
                 {/* Address */}
-                <View style={styles.infoRow}>
-                    <View style={styles.infoIconContainer}>
-                        <Ionicons name="location-outline" size={20} color="#5356FF" />
+                <View style={styles.infoBox}>
+                    <View style={styles.iconCircle}>
+                        <Ionicons name="location-outline" size={18} color="#5356FF" />
                     </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>{place.address}</Text>
+                    <View style={styles.infoTextContainer}>
+                        <Text style={styles.infoLabel} numberOfLines={2}>{place.address}</Text>
                         <TouchableOpacity onPress={handleMapNavigation}>
-                            <Text style={styles.infoLink}>Map navigation</Text>
+                            <Text style={styles.infoLink}>Get Directions</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
-                {/* Phone */}
-                <View style={styles.infoRow}>
-                    <View style={styles.infoIconContainer}>
-                        <Ionicons name="call-outline" size={20} color="#5356FF" />
+                {/* Categories */}
+                <View style={styles.infoBox}>
+                    <View style={styles.iconCircle}>
+                        <Ionicons name="pricetag-outline" size={18} color="#5356FF" />
                     </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>[phone]</Text>
-                        <TouchableOpacity onPress={handleCall}>
-                            <Text style={styles.infoLink}>Call now</Text>
-                        </TouchableOpacity>
+                    <View style={styles.infoTextContainer}>
+                        <Text style={styles.infoLabel}>{place.category.toUpperCase()}</Text>
+                        <Text style={styles.infoValue}>Verified business category</Text>
                     </View>
                 </View>
 
                 {/* Mini Map */}
-                <View style={styles.mapContainer}>
+                <View style={styles.mapFrame}>
                     <MapView
-                        style={styles.map}
-                        initialRegion={{
-                            latitude: place.coordinates.latitude,
-                            longitude: place.coordinates.longitude,
-                            latitudeDelta: 0.01,
-                            longitudeDelta: 0.01,
+                        style={styles.miniMap}
+                        region={{
+                            latitude: coordinates.latitude,
+                            longitude: coordinates.longitude,
+                            latitudeDelta: 0.005,
+                            longitudeDelta: 0.005,
                         }}
                         scrollEnabled={false}
                         zoomEnabled={false}
                     >
-                        <Marker
-                            coordinate={place.coordinates}
-                            title={place.name}
-                        />
+                        <Marker coordinate={coordinates} />
                     </MapView>
                 </View>
 
-                {/* Reviews Section */}
-                <View style={styles.reviewsHeader}>
-                    <Text style={styles.sectionTitle}>Reviews</Text>
-                    <TouchableOpacity style={styles.addReviewButton}>
-                        <Text style={styles.addReviewText}>+ Add review</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {place.reviews.map((review: any) => (
-                    <View key={review.id} style={styles.reviewCard}>
-                        <View style={styles.reviewHeader}>
-                            <Text style={styles.reviewerName}>[{review.reviewerName}]</Text>
-                            <View style={styles.reviewStars}>
-                                {renderStars(review.rating)}
-                            </View>
-                        </View>
-                        <Text style={styles.reviewText}>[{review.review}]</Text>
-                    </View>
-                ))}
-
-                {/* Similar Places Section */}
-                <Text style={styles.sectionTitle}>Similar businesses in the area</Text>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.similarContainer}
-                >
-                    {place.similarPlaces.map((similar: any) => (
-                        <TouchableOpacity
-                            key={similar.id}
-                            style={styles.similarCard}
-                            onPress={() => router.push(`/place/${similar.id}`)}
+                {/* Similar Places */}
+                {similarPlaces.length > 0 && (
+                    <>
+                        <Text style={styles.sectionTitle}>Similar businesses nearby</Text>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            style={styles.similarScroll}
                         >
-                            <LinearGradient
-                                colors={['#e8e8e8', '#d0d0d0']}
-                                style={styles.similarImage}
-                            />
-                            <Text style={styles.similarName}>[{similar.name}]</Text>
-                            <View style={styles.similarRating}>
-                                <Ionicons name="star" size={12} color="#FFD700" />
-                                <Text style={styles.similarRatingText}>[{similar.rating}]</Text>
-                            </View>
-                            <Text style={[styles.similarQueue, { color: getQueueColor(similar.queueStatus) }]}>
-                                {similar.queueStatus}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
+                            {similarPlaces.map((sibling) => (
+                                <TouchableOpacity
+                                    key={sibling.id}
+                                    style={styles.similarCard}
+                                    onPress={() => router.push(`/place/${sibling.id}`)}
+                                >
+                                    <View style={styles.similarThumbnailBox}>
+                                        <Image source={{ uri: sibling.image }} style={styles.similarThumb} />
+                                    </View>
+                                    <View style={styles.similarInfo}>
+                                        <Text style={styles.similarName} numberOfLines={1}>{sibling.name}</Text>
+                                        <View style={styles.similarMeta}>
+                                            <Ionicons name="star" size={12} color="#FFD700" />
+                                            <Text style={styles.similarRatingText}>{sibling.rating}</Text>
+                                            <Text style={[styles.similarStatus, { color: getQueueColor(sibling.status) }]}>
+                                                · {sibling.status}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </>
+                )}
 
-                {/* Bottom Spacing */}
-                <View style={{ height: 100 }} />
+                <View style={{ height: 120 }} />
             </ScrollView>
 
-            {/* Report Button */}
-            <TouchableOpacity style={styles.reportButton}>
+            {/* Floating Action Button */}
+            <TouchableOpacity style={styles.fabContainer}>
                 <LinearGradient
-                    colors={['#5356FF', '#3787FF']}
+                    colors={['#6366F1', '#4F46E5']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={styles.reportGradient}
+                    style={styles.fabGradient}
                 >
                     <Ionicons name="flash" size={20} color="#FFD700" />
-                    <Text style={styles.reportText}>Report now</Text>
+                    <Text style={styles.fabText}>Report Queue</Text>
                 </LinearGradient>
             </TouchableOpacity>
         </View>
@@ -353,249 +269,50 @@ export default function PlaceDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
-    headerImage: {
-        height: 280,
-    },
-    headerOverlay: {
-        flex: 1,
-    },
-    safeArea: {
-        flex: 1,
-        justifyContent: 'space-between',
-    },
-    headerActions: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingTop: 8,
-    },
-    headerButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerRightActions: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    favoriteButton: {
-        backgroundColor: 'rgba(0,0,0,0.3)',
-    },
-    statusBadgeContainer: {
-        alignItems: 'flex-end',
-        paddingHorizontal: 16,
-        paddingBottom: 16,
-    },
-    statusBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-    },
-    statusDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginRight: 6,
-    },
-    statusText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '500',
-    },
-    updatedText: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 12,
-        marginTop: 4,
-    },
-    content: {
-        flex: 1,
-        marginTop: -20,
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        paddingHorizontal: 20,
-        paddingTop: 24,
-    },
-    placeName: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#1E40AF',
-        marginBottom: 8,
-    },
-    divider: {
-        height: 3,
-        backgroundColor: '#FFD700',
-        width: 60,
-        borderRadius: 2,
-        marginBottom: 12,
-    },
-    description: {
-        fontSize: 16,
-        color: '#666',
-        marginBottom: 24,
-        lineHeight: 22,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#1E40AF',
-        marginBottom: 16,
-        marginTop: 8,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        marginBottom: 16,
-    },
-    infoIconContainer: {
-        width: 32,
-        alignItems: 'center',
-        marginTop: 2,
-    },
-    infoContent: {
-        flex: 1,
-        marginLeft: 8,
-    },
-    infoLabel: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#333',
-    },
-    infoValue: {
-        fontSize: 14,
-        color: '#666',
-        marginTop: 2,
-    },
-    infoLink: {
-        fontSize: 14,
-        color: '#1E40AF',
-        marginTop: 4,
-    },
-    mapContainer: {
-        height: 150,
-        borderRadius: 12,
-        overflow: 'hidden',
-        marginVertical: 16,
-    },
-    map: {
-        flex: 1,
-    },
-    reviewsHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    addReviewButton: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#5356FF',
-    },
-    addReviewText: {
-        fontSize: 14,
-        color: '#5356FF',
-        fontWeight: '500',
-    },
-    reviewCard: {
-        backgroundColor: '#F8F9FA',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-    },
-    reviewHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    reviewerName: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#333',
-    },
-    reviewStars: {
-        flexDirection: 'row',
-    },
-    reviewText: {
-        fontSize: 14,
-        color: '#666',
-        lineHeight: 20,
-    },
-    similarContainer: {
-        marginBottom: 16,
-    },
-    similarCard: {
-        width: (width - 60) / 2,
-        marginRight: 16,
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
-    },
-    similarImage: {
-        height: 100,
-        width: '100%',
-    },
-    similarName: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#333',
-        padding: 12,
-        paddingBottom: 4,
-    },
-    similarRating: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 12,
-    },
-    similarRatingText: {
-        fontSize: 12,
-        color: '#666',
-        marginLeft: 4,
-    },
-    similarQueue: {
-        fontSize: 13,
-        fontWeight: '500',
-        padding: 12,
-        paddingTop: 4,
-    },
-    reportButton: {
-        position: 'absolute',
-        bottom: 30,
-        right: 20,
-        borderRadius: 30,
-        overflow: 'hidden',
-        shadowColor: '#5356FF',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
-    },
-    reportGradient: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 14,
-    },
-    reportText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-        marginLeft: 8,
-    },
+    container: { flex: 1, backgroundColor: '#fff' },
+    loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+    loaderText: { marginTop: 12, color: '#64748B', fontWeight: '600' },
+    errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+    errorText: { fontSize: 22, fontWeight: '800', color: '#1E293B', marginTop: 16 },
+    backBtn: { marginTop: 20, paddingHorizontal: 30, paddingVertical: 12, backgroundColor: '#5356FF', borderRadius: 12 },
+    backBtnText: { color: '#fff', fontWeight: '700' },
+    headerImage: { height: 320 },
+    headerOverlay: { flex: 1 },
+    safeArea: { flex: 1, justifyContent: 'space-between' },
+    headerActions: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10 },
+    headerButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(15, 23, 42, 0.4)', justifyContent: 'center', alignItems: 'center' },
+    headerRightActions: { flexDirection: 'row', gap: 12 },
+    statusBadgeContainer: { alignItems: 'flex-end', paddingHorizontal: 20, paddingBottom: 25 },
+    statusBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15, 23, 42, 0.7)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+    statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
+    statusText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+    updatedText: { color: 'rgba(255,255,255,0.9)', fontSize: 11, marginTop: 4, fontWeight: '600' },
+    contentSection: { flex: 1, marginTop: -30, backgroundColor: '#fff', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 24, paddingTop: 30 },
+    titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+    placeName: { fontSize: 26, fontWeight: '800', color: '#0F172A', flex: 1, marginRight: 15 },
+    ratingRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
+    ratingText: { marginLeft: 5, fontSize: 15, fontWeight: '800', color: '#0F172A' },
+    accentDivider: { height: 4, width: 50, backgroundColor: '#F59E0B', borderRadius: 2, marginBottom: 20 },
+    descriptionText: { fontSize: 16, color: '#475569', lineHeight: 26, marginBottom: 30, fontWeight: '500' },
+    sectionTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A', marginBottom: 20 },
+    infoBox: { flexDirection: 'row', marginBottom: 20, alignItems: 'flex-start' },
+    iconCircle: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center' },
+    infoTextContainer: { flex: 1, marginLeft: 15 },
+    infoLabel: { fontSize: 15, fontWeight: '700', color: '#1E293B' },
+    infoValue: { fontSize: 14, color: '#64748B', marginTop: 3, fontWeight: '500' },
+    infoLink: { fontSize: 14, color: '#4F46E5', marginTop: 5, fontWeight: '800' },
+    mapFrame: { height: 160, borderRadius: 20, overflow: 'hidden', marginVertical: 25, borderWidth: 1, borderColor: '#F1F5F9' },
+    miniMap: { flex: 1 },
+    similarScroll: { marginHorizontal: -24, paddingHorizontal: 24 },
+    similarCard: { width: 180, marginRight: 16, backgroundColor: '#fff', borderRadius: 18, borderWidth: 1, borderColor: '#F1F5F9', padding: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+    similarThumbnailBox: { width: '100%', height: 100, borderRadius: 12, overflow: 'hidden', marginBottom: 10 },
+    similarThumb: { width: '100%', height: '100%' },
+    similarInfo: { paddingHorizontal: 2 },
+    similarName: { fontSize: 14, fontWeight: '700', color: '#1E293B', marginBottom: 5 },
+    similarMeta: { flexDirection: 'row', alignItems: 'center' },
+    similarRatingText: { fontSize: 12, fontWeight: '800', marginLeft: 4, color: '#475569' },
+    similarStatus: { fontSize: 12, fontWeight: '700', marginLeft: 4, textTransform: 'capitalize' },
+    fabContainer: { position: 'absolute', bottom: 35, alignSelf: 'center', borderRadius: 30, overflow: 'hidden', shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 8 },
+    fabGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 35, paddingVertical: 18 },
+    fabText: { color: '#fff', fontSize: 16, fontWeight: '800', marginLeft: 10 },
 });
