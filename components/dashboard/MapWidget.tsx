@@ -6,6 +6,8 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
+import { BlurView } from 'expo-blur';
+
 export default function MapWidget() {
     const router = useRouter();
     const { location, address, loading, error, refreshLocation, permissionStatus } = useLocation();
@@ -75,36 +77,44 @@ export default function MapWidget() {
                                         >
                                             <Ionicons name="person" size={16} color="#fff" />
                                         </LinearGradient>
-                                        <View style={styles.markerPulse} />
+                                        {/* <View style={styles.markerPulse} /> */}
                                     </View>
                                 </Marker>
                             )}
                         </MapView>
 
-                        {/* Location Info Overlay */}
-                        <View style={[styles.mapOverlayBox, { zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexDirection: 'row' }]}>
-                            <View>
-                                <View style={styles.overlayHeader}>
-                                    <Ionicons name="location" size={20} color="#5356FF" />
-                                    <Text style={styles.overlayTitle}>Your Location</Text>
+                        {/* Location Info Overlay with Glassmorphism */}
+                        <BlurView
+                            intensity={120}
+                            tint="light"
+                            style={styles.mapOverlayBox}
+                        >
+                            <View style={styles.overlayContent}>
+                                <View style={styles.overlayLeft}>
+                                    <View style={styles.overlayHeader}>
+                                        <Ionicons name="location" size={20} color="#6366F1" />
+                                        <Text style={styles.overlayTitle}>Your Location</Text>
+                                    </View>
+                                    <Text style={styles.overlayText} numberOfLines={2}>
+                                        {address || 'Detecting location...'}
+                                    </Text>
                                 </View>
-                                <Text style={styles.overlayText} numberOfLines={2}>
-                                    {address || 'Detecting location...'}
-                                </Text>
-                            </View>
-                            <View>
+
                                 {location && (
                                     <TouchableOpacity
-                                        style={styles.refreshButton}
+                                        style={styles.refreshButtonBox}
                                         onPress={refreshLocation}
                                     >
-                                        <Ionicons name="refresh" size={14} color="#5356FF" />
-                                        <Text style={styles.refreshText}>Refresh</Text>
+                                        <LinearGradient
+                                            colors={['#6366F1', '#4F46E5']}
+                                            style={styles.refreshIconCircle}
+                                        >
+                                            <Ionicons name="refresh" size={16} color="#fff" />
+                                        </LinearGradient>
                                     </TouchableOpacity>
                                 )}
                             </View>
-
-                        </View>
+                        </BlurView>
 
                         {/* Open Full Map Button */}
                         <View style={styles.floatingMapButtonContainer}>
@@ -152,6 +162,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f0f0',
         position: 'relative',
         overflow: 'hidden',
+        paddingTop: 30
     },
     map: {
         width: '100%',
@@ -195,14 +206,21 @@ const styles = StyleSheet.create({
         top: 12,
         left: 12,
         right: 12,
-        backgroundColor: 'white/30',
+        borderRadius: 16,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 1)',
+        elevation: 2,
+    },
+    overlayContent: {
+        flexDirection: 'row',
         padding: 14,
-        borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    overlayLeft: {
+        flex: 1,
+        marginRight: 12,
     },
     overlayHeader: {
         flexDirection: 'row',
@@ -210,26 +228,27 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     overlayTitle: {
-        fontWeight: 'bold',
+        fontWeight: '800',
         fontSize: 15,
         marginLeft: 6,
-        color: '#333',
+        color: '#1E293B',
     },
     overlayText: {
-        color: '#666',
+        color: '#64748B',
         fontSize: 13,
         lineHeight: 18,
-    },
-    refreshButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    refreshText: {
-        fontSize: 12,
-        color: '#5356FF',
-        marginLeft: 4,
         fontWeight: '500',
+    },
+    refreshButtonBox: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    refreshIconCircle: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     markerContainer: {
         alignItems: 'center',
@@ -242,11 +261,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 3,
         borderColor: '#fff',
-        shadowColor: '#5356FF',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
+        shadowColor: '#ffffffff',
+        shadowOffset: { width: 2, height: 2 },
+
         shadowRadius: 4,
-        elevation: 1,
+        elevation: 2,
     },
     markerPulse: {
         position: 'absolute',
