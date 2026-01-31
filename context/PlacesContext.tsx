@@ -53,7 +53,13 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
     const [currentSearchName, setCurrentSearchName] = useState<string | null>(null);
     const [isManualSearch, setIsManualSearch] = useState(false);
 
-    const saveSearchHistory = async (query: string, searchAddress: string | null, businessId: string | null = null) => {
+    const saveSearchHistory = async (
+        query: string,
+        searchAddress: string | null,
+        businessId: string | null = null,
+        imageUrl: string | null = null,
+        rating: number | null = null
+    ) => {
         if (!user) return;
 
         try {
@@ -64,6 +70,8 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                 businessRef: businessId ? doc(db, 'Business', businessId) : null,
                 searchedAddress: searchAddress || query,
                 HsearchedString: query.toLowerCase(),
+                imageUrl: imageUrl,
+                rating: rating
             });
             console.log('[PlacesContext] Search history saved');
         } catch (error) {
@@ -72,7 +80,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const recordPlaceClick = async (place: PlaceData) => {
-        await saveSearchHistory(place.name, place.address, place.id);
+        await saveSearchHistory(place.name, place.address, place.id, place.image, place.rating);
     };
 
     // Fetch places using coordinates (used for GPS-based and geocoded searches)

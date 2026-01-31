@@ -112,8 +112,8 @@ export default function CustomizedScreen() {
                     id: placeId,
                     name: data.searchedString || 'Unknown Place',
                     address: data.searchedAddress || 'Address not available',
-                    rating: placeFromContext?.rating || 4.2,
-                    image: placeFromContext?.image || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400',
+                    rating: placeFromContext?.rating || data.rating || 4.2,
+                    image: placeFromContext?.image || data.imageUrl || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400',
                     searchedOn: data.searchedOn?.toDate() || new Date(),
                 });
 
