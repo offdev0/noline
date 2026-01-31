@@ -172,7 +172,14 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                         {/* My Personal Area */}
                         <SectionHeader title="My personal area" />
                         <View style={styles.menuGroup}>
-                            <MenuItem icon="star" label="Favorites" />
+                            <MenuItem
+                                icon="star"
+                                label="Favorites"
+                                onPress={() => {
+                                    onClose();
+                                    router.push('/favorites');
+                                }}
+                            />
                             <MenuItem icon="notifications" label="Customized notifications" />
                             <MenuItem icon="person-add" label="Profile sharing" />
                         </View>

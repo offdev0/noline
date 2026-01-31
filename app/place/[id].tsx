@@ -2,7 +2,7 @@ import { usePlaces } from '@/context/PlacesContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
@@ -11,6 +11,7 @@ import {
     Linking,
     Platform,
     ScrollView,
+    Share,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -21,14 +22,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
+import { useFavorites } from '@/context/FavoritesContext';
+
 export default function PlaceDetailScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
     const { getPlaceById, allPlaces, loading: globalLoading } = usePlaces();
-    const [isFavorite, setIsFavorite] = useState(false);
+    const { toggleFavorite, isFavorite } = useFavorites();
 
-    // Get dynamic data from context
     const place = useMemo(() => getPlaceById(id), [id, getPlaceById]);
+    const isPlaceFavorite = useMemo(() => isFavorite(id || ''), [id, isFavorite]);
 
     // Derived coordinates (using mock defaults if API doesn't provide lat/lng yet)
     // Note: In the next step, we could update MapsService to include real lat/lng
@@ -99,6 +102,18 @@ export default function PlaceDetailScreen() {
         .filter(p => p.category === place.category && p.id !== place.id)
         .slice(0, 4);
 
+    const handleShare = async () => {
+        if (!place) return;
+        try {
+            await Share.share({
+                message: `Check out ${place.name} on NoLine!\n\n📍 Address: ${place.address}\n⭐ Rating: ${place.rating}/5\n🚦 Current Status: ${place.status}`,
+                title: `Share ${place.name}`
+            });
+        } catch (error: any) {
+            console.error('Error sharing:', error.message);
+        }
+    };
+
     return (
         <View style={styles.container}>
             {/* Header Image */}
@@ -120,17 +135,17 @@ export default function PlaceDetailScreen() {
                             </TouchableOpacity>
 
                             <View style={styles.headerRightActions}>
-                                <TouchableOpacity style={styles.headerButton}>
+                                <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
                                     <Ionicons name="share-outline" size={24} color="#fff" />
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    style={[styles.headerButton, isFavorite && { backgroundColor: 'rgba(239, 68, 68, 0.2)' }]}
-                                    onPress={() => setIsFavorite(!isFavorite)}
+                                    style={[styles.headerButton, isPlaceFavorite && { backgroundColor: 'rgba(239, 68, 68, 0.2)' }]}
+                                    onPress={() => place && toggleFavorite(place)}
                                 >
                                     <Ionicons
-                                        name={isFavorite ? 'heart' : 'heart-outline'}
+                                        name={isPlaceFavorite ? 'heart' : 'heart-outline'}
                                         size={24}
-                                        color={isFavorite ? '#EF4444' : '#fff'}
+                                        color={isPlaceFavorite ? '#EF4444' : '#fff'}
                                     />
                                 </TouchableOpacity>
                             </View>

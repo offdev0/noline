@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import 'react-native-reanimated';
 
+import { FavoritesProvider } from '@/context/FavoritesContext';
 import { LocationProvider } from '@/context/LocationContext';
 import { PlacesProvider } from '@/context/PlacesContext';
 import { UserProvider, useUser } from '@/context/UserContext';
@@ -23,7 +24,8 @@ function MainLayout() {
     const inTabsGroup = segments[0] === '(tabs)';
     const inPlaceRoute = segments[0] === 'place';
     const inMapRoute = segments[0] === 'map';
-    const inAuthenticatedRoute = inTabsGroup || inPlaceRoute || inMapRoute;
+    const inFavoritesRoute = segments[0] === 'favorites';
+    const inAuthenticatedRoute = inTabsGroup || inPlaceRoute || inMapRoute || inFavoritesRoute;
 
     if (user && !inAuthenticatedRoute) {
       // Redirect to tabs if user is signed in and not in an authenticated route
@@ -56,6 +58,7 @@ function MainLayout() {
         <Stack.Screen name="index" options={{ headerShown: false, statusBarStyle: 'dark' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false, statusBarHidden: false, statusBarStyle: 'dark', statusBarTranslucent: true }} />
         <Stack.Screen name="place" options={{ headerShown: false }} />
+        <Stack.Screen name="favorites" options={{ headerShown: false }} />
         <Stack.Screen
           name="map"
           options={{
@@ -76,7 +79,9 @@ export default function RootLayout() {
     <UserProvider>
       <LocationProvider>
         <PlacesProvider>
-          <MainLayout />
+          <FavoritesProvider>
+            <MainLayout />
+          </FavoritesProvider>
         </PlacesProvider>
       </LocationProvider>
     </UserProvider>
