@@ -16,13 +16,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
-// Sample nearby places data
-const nearbyPlaces = [
-    { id: '1', name: 'Uniqlo Store', latitude: 22.5746, longitude: 88.3659, category: 'Fashion', queueStatus: 'Short queue' },
-    { id: '2', name: 'Coffee House', latitude: 22.5706, longitude: 88.3619, category: 'Cafe', queueStatus: 'Short queue' },
-    { id: '3', name: 'Tech Store', latitude: 22.5766, longitude: 88.3679, category: 'Electronics', queueStatus: 'Medium queue' },
-    { id: '4', name: 'Food Court', latitude: 22.5686, longitude: 88.3599, category: 'Restaurant', queueStatus: 'Long queue' },
-];
+
+import { usePlaces } from '@/context/PlacesContext';
+
+const CATEGORY_ICONS: Record<string, any> = {
+    restaurant: 'restaurant',
+    cafe: 'cafe',
+    bar: 'beer',
+    casino: 'cash',
+    fun: 'happy',
+    shopping: 'cart',
+    default: 'location'
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+    restaurant: '#F59E0B',
+    casino: '#DC2626',
+    fun: '#8B5CF6',
+    shopping: '#6366F1',
+    default: '#94A3B8'
+};
 
 export default function FullMapScreen() {
     const router = useRouter();
@@ -32,9 +45,10 @@ export default function FullMapScreen() {
         longitude?: string;
     }>();
     const insets = useSafeAreaInsets();
-    const { location, address, refreshLocation, loading } = useLocation();
+    const { location, address, refreshLocation, loading: locationLoading } = useLocation();
+    const { allPlaces, loading: placesLoading } = usePlaces();
     const mapRef = useRef<MapView>(null);
-    const [selectedPlace, setSelectedPlace] = useState<typeof nearbyPlaces[0] | null>(null);
+    const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
     const [searchedLocation, setSearchedLocation] = useState<{
         latitude: number;
         longitude: number;
@@ -82,22 +96,22 @@ export default function FullMapScreen() {
         longitudeDelta: 0.02,
     };
 
-    const getQueueColor = (status: string) => {
+    const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Short queue': return '#22C55E';
-            case 'Medium queue': return '#F59E0B';
-            case 'Long queue': return '#EF4444';
+            case 'vacant': return '#22C55E';
+            case 'medium': return '#F59E0B';
+            case 'loaded': return '#EF4444';
             default: return '#22C55E';
         }
     };
 
-    const handlePlaceSelect = (place: typeof nearbyPlaces[0]) => {
+    const handlePlaceSelect = (place: any) => {
         setSelectedPlace(place);
 
         // Animate to selected place
         mapRef.current?.animateToRegion({
-            latitude: place.latitude,
-            longitude: place.longitude,
+            latitude: place.location.latitude,
+            longitude: place.location.longitude,
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
         }, 500);
@@ -170,10 +184,11 @@ export default function FullMapScreen() {
                         }}
                         title="You are here"
                         description={address || 'Your current location'}
+                        zIndex={10}
                     >
                         <View style={styles.userMarker}>
                             <LinearGradient
-                                colors={['#5356FF', '#3787FF']}
+                                colors={['#6366F1', '#4F46E5']}
                                 style={styles.userMarkerGradient}
                             >
                                 <Ionicons name="person" size={16} color="#fff" />
@@ -182,32 +197,36 @@ export default function FullMapScreen() {
                     </Marker>
                 )}
 
-                {/* Nearby Places Markers */}
-                {nearbyPlaces.map((place) => (
-                    <Marker
-                        key={place.id}
-                        coordinate={{
-                            latitude: place.latitude,
-                            longitude: place.longitude,
-                        }}
-                        onPress={() => handlePlaceSelect(place)}
-                    >
-                        <View style={styles.placeMarker}>
-                            <View style={[
-                                styles.placeMarkerInner,
-                                { backgroundColor: getQueueColor(place.queueStatus) }
-                            ]}>
-                                <Ionicons
-                                    name={place.category === 'Cafe' ? 'cafe' :
-                                        place.category === 'Fashion' ? 'shirt' :
-                                            place.category === 'Electronics' ? 'phone-portrait' : 'restaurant'}
-                                    size={14}
-                                    color="#fff"
-                                />
+                {/* Real Nearby Places Markers */}
+                {allPlaces.map((place) => {
+                    const category = place.category?.toLowerCase() || 'default';
+                    const iconName = CATEGORY_ICONS[category] || CATEGORY_ICONS.default;
+                    const statusColor = getStatusColor(place.status);
+
+                    return (
+                        <Marker
+                            key={place.id}
+                            coordinate={{
+                                latitude: place.location.latitude,
+                                longitude: place.location.longitude,
+                            }}
+                            onPress={() => handlePlaceSelect(place)}
+                        >
+                            <View style={styles.placeMarker}>
+                                <View style={[
+                                    styles.placeMarkerInner,
+                                    { backgroundColor: statusColor }
+                                ]}>
+                                    <Ionicons
+                                        name={iconName}
+                                        size={14}
+                                        color="#fff"
+                                    />
+                                </View>
                             </View>
-                        </View>
-                    </Marker>
-                ))}
+                        </Marker>
+                    );
+                })}
 
                 {/* Searched Location Marker */}
                 {searchedLocation && (
@@ -245,7 +264,7 @@ export default function FullMapScreen() {
                     <Text style={styles.headerSubtitle}>
                         {searchedLocation
                             ? `"${searchedLocation.query}"`
-                            : `${nearbyPlaces.length} places nearby`
+                            : `${allPlaces.length} real places nearby`
                         }
                     </Text>
                 </View>
@@ -255,14 +274,14 @@ export default function FullMapScreen() {
                         style={styles.refreshButton}
                         onPress={centerOnSearch}
                     >
-                        <Ionicons name="navigate" size={22} color="#5356FF" />
+                        <Ionicons name="navigate" size={22} color="#6366F1" />
                     </TouchableOpacity>
                 ) : (
                     <TouchableOpacity
                         style={styles.refreshButton}
                         onPress={refreshLocation}
                     >
-                        <Ionicons name="refresh" size={22} color="#5356FF" />
+                        <Ionicons name="refresh" size={22} color="#6366F1" />
                     </TouchableOpacity>
                 )}
             </View>
@@ -272,7 +291,7 @@ export default function FullMapScreen() {
                 <Ionicons
                     name={searchedLocation ? "search" : "location"}
                     size={20}
-                    color="#5356FF"
+                    color="#6366F1"
                 />
                 <Text style={styles.locationText} numberOfLines={1}>
                     {searchedLocation
@@ -298,7 +317,7 @@ export default function FullMapScreen() {
                 style={[styles.centerButton, { bottom: selectedPlace ? 220 : 100 }]}
                 onPress={centerOnUser}
             >
-                <Ionicons name="locate" size={24} color="#5356FF" />
+                <Ionicons name="locate" size={24} color="#6366F1" />
             </TouchableOpacity>
 
             {/* Selected Place Bottom Sheet */}
@@ -311,7 +330,7 @@ export default function FullMapScreen() {
                             transform: [{
                                 translateY: slideAnim.interpolate({
                                     inputRange: [0, 1],
-                                    outputRange: [200, 0],
+                                    outputRange: [300, 0],
                                 })
                             }]
                         }
@@ -328,13 +347,13 @@ export default function FullMapScreen() {
                         <View style={styles.placeInfo}>
                             <View style={[
                                 styles.categoryBadge,
-                                { backgroundColor: getQueueColor(selectedPlace.queueStatus) + '20' }
+                                { backgroundColor: getStatusColor(selectedPlace.status) + '20' }
                             ]}>
                                 <Text style={[
                                     styles.categoryText,
-                                    { color: getQueueColor(selectedPlace.queueStatus) }
+                                    { color: getStatusColor(selectedPlace.status) }
                                 ]}>
-                                    {selectedPlace.queueStatus}
+                                    {selectedPlace.status.toUpperCase()}
                                 </Text>
                             </View>
                             <Text style={styles.placeName}>{selectedPlace.name}</Text>
@@ -346,7 +365,7 @@ export default function FullMapScreen() {
                             onPress={handleViewPlace}
                         >
                             <LinearGradient
-                                colors={['#5356FF', '#3787FF']}
+                                colors={['#6366F1', '#4F46E5']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                                 style={styles.viewButtonGradient}

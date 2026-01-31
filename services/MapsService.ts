@@ -8,6 +8,10 @@ export interface PlaceData {
     image: string;
     rating: number;
     address: string;
+    location: {
+        latitude: number;
+        longitude: number;
+    };
     hours?: string;
 }
 
@@ -49,12 +53,11 @@ export class MapsService {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
-                    'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.types,places.photos,places.editorialSummary'
+                    'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.types,places.photos,places.editorialSummary,places.location'
                 },
                 body: JSON.stringify({
-                    // Broadening the query to hit more category types
                     textQuery: `top attractions, restaurants, shopping malls, and entertainment in ${locationName}`,
-                    maxResultCount: 20 // Increased count to get more variety
+                    maxResultCount: 20
                 })
             });
 
@@ -105,7 +108,11 @@ export class MapsService {
                     status: status,
                     image: imageUrl,
                     rating: p.rating || 4.2,
-                    address: p.formattedAddress || 'Address not available'
+                    address: p.formattedAddress || 'Address not available',
+                    location: {
+                        latitude: p.location?.latitude || locationName === 'Kolkata' ? 22.5726 : 0,
+                        longitude: p.location?.longitude || locationName === 'Kolkata' ? 88.3639 : 0,
+                    }
                 };
             });
 

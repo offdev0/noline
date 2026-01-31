@@ -1,4 +1,5 @@
 import { useLocation } from '@/context/LocationContext';
+import { usePlaces } from '@/context/PlacesContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -8,9 +9,28 @@ import MapView, { Marker } from 'react-native-maps';
 
 import { BlurView } from 'expo-blur';
 
+const CATEGORY_ICONS: Record<string, any> = {
+    restaurant: 'restaurant',
+    cafe: 'cafe',
+    bar: 'beer',
+    casino: 'cash',
+    fun: 'happy',
+    shopping: 'cart',
+    default: 'location'
+};
+
+const CATEGORY_COLORS: Record<string, string[]> = {
+    restaurant: ['#F59E0B', '#D97706'],
+    casino: ['#DC2626', '#B91C1C'],
+    fun: ['#8B5CF6', '#7C3AED'],
+    shopping: ['#6366F1', '#4F46E5'],
+    default: ['#94A3B8', '#64748B']
+};
+
 export default function MapWidget() {
     const router = useRouter();
-    const { location, address, loading, error, refreshLocation, permissionStatus } = useLocation();
+    const { location, address: userAddress, refreshLocation, loading, error } = useLocation();
+    const { allPlaces, currentSearchCenter, currentSearchName, resetSearch } = usePlaces();
 
     // Default location (can be city center or any default)
     const defaultLocation = {
@@ -18,16 +38,34 @@ export default function MapWidget() {
         longitude: 88.3639,
     };
 
+    // Determine target location (Search takes priority over current location)
+    const targetLatitude = currentSearchCenter?.latitude || location?.latitude || defaultLocation.latitude;
+    const targetLongitude = currentSearchCenter?.longitude || location?.longitude || defaultLocation.longitude;
+
     const mapRegion = {
-        latitude: location?.latitude || defaultLocation.latitude,
-        longitude: location?.longitude || defaultLocation.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
+        latitude: targetLatitude,
+        longitude: targetLongitude,
+        latitudeDelta: 0.04, // Broader view for city searches
+        longitudeDelta: 0.04,
+    };
+
+    const displayAddress = currentSearchName || userAddress || 'Detecting location...';
+
+    const handleRefresh = async () => {
+        resetSearch();
+        await refreshLocation();
     };
 
     const handleOpenFullMap = () => {
-        // Navigate to the full-screen map modal
-        router.push('/map');
+        // Navigate to the full-screen map modal with coordinates
+        router.push({
+            pathname: '/map',
+            params: {
+                latitude: targetLatitude.toString(),
+                longitude: targetLongitude.toString(),
+                searchQuery: currentSearchName || ''
+            }
+        });
     };
 
     return (
@@ -61,6 +99,7 @@ export default function MapWidget() {
                             pitchEnabled={false}
                             rotateEnabled={false}
                         >
+                            {/* User Location Marker */}
                             {location && (
                                 <Marker
                                     coordinate={{
@@ -68,19 +107,48 @@ export default function MapWidget() {
                                         longitude: location.longitude,
                                     }}
                                     title="You are here"
-                                    description={address || 'Your current location'}
+                                    description={userAddress || 'Your current location'}
+                                    zIndex={10}
                                 >
-                                    <View style={styles.markerContainer}>
+                                    <View style={styles.userMarkerWrapper}>
                                         <LinearGradient
-                                            colors={['#5356FF', '#3787FF']}
-                                            style={styles.markerGradient}
+                                            colors={['#6366F1', '#4F46E5']}
+                                            style={styles.userMarkerGradient}
                                         >
-                                            <Ionicons name="person" size={16} color="#fff" />
+                                            <Ionicons name="person" size={14} color="#fff" />
                                         </LinearGradient>
-                                        {/* <View style={styles.markerPulse} /> */}
+                                        <View style={styles.userMarkerPulse} />
                                     </View>
                                 </Marker>
                             )}
+
+                            {/* Venue Markers */}
+                            {allPlaces.map((place) => {
+                                const category = place.category?.toLowerCase() || 'default';
+                                const iconName = CATEGORY_ICONS[category] || CATEGORY_ICONS.default;
+                                const colors = (CATEGORY_COLORS[category] || CATEGORY_COLORS.default) as [string, string];
+
+                                return (
+                                    <Marker
+                                        key={place.id}
+                                        coordinate={{
+                                            latitude: place.location.latitude,
+                                            longitude: place.location.longitude,
+                                        }}
+                                        title={place.name}
+                                        onPress={() => router.push(`/place/${place.id}`)}
+                                    >
+                                        <View style={styles.venueMarkerWrapper}>
+                                            <LinearGradient
+                                                colors={colors}
+                                                style={styles.venueMarkerGradient}
+                                            >
+                                                <Ionicons name={iconName} size={12} color="#fff" />
+                                            </LinearGradient>
+                                        </View>
+                                    </Marker>
+                                );
+                            })}
                         </MapView>
 
                         {/* Location Info Overlay with Glassmorphism */}
@@ -93,17 +161,18 @@ export default function MapWidget() {
                                 <View style={styles.overlayLeft}>
                                     <View style={styles.overlayHeader}>
                                         <Ionicons name="location" size={20} color="#6366F1" />
-                                        <Text style={styles.overlayTitle}>Your Location</Text>
+                                        <Text style={styles.overlayTitle}>Target Location</Text>
                                     </View>
                                     <Text style={styles.overlayText} numberOfLines={2}>
-                                        {address || 'Detecting location...'}
+                                        {displayAddress}
                                     </Text>
                                 </View>
 
                                 {location && (
                                     <TouchableOpacity
                                         style={styles.refreshButtonBox}
-                                        onPress={refreshLocation}
+                                        onPress={handleRefresh}
+                                        disabled={loading}
                                     >
                                         <LinearGradient
                                             colors={['#6366F1', '#4F46E5']}
@@ -250,10 +319,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    markerContainer: {
+    userMarkerWrapper: {
         alignItems: 'center',
+        justifyContent: 'center',
     },
-    markerGradient: {
+    userMarkerGradient: {
         width: 32,
         height: 32,
         borderRadius: 16,
@@ -261,19 +331,37 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 3,
         borderColor: '#fff',
-        shadowColor: '#ffffffff',
-        shadowOffset: { width: 2, height: 2 },
-
-        shadowRadius: 4,
-        elevation: 2,
+        shadowColor: '#6366F1',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        elevation: 5,
     },
-    markerPulse: {
+    userMarkerPulse: {
         position: 'absolute',
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: 'rgba(83, 86, 255, 0.2)',
-        top: -8,
+        backgroundColor: 'rgba(99, 102, 241, 0.15)',
+        zIndex: -1,
+    },
+    venueMarkerWrapper: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    venueMarkerGradient: {
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2.5,
+        borderColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
     },
     floatingMapButtonContainer: {
         position: 'absolute',
