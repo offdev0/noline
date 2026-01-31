@@ -1,6 +1,9 @@
+import { usePlaces } from '@/context/PlacesContext';
+import { useReports } from '@/context/ReportsContext';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
+    ActivityIndicator,
     FlatList,
     Image,
     Modal,
@@ -12,149 +15,101 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Mock Data for Reports
-const reports = [
-    {
-        id: '1',
-        name: 'CFC Shalimar Family Restaurant',
-        category: 'Restaurants and cafes',
-        reportedBy: 'reported',
-        timeAgo: '8 days ago',
-        moodText: 'calm 😊',
-        type: 'vacant',
-        likes: 0,
-        comments: 0,
-        icon: 'restaurant',
-        avatar: 'https://i.pravatar.cc/100?img=1',
-        bannerStyle: {
-            bg: '#F0FDF4',
-            text: '#16A34A',
-            border: '#DCFCE7'
-        }
-    },
-    {
-        id: '2',
-        name: "TINU'S Kitchen",
-        category: 'Restaurants and cafes',
-        reportedBy: 'Deva Cafe reported',
-        timeAgo: '9 days ago',
-        moodText: 'Slow service ⏳',
-        type: 'vacant',
-        likes: 1,
-        comments: 0,
-        icon: 'cafe',
-        avatar: 'https://i.pravatar.cc/100?img=2',
-        bannerStyle: {
-            bg: '#FFFBEB',
-            text: '#D97706',
-            border: '#FEF3C7'
-        }
-    },
-    {
-        id: '3',
-        name: 'Hotel Ajantha',
-        category: 'Restaurants and cafes',
-        reportedBy: 'reported',
-        timeAgo: '9 days ago',
-        moodText: 'The place is closed ❌',
-        type: 'loaded',
-        likes: 0,
-        comments: 0,
-        icon: 'business',
-        avatar: 'https://i.pravatar.cc/100?img=3',
-        bannerStyle: {
-            bg: '#FEF2F2',
-            text: '#DC2626',
-            border: '#FEE2E2'
-        }
-    },
-];
-
-import { usePlaces } from '@/context/PlacesContext';
-
 export default function PlacesScreen() {
-    const { trendingPlaces: allPlaces, loading } = usePlaces();
+    const { reports, loading: reportsLoading } = useReports();
+    const { loading: placesLoading } = usePlaces();
     const [filterVisible, setFilterVisible] = useState(false);
     const [selectedType, setSelectedType] = useState('vacant');
     const [selectedDistance, setSelectedDistance] = useState('1-5 km');
     const [selectedCategory, setSelectedCategory] = useState('everything');
 
-    // Generate dynamic reports from fetched places
-    const dynamicReports = allPlaces.map((p, idx) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category.charAt(0).toUpperCase() + p.category.slice(1),
-        reportedBy: idx % 2 === 0 ? 'User123 reported' : 'Deva Cafe reported',
-        timeAgo: `${idx + 1}h ago`,
-        moodText: p.status === 'vacant' ? 'Smooth flow 😊' : p.status === 'medium' ? 'Getting busy ⏳' : 'Very crowded ❌',
-        type: p.status,
-        likes: Math.floor(Math.random() * 10),
-        comments: Math.floor(Math.random() * 5),
-        icon: p.category === 'restaurant' ? 'restaurant' : p.category === 'casino' ? 'cash-outline' : 'business',
-        avatar: `https://i.pravatar.cc/100?img=${(idx % 70) + 1}`,
-        bannerStyle: {
-            bg: p.status === 'vacant' ? '#F0FDF4' : p.status === 'medium' ? '#FFFBEB' : '#FEF2F2',
-            text: p.status === 'vacant' ? '#16A34A' : p.status === 'medium' ? '#D97706' : '#DC2626',
-            border: p.status === 'vacant' ? '#DCFCE7' : p.status === 'medium' ? '#FEF3C7' : '#FEE2E2'
-        }
-    }));
+    const formatTimeAgo = (timestamp: any) => {
+        if (!timestamp) return 'Just now';
 
-    const renderReportCard = ({ item }: { item: any }) => (
-        <TouchableOpacity style={styles.card} activeOpacity={0.9}>
-            {/* Header: Icon, Name, Category, Status Dot */}
-            <View style={styles.cardHeader}>
-                <View style={[styles.placeIconBox, { backgroundColor: item.type === 'vacant' ? '#F0FDF4' : item.type === 'medium' ? '#FFFBEB' : '#FEF2F2' }]}>
-                    <Ionicons
-                        name={item.icon as any}
-                        size={24}
-                        color={item.type === 'vacant' ? '#16A34A' : item.type === 'medium' ? '#D97706' : '#DC2626'}
-                    />
-                </View>
-                <View style={styles.placeDetails}>
-                    <View style={styles.nameRow}>
-                        <Text style={styles.placeName} numberOfLines={1}>{item.name}</Text>
-                        <View style={[styles.inlineStatusDot, { backgroundColor: item.type === 'vacant' ? '#22C55E' : item.type === 'medium' ? '#F59E0B' : '#EF4444' }]} />
+        // Handle Firestore Timestamp
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    };
+
+    const getStatusType = (level: number) => {
+        if (level === 1) return 'vacant';
+        if (level === 2 || level === 3) return 'medium';
+        return 'loaded';
+    };
+
+    const renderReportCard = ({ item }: { item: any }) => {
+        const type = getStatusType(item.crowdLevel);
+        const bannerStyle = {
+            bg: type === 'vacant' ? '#F0FDF4' : type === 'medium' ? '#FFFBEB' : '#FEF2F2',
+            text: type === 'vacant' ? '#16A34A' : type === 'medium' ? '#D97706' : '#DC2626',
+            border: type === 'vacant' ? '#DCFCE7' : type === 'medium' ? '#FEF3C7' : '#FEE2E2'
+        };
+
+        const avatarId = (item.reportBy?.length || 0) % 70;
+
+        return (
+            <TouchableOpacity style={styles.card} activeOpacity={0.9}>
+                {/* Header: Icon, Name, Category, Status Dot */}
+                <View style={styles.cardHeader}>
+                    <View style={[styles.placeIconBox, { backgroundColor: bannerStyle.bg }]}>
+                        <Ionicons
+                            name="location"
+                            size={24}
+                            color={bannerStyle.text}
+                        />
                     </View>
-                    <Text style={styles.placeCategory}>{item.category}</Text>
-                </View>
-            </View>
-
-            {/* Reporter Info */}
-            <View style={styles.reporterRow}>
-                <Image source={{ uri: item.avatar }} style={styles.reporterAvatar} />
-                <Text style={styles.reporterText} numberOfLines={1}>
-                    <Text style={styles.boldText}>{item.reportedBy.split(' ')[0]}</Text> {item.reportedBy.includes('reported') ? 'reported' : 'sent an update'}
-                </Text>
-                <Text style={styles.reportTime}>{item.timeAgo}</Text>
-            </View>
-
-            {/* Mood/Status Banner */}
-            <View style={[styles.statusBanner, { backgroundColor: item.bannerStyle.bg, borderColor: item.bannerStyle.border }]}>
-                <Text style={[styles.statusBannerText, { color: item.bannerStyle.text }]}>{item.moodText}</Text>
-            </View>
-
-            {/* Footer: Stats and Type Badge */}
-            <View style={styles.cardFooter}>
-                <View style={styles.statsContainer}>
-                    <TouchableOpacity style={styles.statItem}>
-                        <Ionicons name="thumbs-up-outline" size={18} color="#6366F1" />
-                        <Text style={styles.statLabel}>{item.likes}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.statItem}>
-                        <Ionicons name="chatbubble-outline" size={18} color="#94A3B8" />
-                        <Text style={styles.statLabel}>{item.comments}</Text>
-                    </TouchableOpacity>
-                    <View style={styles.statItem}>
-                        <Ionicons name="information-circle-outline" size={18} color="#94A3B8" />
-                        <Text style={styles.statLabel}>Details</Text>
+                    <View style={styles.placeDetails}>
+                        <View style={styles.nameRow}>
+                            <Text style={styles.placeName} numberOfLines={1}>{item.placeName}</Text>
+                            <View style={[styles.inlineStatusDot, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]} />
+                        </View>
+                        <Text style={styles.placeCategory}>Community Reported</Text>
                     </View>
                 </View>
-                <View style={[styles.typeBadge, { backgroundColor: item.type === 'vacant' ? '#22C55E' : item.type === 'medium' ? '#F59E0B' : '#EF4444' }]}>
-                    <Text style={styles.typeBadgeText}>{item.type.toUpperCase()}</Text>
+
+                {/* Reporter Info */}
+                <View style={styles.reporterRow}>
+                    <Image source={{ uri: `https://i.pravatar.cc/100?img=${avatarId}` }} style={styles.reporterAvatar} />
+                    <Text style={styles.reporterText} numberOfLines={1}>
+                        <Text style={styles.boldText}>{item.reportBy?.split('@')[0] || 'User'}</Text> sent an update
+                    </Text>
+                    <Text style={styles.reportTime}>{formatTimeAgo(item.Timestamp)}</Text>
                 </View>
-            </View>
-        </TouchableOpacity>
-    );
+
+                {/* Mood/Status Banner */}
+                <View style={[styles.statusBanner, { backgroundColor: bannerStyle.bg, borderColor: bannerStyle.border }]}>
+                    <Text style={[styles.statusBannerText, { color: bannerStyle.text }]}>{item.liveSituation}</Text>
+                </View>
+
+                {/* Footer: Stats and Type Badge */}
+                <View style={styles.cardFooter}>
+                    <View style={styles.statsContainer}>
+                        <TouchableOpacity style={styles.statItem}>
+                            <Ionicons name="thumbs-up-outline" size={18} color="#6366F1" />
+                            <Text style={styles.statLabel}>{item.likes?.length || 0}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.statItem}>
+                            <Ionicons name="chatbubble-outline" size={18} color="#94A3B8" />
+                            <Text style={styles.statLabel}>{item.commentsCount || 0}</Text>
+                        </TouchableOpacity>
+                        <View style={styles.statItem}>
+                            <Ionicons name="information-circle-outline" size={18} color="#94A3B8" />
+                            <Text style={styles.statLabel}>Details</Text>
+                        </View>
+                    </View>
+                    <View style={[styles.typeBadge, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]}>
+                        <Text style={styles.typeBadgeText}>{type.toUpperCase()}</Text>
+                    </View>
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -172,13 +127,20 @@ export default function PlacesScreen() {
                 </TouchableOpacity>
             </View>
 
-            {loading && dynamicReports.length === 0 ? (
+            {reportsLoading ? (
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ color: '#666' }}>Fetching live reports...</Text>
+                    <ActivityIndicator size="large" color="#6366F1" />
+                    <Text style={{ color: '#666', marginTop: 12 }}>Syncing community reports...</Text>
+                </View>
+            ) : reports.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                    <Ionicons name="chatbubbles-outline" size={64} color="#CBD5E1" />
+                    <Text style={styles.emptyTitle}>No reports yet</Text>
+                    <Text style={styles.emptySubtitle}>Be the first to report a crowd situation near you!</Text>
                 </View>
             ) : (
                 <FlatList
-                    data={dynamicReports}
+                    data={reports}
                     renderItem={renderReportCard}
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.scrollList}
@@ -285,7 +247,7 @@ export default function PlacesScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#ffffffff',
+        backgroundColor: '#fff',
     },
     header: {
         flexDirection: 'row',
@@ -483,6 +445,25 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: '900',
         letterSpacing: 0.5,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 40,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#1E293B',
+        marginTop: 16,
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: '#64748B',
+        textAlign: 'center',
+        marginTop: 8,
+        lineHeight: 20,
     },
     modalBackdrop: {
         flex: 1,
