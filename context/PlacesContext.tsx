@@ -50,17 +50,28 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(true);
         setCurrentSearchName(locationName);
         try {
-            // Geocode for map navigation
-            const geocodeResults = await ExpoLocation.geocodeAsync(locationName);
-            if (geocodeResults && geocodeResults.length > 0) {
-                setCurrentSearchCenter({
-                    latitude: geocodeResults[0].latitude,
-                    longitude: geocodeResults[0].longitude,
-                });
-            }
-
+            // 1. Fetch places first - this gives us actual venue data and a fallback location
             const data = await MapsService.fetchNearbyPlaces(locationName);
             setAllPlaces(data);
+
+            // 2. Try to geocode for the exact city center
+            try {
+                const geocodeResults = await ExpoLocation.geocodeAsync(locationName);
+                if (geocodeResults && geocodeResults.length > 0) {
+                    setCurrentSearchCenter({
+                        latitude: geocodeResults[0].latitude,
+                        longitude: geocodeResults[0].longitude,
+                    });
+                } else if (data.length > 0) {
+                    // Fallback to first place location if geocoding yields no results
+                    setCurrentSearchCenter(data[0].location);
+                }
+            } catch (geocodeError) {
+                console.warn('Native geocoding failed, using place fallback:', geocodeError);
+                if (data.length > 0) {
+                    setCurrentSearchCenter(data[0].location);
+                }
+            }
         } catch (error) {
             console.error('Error searching location:', error);
         } finally {

@@ -16,26 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
-
 import { usePlaces } from '@/context/PlacesContext';
-
-const CATEGORY_ICONS: Record<string, any> = {
-    restaurant: 'restaurant',
-    cafe: 'cafe',
-    bar: 'beer',
-    casino: 'cash',
-    fun: 'happy',
-    shopping: 'cart',
-    default: 'location'
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-    restaurant: '#F59E0B',
-    casino: '#DC2626',
-    fun: '#8B5CF6',
-    shopping: '#6366F1',
-    default: '#94A3B8'
-};
 
 export default function FullMapScreen() {
     const router = useRouter();
@@ -65,7 +46,7 @@ export default function FullMapScreen() {
 
     // Handle search params
     useEffect(() => {
-        if (params.latitude && params.longitude && params.searchQuery) {
+        if (params.latitude && params.longitude) {
             const lat = parseFloat(params.latitude);
             const lng = parseFloat(params.longitude);
 
@@ -73,7 +54,7 @@ export default function FullMapScreen() {
                 setSearchedLocation({
                     latitude: lat,
                     longitude: lng,
-                    query: params.searchQuery,
+                    query: params.searchQuery || 'Searched Location',
                 });
 
                 // Animate to searched location after a short delay
@@ -81,8 +62,8 @@ export default function FullMapScreen() {
                     mapRef.current?.animateToRegion({
                         latitude: lat,
                         longitude: lng,
-                        latitudeDelta: 0.02,
-                        longitudeDelta: 0.02,
+                        latitudeDelta: 0.05,
+                        longitudeDelta: 0.05,
                     }, 1000);
                 }, 500);
             }
@@ -92,8 +73,8 @@ export default function FullMapScreen() {
     const initialRegion: Region = {
         latitude: params.latitude ? parseFloat(params.latitude) : (location?.latitude || defaultLocation.latitude),
         longitude: params.longitude ? parseFloat(params.longitude) : (location?.longitude || defaultLocation.longitude),
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
     };
 
     const getStatusColor = (status: string) => {
@@ -198,35 +179,19 @@ export default function FullMapScreen() {
                 )}
 
                 {/* Real Nearby Places Markers */}
-                {allPlaces.map((place) => {
-                    const category = place.category?.toLowerCase() || 'default';
-                    const iconName = CATEGORY_ICONS[category] || CATEGORY_ICONS.default;
-                    const statusColor = getStatusColor(place.status);
-
-                    return (
-                        <Marker
-                            key={place.id}
-                            coordinate={{
-                                latitude: place.location.latitude,
-                                longitude: place.location.longitude,
-                            }}
-                            onPress={() => handlePlaceSelect(place)}
-                        >
-                            <View style={styles.placeMarker}>
-                                <View style={[
-                                    styles.placeMarkerInner,
-                                    { backgroundColor: statusColor }
-                                ]}>
-                                    <Ionicons
-                                        name={iconName}
-                                        size={14}
-                                        color="#fff"
-                                    />
-                                </View>
-                            </View>
-                        </Marker>
-                    );
-                })}
+                {allPlaces.map((place) => (
+                    <Marker
+                        key={place.id}
+                        coordinate={{
+                            latitude: place.location.latitude,
+                            longitude: place.location.longitude,
+                        }}
+                        title={place.name}
+                        description={place.category}
+                        onPress={() => handlePlaceSelect(place)}
+                        pinColor="#EF4444" // Classic Red
+                    />
+                ))}
 
                 {/* Searched Location Marker */}
                 {searchedLocation && (

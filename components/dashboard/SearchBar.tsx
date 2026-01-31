@@ -16,7 +16,7 @@ import { usePlaces } from '@/context/PlacesContext';
 
 export default function SearchBar() {
     const router = useRouter();
-    const { searchLocation } = usePlaces();
+    const { searchLocation, allPlaces } = usePlaces();
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
 
@@ -30,22 +30,33 @@ export default function SearchBar() {
         setIsSearching(true);
 
         try {
-            // Updated global places based on search
+            // 1. Update global places and search center in context
+            // searchLocation now handles its own internal geocoding with fallbacks
             await searchLocation(searchQuery.trim());
 
-            // Geocode for map navigation
-            const results = await Location.geocodeAsync(searchQuery.trim());
-            if (results && results.length > 0) {
-                const { latitude, longitude } = results[0];
-                router.push({
-                    pathname: '/map',
-                    params: {
-                        searchQuery: searchQuery.trim(),
-                        latitude: latitude.toString(),
-                        longitude: longitude.toString(),
-                    }
-                });
+            // 2. Try to get coordinates for deep navigation
+            let targetCoords = null;
+            try {
+                const results = await Location.geocodeAsync(searchQuery.trim());
+                if (results && results.length > 0) {
+                    targetCoords = {
+                        latitude: results[0].latitude,
+                        longitude: results[0].longitude,
+                    };
+                }
+            } catch (err) {
+                console.warn('Geocoding failed in SearchBar, using context fallback');
             }
+
+            // 3. Navigate with the best available data
+            router.push({
+                pathname: '/map',
+                params: {
+                    searchQuery: searchQuery.trim(),
+                    latitude: targetCoords?.latitude.toString(),
+                    longitude: targetCoords?.longitude.toString(),
+                }
+            });
         } catch (error: any) {
             console.error('Search error:', error);
         } finally {

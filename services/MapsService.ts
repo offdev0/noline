@@ -110,8 +110,8 @@ export class MapsService {
                     rating: p.rating || 4.2,
                     address: p.formattedAddress || 'Address not available',
                     location: {
-                        latitude: p.location?.latitude || locationName === 'Kolkata' ? 22.5726 : 0,
-                        longitude: p.location?.longitude || locationName === 'Kolkata' ? 88.3639 : 0,
+                        latitude: p.location?.latitude ?? (locationName === 'Kolkata' ? 22.5726 : 0),
+                        longitude: p.location?.longitude ?? (locationName === 'Kolkata' ? 88.3639 : 0),
                     }
                 };
             });
