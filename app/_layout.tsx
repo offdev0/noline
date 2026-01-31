@@ -19,13 +19,15 @@ function MainLayout() {
     if (loading) return;
 
     const inTabsGroup = segments[0] === '(tabs)';
+    const inPlaceRoute = segments[0] === 'place';
+    const inAuthenticatedRoute = inTabsGroup || inPlaceRoute;
 
-    if (user && !inTabsGroup) {
-      // Redirect to tabs if user is signed in and not already there
+    if (user && !inAuthenticatedRoute) {
+      // Redirect to tabs if user is signed in and not in an authenticated route
       console.log('User logged in, redirecting to tabs...');
       router.replace('/(tabs)');
-    } else if (!user && inTabsGroup) {
-      // Redirect to login if user is not signed in but tries to access tabs
+    } else if (!user && inAuthenticatedRoute) {
+      // Redirect to login if user is not signed in but tries to access authenticated routes
       console.log('User logged out, redirecting to login...');
       router.replace('/');
     }
@@ -50,6 +52,7 @@ function MainLayout() {
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false, statusBarStyle: 'light' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="place" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />

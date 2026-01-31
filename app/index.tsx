@@ -1,25 +1,25 @@
 import { auth, db } from '@/configs/firebaseConfig';
-import Checkbox from 'expo-checkbox';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Animated,
     Easing,
     SafeAreaView,
     ScrollView,
-    StyleSheet,
     Text,
-    TouchableOpacity,
     View
 } from 'react-native';
 
+import AuthButton from '@/components/auth/AuthButton';
 import AuthHeader from '@/components/auth/AuthHeader';
 import AuthInput from '@/components/auth/AuthInput';
+import AuthLinks from '@/components/auth/AuthLinks';
+import TermsCheckbox from '@/components/auth/TermsCheckbox';
+import { AUTH_GRADIENT_COLORS, authStyles } from '@/components/auth/authStyles';
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -177,16 +177,16 @@ export default function LoginScreen() {
 
     return (
         <LinearGradient
-            colors={['#5356FF', '#3787FF']} // Approximate blue/purple gradient
-            style={styles.container}
+            colors={AUTH_GRADIENT_COLORS}
+            style={authStyles.container}
         >
-            <SafeAreaView style={styles.safeArea}>
+            <SafeAreaView style={authStyles.safeArea}>
                 <AuthHeader />
 
-                <View style={styles.contentContainer}>
-                    <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                        <Text style={styles.title}>Let's get started.</Text>
-                        <Text style={styles.subtitle}>Controlling your time starts here.</Text>
+                <View style={authStyles.contentContainer}>
+                    <ScrollView contentContainerStyle={authStyles.scrollContent} showsVerticalScrollIndicator={false}>
+                        <Text style={authStyles.title}>Let's get started.</Text>
+                        <Text style={authStyles.subtitle}>Controlling your time starts here.</Text>
 
                         {/* Email Input */}
                         <AuthInput
@@ -223,161 +223,30 @@ export default function LoginScreen() {
                         )}
 
                         {/* Action Button with Loading State */}
-                        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                            <TouchableOpacity
-                                style={[styles.button, isLoading && styles.buttonDisabled]}
-                                onPress={handleAuth}
-                                disabled={isLoading}
-                                activeOpacity={0.8}
-                            >
-                                {isLoading ? (
-                                    <View style={styles.loadingContainer}>
-                                        <ActivityIndicator size="small" color="#fff" />
-                                        <Text style={[styles.buttonText, { marginLeft: 10 }]}>
-                                            {isLoginMode ? 'Logging in...' : 'Creating account...'}
-                                        </Text>
-                                    </View>
-                                ) : (
-                                    <Text style={styles.buttonText}>
-                                        {isLoginMode ? 'Log In' : 'Create Account'}
-                                    </Text>
-                                )}
-                            </TouchableOpacity>
-                        </Animated.View>
+                        <AuthButton
+                            isLoading={isLoading}
+                            isLoginMode={isLoginMode}
+                            buttonScale={buttonScale}
+                            onPress={handleAuth}
+                        />
 
                         {/* Terms Checkbox - Only for Signup */}
                         {!isLoginMode && (
-                            <View style={styles.checkboxContainer}>
-                                <Checkbox
-                                    style={styles.checkbox}
-                                    value={isChecked}
-                                    onValueChange={setChecked}
-                                    color={isChecked ? '#4A6CFA' : undefined}
-                                />
-                                <Text style={styles.checkboxLabel}>
-                                    I agree to the Terms of Use and Privacy Policy and allow the use of my location to see real queues and hot spots near me!
-                                </Text>
-                            </View>
+                            <TermsCheckbox
+                                isChecked={isChecked}
+                                onValueChange={setChecked}
+                            />
                         )}
 
-                        {isLoginMode ? (
-                            <TouchableOpacity onPress={toggleMode} disabled={isLoading}>
-                                <Text style={[styles.privacyLink, isLoading && styles.disabledText]}>
-                                    Don't have an account? Sign Up
-                                </Text>
-                            </TouchableOpacity>
-                        ) : (
-                            <TouchableOpacity onPress={toggleMode} disabled={isLoading}>
-                                <Text style={[styles.privacyLink, isLoading && styles.disabledText]}>
-                                    Already have an account? Log In
-                                </Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {!isLoginMode && (
-                            <TouchableOpacity>
-                                <Text style={[styles.privacyLink, { marginTop: 10 }]}>Privacy Policy</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        <View style={{ alignItems: 'center', marginTop: 12 }}>
-                            <TouchableOpacity disabled={isLoading}>
-                                <Text style={[styles.forgotPassword, isLoading && styles.disabledText]}>
-                                    Forgot Password?
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
+                        {/* Auth Links - Toggle Mode, Privacy, Forgot Password */}
+                        <AuthLinks
+                            isLoginMode={isLoginMode}
+                            isLoading={isLoading}
+                            onToggleMode={toggleMode}
+                        />
                     </ScrollView>
                 </View>
             </SafeAreaView>
         </LinearGradient>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    safeArea: {
-        flex: 1,
-    },
-    contentContainer: {
-        flex: 1,
-        backgroundColor: 'white',
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        paddingHorizontal: 24,
-        paddingTop: 32,
-    },
-    scrollContent: {
-        paddingBottom: 40,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#000',
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: '#666',
-        marginBottom: 32,
-    },
-    button: {
-        backgroundColor: '#5A46E5', // Distinctive purple/blue
-        height: 56,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 10,
-        marginBottom: 20,
-        shadowColor: '#4E46E5',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    buttonDisabled: {
-        opacity: 0.8,
-    },
-    buttonText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    loadingContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    checkboxContainer: {
-        flexDirection: 'row',
-        marginBottom: 8,
-    },
-    checkbox: {
-        marginRight: 8,
-        marginTop: 4,
-        borderRadius: 4,
-    },
-    checkboxLabel: {
-        flex: 1,
-        fontSize: 12,
-        color: '#666',
-        lineHeight: 18,
-        marginTop: -2
-    },
-    privacyLink: {
-        fontSize: 12,
-        color: '#4E46E5',
-        marginTop: 2,
-        marginLeft: 22
-    },
-    forgotPassword: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 24
-    },
-    disabledText: {
-        opacity: 0.5,
-    },
-});

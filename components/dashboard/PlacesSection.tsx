@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -29,7 +30,7 @@ const hotPlaces: Place[] = [
 ];
 
 // Place Card Component
-const PlaceCard = ({ place }: { place: Place }) => {
+const PlaceCard = ({ place, onPress }: { place: Place; onPress: () => void }) => {
     const getQueueColor = (status: string) => {
         switch (status) {
             case 'Short queue': return '#22C55E';
@@ -39,8 +40,17 @@ const PlaceCard = ({ place }: { place: Place }) => {
         }
     };
 
+    const handlePress = () => {
+        console.log('Navigating to place:', place.id);
+        onPress();
+    };
+
     return (
-        <View style={styles.card}>
+        <TouchableOpacity
+            style={styles.card}
+            onPress={handlePress}
+            activeOpacity={0.85}
+        >
             {/* Image Placeholder */}
             <LinearGradient
                 colors={place.imageColors}
@@ -72,7 +82,7 @@ const PlaceCard = ({ place }: { place: Place }) => {
                 </View>
 
                 {/* CTA Button */}
-                <TouchableOpacity style={styles.ctaButton} activeOpacity={0.8}>
+                <View style={styles.ctaButton}>
                     <LinearGradient
                         colors={['#5356FF', '#5A46E5']}
                         start={{ x: 0, y: 0 }}
@@ -81,13 +91,23 @@ const PlaceCard = ({ place }: { place: Place }) => {
                     >
                         <Text style={styles.ctaText}>Let's find out</Text>
                     </LinearGradient>
-                </TouchableOpacity>
+                </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 
 export default function PlacesSection() {
+    const router = useRouter();
+
+    const handlePlacePress = (placeId: string) => {
+        console.log('handlePlacePress called with id:', placeId);
+        router.push({
+            pathname: '/place/[id]',
+            params: { id: placeId }
+        });
+    };
+
     return (
         <View style={styles.container}>
             {/* Places with Special Atmosphere */}
@@ -103,7 +123,11 @@ export default function PlacesSection() {
                     contentContainerStyle={styles.cardsContainer}
                 >
                     {specialPlaces.map((place) => (
-                        <PlaceCard key={place.id} place={place} />
+                        <PlaceCard
+                            key={place.id}
+                            place={place}
+                            onPress={() => handlePlacePress(place.id)}
+                        />
                     ))}
                 </ScrollView>
             </View>
@@ -121,7 +145,11 @@ export default function PlacesSection() {
                     contentContainerStyle={styles.cardsContainer}
                 >
                     {hotPlaces.map((place) => (
-                        <PlaceCard key={place.id} place={place} />
+                        <PlaceCard
+                            key={place.id}
+                            place={place}
+                            onPress={() => handlePlacePress(place.id)}
+                        />
                     ))}
                 </ScrollView>
             </View>
