@@ -46,6 +46,13 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.83234148402-1afb8eaa027069f7c06c2b"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow NoLine to use your location to find places and queues near you.",
+          "locationWhenInUsePermission": "Allow NoLine to use your location to find places and queues near you."
+        }
       ]
     ],
     "experiments": {
