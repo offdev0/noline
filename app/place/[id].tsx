@@ -1,8 +1,10 @@
+import ReportModal from '@/components/ReportModal';
+import { useFavorites } from '@/context/FavoritesContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
@@ -22,19 +24,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
-import { useFavorites } from '@/context/FavoritesContext';
-
 export default function PlaceDetailScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
     const { getPlaceById, allPlaces, loading: globalLoading } = usePlaces();
     const { toggleFavorite, isFavorite } = useFavorites();
+    const [isReportVisible, setIsReportVisible] = useState(false);
 
+    // Get dynamic data from context
     const place = useMemo(() => getPlaceById(id), [id, getPlaceById]);
     const isPlaceFavorite = useMemo(() => isFavorite(id || ''), [id, isFavorite]);
 
-    // Derived coordinates (using mock defaults if API doesn't provide lat/lng yet)
-    // Note: In the next step, we could update MapsService to include real lat/lng
+    // Derived coordinates
     const coordinates = {
         latitude: 22.5726,
         longitude: 88.3639,
@@ -78,30 +79,6 @@ export default function PlaceDetailScreen() {
         if (url) Linking.openURL(url);
     };
 
-    const handleCall = () => {
-        // Linking.openURL(`tel:${place.phone}`);
-    };
-
-    const renderStars = (rating: number) => {
-        const stars = [];
-        const fullStars = Math.floor(rating);
-        for (let i = 1; i <= 5; i++) {
-            stars.push(
-                <Ionicons
-                    key={i}
-                    name={i <= fullStars ? 'star' : 'star-outline'}
-                    size={16}
-                    color="#FFD700"
-                />
-            );
-        }
-        return stars;
-    };
-
-    const similarPlaces = allPlaces
-        .filter(p => p.category === place.category && p.id !== place.id)
-        .slice(0, 4);
-
     const handleShare = async () => {
         if (!place) return;
         try {
@@ -113,6 +90,10 @@ export default function PlaceDetailScreen() {
             console.error('Error sharing:', error.message);
         }
     };
+
+    const similarPlaces = allPlaces
+        .filter(p => p.category === place.category && p.id !== place.id)
+        .slice(0, 4);
 
     return (
         <View style={styles.container}>
@@ -268,7 +249,10 @@ export default function PlaceDetailScreen() {
             </ScrollView>
 
             {/* Floating Action Button */}
-            <TouchableOpacity style={styles.fabContainer}>
+            <TouchableOpacity
+                style={styles.fabContainer}
+                onPress={() => setIsReportVisible(true)}
+            >
                 <LinearGradient
                     colors={['#6366F1', '#4F46E5']}
                     start={{ x: 0, y: 0 }}
@@ -279,6 +263,13 @@ export default function PlaceDetailScreen() {
                     <Text style={styles.fabText}>Report Queue</Text>
                 </LinearGradient>
             </TouchableOpacity>
+
+            {/* Report Modal Component */}
+            <ReportModal
+                isVisible={isReportVisible}
+                onClose={() => setIsReportVisible(false)}
+                place={place}
+            />
         </View>
     );
 }

@@ -9,6 +9,7 @@ import 'react-native-reanimated';
 import { FavoritesProvider } from '@/context/FavoritesContext';
 import { LocationProvider } from '@/context/LocationContext';
 import { PlacesProvider } from '@/context/PlacesContext';
+import { ReportsProvider } from '@/context/ReportsContext';
 import { UserProvider, useUser } from '@/context/UserContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -28,11 +29,9 @@ function MainLayout() {
     const inAuthenticatedRoute = inTabsGroup || inPlaceRoute || inMapRoute || inFavoritesRoute;
 
     if (user && !inAuthenticatedRoute) {
-      // Redirect to tabs if user is signed in and not in an authenticated route
       console.log('User logged in, redirecting to tabs...');
       router.replace('/(tabs)');
     } else if (!user && inAuthenticatedRoute) {
-      // Redirect to login if user is not signed in but tries to access authenticated routes
       console.log('User logged out, redirecting to login...');
       router.replace('/');
     }
@@ -80,7 +79,9 @@ export default function RootLayout() {
       <LocationProvider>
         <PlacesProvider>
           <FavoritesProvider>
-            <MainLayout />
+            <ReportsProvider>
+              <MainLayout />
+            </ReportsProvider>
           </FavoritesProvider>
         </PlacesProvider>
       </LocationProvider>
