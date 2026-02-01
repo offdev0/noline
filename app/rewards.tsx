@@ -18,11 +18,13 @@ const { width } = Dimensions.get('window');
 export default function RewardsScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const { user, completedTasksToday } = useUser();
+    const { user, completedTasksToday, userData } = useUser();
 
     const points = parseInt(params.points as string) || 0;
     const streak = parseInt(params.streak as string) || 0;
-    const userName = user?.displayName || user?.email?.split('@')[0] || 'Explorer';
+    const userName = userData?.display_name || user?.displayName || user?.email?.split('@')[0] || 'Explorer';
+    const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
+    const profilePic = userData?.photo_url || user?.photoURL || DEFAULT_PROFILE_PIC;
 
     // Simple logic for level and XP based on points
     const level = Math.floor(points / 500) + 1;
@@ -48,7 +50,7 @@ export default function RewardsScreen() {
                 {/* Profile Card */}
                 <View style={styles.profileCard}>
                     <Image
-                        source={{ uri: `https://ui-avatars.com/api/?name=${userName}&background=random` }}
+                        source={{ uri: profilePic }}
                         style={styles.avatar}
                     />
                     <Text style={styles.userName}>{userName}</Text>

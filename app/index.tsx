@@ -29,6 +29,8 @@ import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import TermsCheckbox from '@/components/auth/TermsCheckbox';
 import { AUTH_GRADIENT_COLORS, authStyles } from '@/components/auth/authStyles';
 
+const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
+
 export default function LoginScreen() {
     const router = useRouter();
     const [email, setEmail] = useState('');
@@ -138,7 +140,7 @@ export default function LoginScreen() {
                         uid: user.uid,
                         email: user.email || '',
                         display_name: "", // Initial empty, user can update later
-                        photo_url: "",
+                        photo_url: DEFAULT_PROFILE_PIC,
                         phone_number: "",
                         username: email.split('@')[0], // Default username from email
 
@@ -227,7 +229,7 @@ export default function LoginScreen() {
                     uid: user.uid,
                     email: user.email || '',
                     display_name: user.displayName || "",
-                    photo_url: user.photoURL || "",
+                    photo_url: user.photoURL || DEFAULT_PROFILE_PIC,
                     phone_number: user.phoneNumber || "",
                     username: user.email?.split('@')[0] || "",
                     created_time: Timestamp.now(),

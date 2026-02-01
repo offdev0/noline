@@ -28,8 +28,11 @@ interface SideDrawerProps {
 
 export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawerProps) {
     const router = useRouter();
-    const { logout } = useUser();
+    const { logout, userData } = useUser();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
+    const profilePic = userData?.photo_url || DEFAULT_PROFILE_PIC;
 
     const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -69,12 +72,10 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
     const handleLogout = async () => {
         setIsLoggingOut(true);
         try {
-            // Close the drawer first to ensure navigation is visible
             onClose();
-            // Small delay to let the modal close animation complete
             await new Promise(resolve => setTimeout(resolve, 100));
             await logout();
-            router.replace('/'); // Explicitly navigate to the root (login screen)
+            router.replace('/');
         } catch (error) {
             console.error("Error signing out: ", error);
             setIsLoggingOut(false);
@@ -117,7 +118,6 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
             animationType="none"
             onRequestClose={onClose}
         >
-            {/* Overlay Backdrop */}
             <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
                 <TouchableOpacity
                     style={styles.backdropTouch}
@@ -127,12 +127,9 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                 />
             </Animated.View>
 
-            {/* Drawer Content */}
             <Animated.View style={[styles.drawerContainer, { transform: [{ translateX: slideAnim }] }]}>
                 <SafeAreaView style={styles.safeArea}>
                     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-
-                        {/* Close Button Header */}
                         <View style={styles.headerRow}>
                             <TouchableOpacity onPress={onClose} disabled={isLoggingOut}>
                                 <Ionicons name="arrow-back" size={24} color="#333" />
@@ -141,18 +138,16 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             <View style={{ width: 24 }} />
                         </View>
 
-                        {/* Profile Info */}
                         <View style={styles.profileInfoContainer}>
                             <View style={styles.avatarContainer}>
                                 <Image
-                                    source={{ uri: 'https://i.pravatar.cc/150?img=33' }}
+                                    source={{ uri: profilePic }}
                                     style={styles.avatar}
                                 />
                             </View>
-                            <Text style={styles.displayName}>{userEmail?.split('@')[0] || '[Display Name]'}</Text>
+                            <Text style={styles.displayName}>{userData?.display_name || userEmail?.split('@')[0] || '[Display Name]'}</Text>
                         </View>
 
-                        {/* Level / XP Card */}
                         <View style={styles.levelCard}>
                             <View style={styles.levelHeader}>
                                 <View style={styles.medalIcon}>
@@ -169,7 +164,6 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             <Text style={styles.reportsText}>You're 3 reports away from your next medal!</Text>
                         </View>
 
-                        {/* My Personal Area */}
                         <SectionHeader title="My personal area" />
                         <View style={styles.menuGroup}>
                             <MenuItem
@@ -184,7 +178,6 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             <MenuItem icon="person-add" label="Profile sharing" />
                         </View>
 
-                        {/* Settings */}
                         <SectionHeader title="Settings" />
                         <View style={styles.menuGroup}>
                             <MenuItem icon="settings" label="General settings" />
@@ -193,7 +186,6 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             <MenuItem icon="share-social" label="Tell your friends about NoLine" />
                         </View>
 
-                        {/* Support */}
                         <SectionHeader title="Support" />
                         <View style={styles.menuGroup}>
                             <MenuItem
@@ -214,7 +206,6 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             />
                         </View>
 
-                        {/* Entry/Exit */}
                         <SectionHeader title="Account" />
                         <View style={styles.menuGroup}>
                             <MenuItem icon="swap-horizontal" label="Account switching" />

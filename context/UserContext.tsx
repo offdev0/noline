@@ -9,6 +9,7 @@ interface UserContextType {
     streak: number;
     points: number;
     completedTasksToday: string[];
+    userData: any;
     logout: () => Promise<void>;
     addPoints: (amount: number) => Promise<void>;
     completeTask: (taskId: string, points: number) => Promise<void>;
@@ -21,6 +22,7 @@ const UserContext = createContext<UserContextType>({
     streak: 0,
     points: 0,
     completedTasksToday: [],
+    userData: null,
     logout: async () => { },
     addPoints: async () => { },
     completeTask: async () => { },
@@ -35,6 +37,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const [streak, setStreak] = useState(0);
     const [points, setPoints] = useState(0);
     const [completedTasksToday, setCompletedTasksToday] = useState<string[]>([]);
+    const [userData, setUserData] = useState<any>(null);
 
     const updateStreakAndPoints = async (currentUser: User) => {
         try {
@@ -43,6 +46,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (userSnap.exists()) {
                 const data = userSnap.data();
+                setUserData(data);
                 const lastLogin = data.lastLogin?.toDate();
                 const currentStreak = data.streak || 0;
                 const currentPoints = data.points || 0;
@@ -95,17 +99,20 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                 // Initialize user document if not exists
                 const now = new Date();
                 const todayStr = now.toISOString().split('T')[0];
+                const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
                 const initialData = {
                     streak: 1,
                     points: 0,
                     lastLogin: serverTimestamp(),
                     email: currentUser.email,
                     displayName: currentUser.displayName,
+                    photo_url: currentUser.photoURL || DEFAULT_PROFILE_PIC,
                     dailyProgress: {
                         [todayStr]: ['daily_login']
                     }
                 };
                 await setDoc(userRef, initialData);
+                setUserData(initialData);
                 setStreak(1);
                 setPoints(10); // 10 points for first login
                 setCompletedTasksToday(['daily_login']);
@@ -124,6 +131,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             } else {
                 setStreak(0);
                 setPoints(0);
+                setUserData(null);
             }
             setLoading(false);
         });
@@ -205,7 +213,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     return (
-        <UserContext.Provider value={{ user, loading, logout, streak, points, completedTasksToday, addPoints, completeTask, isTaskCompleted }}>
+        <UserContext.Provider value={{ user, loading, logout, streak, points, completedTasksToday, userData, addPoints, completeTask, isTaskCompleted }}>
             {children}
         </UserContext.Provider>
     );

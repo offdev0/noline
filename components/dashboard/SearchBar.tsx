@@ -13,12 +13,18 @@ import {
 } from 'react-native';
 
 import { usePlaces } from '@/context/PlacesContext';
+import { useUser } from '@/context/UserContext';
+
+const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
 
 export default function SearchBar() {
     const router = useRouter();
+    const { userData } = useUser();
     const { searchLocation, allPlaces } = usePlaces();
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+
+    const profilePic = userData?.photo_url || DEFAULT_PROFILE_PIC;
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) {
@@ -72,7 +78,7 @@ export default function SearchBar() {
     return (
         <View style={styles.searchContainer}>
             <Image
-                source={{ uri: 'https://i.pravatar.cc/100?img=33' }}
+                source={{ uri: profilePic }}
                 style={styles.avatar}
             />
             <TextInput
