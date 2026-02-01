@@ -158,7 +158,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                                     <View style={styles.progressBarBg}>
                                         <View style={[styles.progressBarFill, { width: '60%' }]} />
                                     </View>
-                                    <Text style={styles.xpText}>310 / 500 XP to the next level</Text>
+
                                 </View>
                             </View>
                             <Text style={styles.reportsText}>You're 3 reports away from your next medal!</Text>
