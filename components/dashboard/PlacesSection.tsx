@@ -135,7 +135,7 @@ export default function PlacesSection() {
                         <Text style={styles.emoji}>{section.emoji}</Text>
                     </View>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardsContainer}>
-                        {section.data.map((place) => (
+                        {section.data.slice(0, 8).map((place) => (
                             <PlaceCard
                                 key={place.id}
                                 place={mapPlace(place)}
