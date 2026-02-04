@@ -11,7 +11,7 @@ const { width } = Dimensions.get('window');
 export default function SearchResultsScreen() {
     const router = useRouter();
     const { query, lat, lon } = useLocalSearchParams();
-    const { searchLocation, allPlaces, loading, recordPlaceClick } = usePlaces();
+    const { performSearch, searchResults, loading, recordPlaceClick } = usePlaces();
     const [results, setResults] = useState<PlaceData[]>([]);
 
     useEffect(() => {
@@ -21,7 +21,7 @@ export default function SearchResultsScreen() {
     }, [query]);
 
     const handleSearch = async () => {
-        await searchLocation(query as string);
+        await performSearch(query as string);
     };
 
     const handlePlacePress = (place: PlaceData) => {
@@ -98,9 +98,9 @@ export default function SearchResultsScreen() {
                     <ActivityIndicator size="large" color="#6366F1" />
                     <Text style={styles.loadingText}>Searching for places...</Text>
                 </View>
-            ) : allPlaces.length > 0 ? (
+            ) : searchResults.length > 0 ? (
                 <FlatList
-                    data={allPlaces}
+                    data={searchResults}
                     renderItem={renderPlaceItem}
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.listContent}

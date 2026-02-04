@@ -31,7 +31,7 @@ const { width } = Dimensions.get('window');
 export default function PlaceDetailScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
-    const { getPlaceById, allPlaces, loading: globalLoading } = usePlaces();
+    const { getPlaceById, allPlaces, searchResults, loading: globalLoading } = usePlaces();
     const { toggleFavorite, isFavorite } = useFavorites();
     const { reports } = useReports();
     const { user } = useUser();
@@ -131,7 +131,7 @@ export default function PlaceDetailScreen() {
         }
     };
 
-    const similarPlaces = allPlaces
+    const similarPlaces = [...allPlaces, ...searchResults]
         .filter(p => p.category === place.category && p.id !== place.id)
         .slice(0, 4);
 

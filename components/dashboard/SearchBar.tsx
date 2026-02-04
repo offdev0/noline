@@ -6,6 +6,7 @@ import {
     ActivityIndicator,
     Image,
     Keyboard,
+    Platform,
     StyleSheet,
     TextInput,
     TouchableOpacity,
@@ -132,10 +133,11 @@ const styles = StyleSheet.create({
     searchInput: {
         flex: 1,
         paddingHorizontal: 15,
-        paddingVertical: 10,
+        paddingVertical: Platform.OS === 'ios' ? 10 : 0, // Prevent Android clipping
         fontSize: 16,
         color: '#333',
         height: 50,
+        textAlignVertical: 'center', // Ensure vertical alignment
     },
     searchButton: {
         width: 40,

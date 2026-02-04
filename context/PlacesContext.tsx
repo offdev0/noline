@@ -13,7 +13,9 @@ interface PlacesContextType {
     restaurants: PlaceData[];
     recommendedPlaces: PlaceData[];
     vibePlaces: PlaceData[];
+    searchResults: PlaceData[];
     loading: boolean;
+    performSearch: (locationName: string) => Promise<PlaceData[]>;
     searchLocation: (locationName: string) => Promise<void>;
     resetSearch: () => void;
     recordPlaceClick: (place: PlaceData) => Promise<void>;
@@ -29,7 +31,9 @@ const PlacesContext = createContext<PlacesContextType>({
     restaurants: [],
     recommendedPlaces: [],
     vibePlaces: [],
+    searchResults: [],
     loading: false,
+    performSearch: async () => [],
     searchLocation: async () => { },
     resetSearch: () => { },
     recordPlaceClick: async () => { },
@@ -44,6 +48,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
     const { user, completeTask } = useUser();
     const { address, location } = useLocation();
     const [allPlaces, setAllPlaces] = useState<PlaceData[]>([]);
+    const [searchResults, setSearchResults] = useState<PlaceData[]>([]);
     const [loading, setLoading] = useState(false);
     const [currentSearchCenter, setCurrentSearchCenter] = useState<{ latitude: number; longitude: number } | null>(null);
     const [currentSearchName, setCurrentSearchName] = useState<string | null>(null);
@@ -104,22 +109,12 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
-    // Main search function - geocodes city name to coordinates first
-    const searchLocation = async (locationName: string, isManual: boolean = true) => {
-        console.log(`[PlacesContext] searchLocation: "${locationName}", isManual: ${isManual}`);
-
-
-
-        if (isManual) {
-            setIsManualSearch(true);
-        }
+    // Dedicated search function that returns data without affecting Home state
+    const performSearch = async (locationName: string): Promise<PlaceData[]> => {
+        console.log(`[PlacesContext] performSearch: "${locationName}"`);
         setLoading(true);
-        setCurrentSearchName(locationName);
-
         try {
-            // Step 1: Geocode the location name to get coordinates
             let targetCoords: { latitude: number; longitude: number } | null = null;
-
             try {
                 const geocodeResults = await ExpoLocation.geocodeAsync(locationName);
                 if (geocodeResults && geocodeResults.length > 0) {
@@ -127,39 +122,30 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                         latitude: geocodeResults[0].latitude,
                         longitude: geocodeResults[0].longitude,
                     };
-                    console.log(`[PlacesContext] Geocoded "${locationName}" to: ${targetCoords.latitude}, ${targetCoords.longitude}`);
                 }
-            } catch (geocodeError) {
-                console.warn('[PlacesContext] Geocoding failed:', geocodeError);
-            }
+            } catch (err) { }
 
-            // Step 2: If we have coordinates, use coordinate-based fetch for richer results
+            let data: PlaceData[] = [];
             if (targetCoords) {
-                const data = await MapsService.fetchPlacesByCoordinates(
-                    targetCoords.latitude,
-                    targetCoords.longitude
-                );
-                console.log(`[PlacesContext] Fetched ${data.length} places for ${locationName}`);
-                setAllPlaces(data);
-                setCurrentSearchCenter(targetCoords);
+                data = await MapsService.fetchPlacesByCoordinates(targetCoords.latitude, targetCoords.longitude);
             } else {
-                // Fallback to text-based search
-                console.log('[PlacesContext] Using text-based fallback');
-                const data = await MapsService.fetchNearbyPlaces(locationName);
-                setAllPlaces(data);
-                if (data.length > 0) {
-                    setCurrentSearchCenter(data[0].location);
-                }
+                data = await MapsService.fetchNearbyPlaces(locationName);
             }
 
-            // Save to history
+            setSearchResults(data);
             await saveSearchHistory(locationName, locationName);
-
+            return data;
         } catch (error) {
-            console.error('[PlacesContext] Error in searchLocation:', error);
+            console.error('[PlacesContext] performSearch Error:', error);
+            return [];
         } finally {
             setLoading(false);
         }
+    };
+
+    // Legacy searchLocation - now uses performSearch but doesn't update allPlaces
+    const searchLocation = async (locationName: string) => {
+        await performSearch(locationName);
     };
 
     const resetSearch = () => {
@@ -175,7 +161,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const getPlaceById = (id: string) => {
-        return allPlaces.find(p => p.id === id);
+        return allPlaces.find(p => p.id === id) || searchResults.find(p => p.id === id);
     };
 
     // Auto-fetch places when GPS location becomes available (and no manual search is active)
@@ -187,7 +173,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
             } else if (!loading) {
                 // FALLBACK: Fetch general Israel places if location is denied or still loading
                 console.log('[PlacesContext] Location unavailable, fetching general Israel places');
-                searchLocation('Top attractions in Tel Aviv and Jerusalem', false);
+                searchLocation('Top attractions in Tel Aviv and Jerusalem');
             }
         }
     }, [location, isManualSearch, currentSearchName]);
@@ -209,7 +195,9 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                 restaurants,
                 recommendedPlaces,
                 vibePlaces,
+                searchResults,
                 loading,
+                performSearch,
                 searchLocation,
                 recordPlaceClick,
                 resetSearch,
