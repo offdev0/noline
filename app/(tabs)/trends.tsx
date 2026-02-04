@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     Dimensions,
     Image,
@@ -26,12 +26,30 @@ const moods = [
 
 import { useFavorites } from '@/context/FavoritesContext';
 import { usePlaces } from '@/context/PlacesContext';
+import { PlaceData } from '@/services/MapsService';
 
 export default function TrendsScreen() {
     const router = useRouter();
     const { trendingPlaces, loading } = usePlaces();
     const { favorites } = useFavorites();
     const [showAllTrending, setShowAllTrending] = useState(false);
+    const [selectedMood, setSelectedMood] = useState<string | null>(null);
+
+    const filteredTrendingPlaces = useMemo(() => {
+        if (!selectedMood) return trendingPlaces;
+
+        return trendingPlaces.filter((place: PlaceData) => {
+            const mood = selectedMood.toLowerCase();
+            const category = place.category.toLowerCase();
+
+            if (mood === 'calm') return category === 'mustvisit' || place.description.toLowerCase().includes('relaxed');
+            if (mood === 'social') return category === 'restaurant' || category === 'hot';
+            if (mood === 'adventure') return category === 'fun' || category === 'casino';
+            if (mood === 'freedom') return category === 'shopping' || category === 'mustvisit';
+
+            return true;
+        });
+    }, [selectedMood, trendingPlaces]);
 
     const handlePlacePress = (id: string) => {
         router.push({
@@ -72,8 +90,21 @@ export default function TrendsScreen() {
                 <View style={styles.moodContainer}>
                     {moods.map((mood) => (
                         <View key={mood.id} style={styles.moodItem}>
-                            <TouchableOpacity activeOpacity={0.8} style={styles.moodWrapper}>
-                                <LinearGradient colors={mood.colors as any} style={styles.moodCircle}>
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                style={[
+                                    styles.moodWrapper,
+                                    selectedMood === mood.label && styles.selectedMoodWrapper
+                                ]}
+                                onPress={() => setSelectedMood(selectedMood === mood.label ? null : mood.label)}
+                            >
+                                <LinearGradient
+                                    colors={mood.colors as any}
+                                    style={[
+                                        styles.moodCircle,
+                                        selectedMood === mood.label && { borderWidth: 2, borderColor: mood.iconColor }
+                                    ]}
+                                >
                                     <Ionicons name={mood.icon as any} size={22} color={mood.iconColor} />
                                 </LinearGradient>
                                 <Text style={[styles.moodLabel, { color: mood.iconColor }]}>{mood.label}</Text>
@@ -100,8 +131,8 @@ export default function TrendsScreen() {
                             <Text style={{ color: '#666', textAlign: 'center' }}>Updating live trends...</Text>
                         </View>
                     ) : (
-                        (trendingPlaces.length > 0
-                            ? (showAllTrending ? trendingPlaces : trendingPlaces.slice(0, 3))
+                        (filteredTrendingPlaces.length > 0
+                            ? (showAllTrending ? filteredTrendingPlaces : filteredTrendingPlaces.slice(0, 3))
                             : []
                         ).map((place) => (
                             <TouchableOpacity
@@ -124,7 +155,10 @@ export default function TrendsScreen() {
                                             <Text style={styles.placeName}>{place.name}</Text>
                                             <Text style={styles.placeDescription}>{place.description}</Text>
                                         </View>
-                                        <TouchableOpacity style={styles.quickVisitBtn}>
+                                        <TouchableOpacity
+                                            style={styles.quickVisitBtn}
+                                            onPress={() => handlePlacePress(place.id)}
+                                        >
                                             <LinearGradient colors={['#6366F1', '#4F46E5']} style={styles.visitGradient}>
                                                 <Text style={styles.visitText}>Visit</Text>
                                             </LinearGradient>
@@ -263,6 +297,9 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '700',
         textTransform: 'capitalize',
+    },
+    selectedMoodWrapper: {
+        transform: [{ scale: 1.05 }],
     },
     sectionHeader: {
         flexDirection: 'row',

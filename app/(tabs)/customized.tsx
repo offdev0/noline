@@ -144,6 +144,23 @@ export default function CustomizedScreen() {
         });
     };
 
+    const handleTipPress = (tip: any) => {
+        const description = tip.description.toLowerCase();
+        const foundPlace = allPlaces.find(p => description.includes(p.name.toLowerCase()));
+
+        if (foundPlace) {
+            handleNavigate(foundPlace.id);
+        } else {
+            // Fallback: extract place name or search
+            const match = tip.description.match(/at (.*?) (now|right now)/i);
+            const searchName = match ? match[1] : tip.title;
+            router.push({
+                pathname: '/map',
+                params: { search: searchName }
+            });
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView
@@ -214,7 +231,10 @@ export default function CustomizedScreen() {
                         <View style={styles.hotTipContent}>
                             <Text style={styles.hotTipTitle}>{tip.title}</Text>
                             <Text style={styles.hotTipDescription}>{tip.description}</Text>
-                            <TouchableOpacity style={styles.checkNowButton}>
+                            <TouchableOpacity
+                                style={styles.checkNowButton}
+                                onPress={() => handleTipPress(tip)}
+                            >
                                 <Text style={styles.checkNowText}>{tip.action}</Text>
                             </TouchableOpacity>
                         </View>

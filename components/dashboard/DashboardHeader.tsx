@@ -30,7 +30,7 @@ export default function DashboardHeader({ onMenuPress }: DashboardHeaderProps) {
                     <Image
                         source={medal}
                         style={styles.medalImage}
-                        resizeMode="contain"
+                        resizeMode="cover"
                     />
                 )}
                 {streak >= 2 && (
@@ -58,9 +58,9 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     medalImage: {
-        width: 65,
-        height: 65,
-        marginBottom: -15, // Overlap streak info slightly
+        width: 70,
+        height: 70,
+        marginBottom: -15,
     },
     streakBadge: {
         flexDirection: 'row',

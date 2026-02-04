@@ -73,7 +73,7 @@ export default function RewardsScreen() {
                     <View style={styles.progressHeader}>
                         <View style={styles.medalIconWrapper}>
                             {medal ? (
-                                <Image source={medal} style={styles.progressMedal} resizeMode="contain" />
+                                <Image source={medal} style={styles.progressMedal} resizeMode="cover" />
                             ) : (
                                 <Ionicons name="medal" size={32} color="#94A3B8" />
                             )}
@@ -241,19 +241,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     medalIconWrapper: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: '#F8FAFC',
+        width: 80,
+        height: 80,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
-        borderWidth: 1,
-        borderColor: '#E2E8F0',
     },
     progressMedal: {
-        width: 50,
-        height: 50,
+        width: 80,
+        height: 80,
     },
     progressInfo: {
         flex: 1,
@@ -386,21 +382,16 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     achievementCircle: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: '#F8FAFC',
-        borderWidth: 1,
-        borderColor: '#F1F5F9',
+        width: 60,
+        height: 60,
         justifyContent: 'center',
         alignItems: 'center',
     },
     achievementCircleEarned: {
-        backgroundColor: '#EEF2FF',
-        borderColor: '#6366F1',
+        // Remove background and border as per user preference for a "clean" look
     },
     achievementMedal: {
-        width: 40,
-        height: 40,
+        width: 60,
+        height: 60,
     }
 });
