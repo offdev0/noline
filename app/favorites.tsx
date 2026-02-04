@@ -29,6 +29,19 @@ export default function FavoritesScreen() {
             return '#EF4444';
         };
 
+        const getCategoryIcon = (cat: string) => {
+            const c = cat.toLowerCase();
+            if (c.includes('restaurant')) return 'restaurant';
+            if (c.includes('cafe') || c.includes('coffee')) return 'cafe';
+            if (c.includes('shop') || c.includes('shopping') || c.includes('mall') || c.includes('store')) return 'cart';
+            if (c.includes('casino') || c.includes('game') || c.includes('play')) return 'game-controller';
+            if (c.includes('fun') || c.includes('entertainment') || c.includes('park')) return 'happy';
+            if (c.includes('bar') || c.includes('club') || c.includes('night')) return 'wine';
+            if (c.includes('must') || c.includes('attraction') || c.includes('landmark')) return 'camera';
+            if (c.includes('vibe') || c.includes('special')) return 'sparkles';
+            return 'location';
+        };
+
         const getQueueBgColor = (status: string) => {
             if (status === 'vacant') return 'rgba(34, 197, 94, 0.1)';
             if (status === 'medium') return 'rgba(245, 158, 11, 0.1)';
@@ -42,6 +55,10 @@ export default function FavoritesScreen() {
                 activeOpacity={0.9}
             >
                 <Image source={{ uri: item.image }} style={styles.cardImage} />
+                <View style={styles.categoryBadge}>
+                    <Ionicons name={getCategoryIcon(item.category) as any} size={10} color="#fff" />
+                </View>
+
                 <View style={styles.ratingBadge}>
                     <Ionicons name="star" size={10} color="#FFD700" />
                     <Text style={styles.ratingText}>{item.rating}</Text>
@@ -53,8 +70,11 @@ export default function FavoritesScreen() {
 
                     <View style={[styles.statusBadge, { backgroundColor: getQueueBgColor(item.status) }]}>
                         <View style={[styles.statusDot, { backgroundColor: getQueueColor(item.status) }]} />
-                        <Text style={[styles.statusText, { color: getQueueColor(item.status) }]}>{item.status}</Text>
+                        <Text style={[styles.statusText, { color: getQueueColor(item.status) }]}>
+                            {item.status === 'vacant' ? 'Short queue' : item.status === 'medium' ? 'Medium queue' : 'Long queue'}
+                        </Text>
                     </View>
+                    <Text style={styles.distanceText}>{item.distance}</Text>
                 </View>
             </TouchableOpacity>
         );
@@ -196,6 +216,17 @@ const styles = StyleSheet.create({
         color: '#1E293B',
         marginBottom: 4,
     },
+    categoryBadge: {
+        position: 'absolute',
+        top: 8,
+        left: 8,
+        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     categoryText: {
         fontSize: 9,
         fontWeight: '800',
@@ -219,8 +250,13 @@ const styles = StyleSheet.create({
     },
     statusText: {
         fontSize: 10,
-        fontWeight: '700',
-        textTransform: 'capitalize',
+        fontWeight: '800',
+    },
+    distanceText: {
+        fontSize: 10,
+        color: '#64748B',
+        fontWeight: '600',
+        marginTop: 6,
     },
     emptyContainer: {
         flex: 1,

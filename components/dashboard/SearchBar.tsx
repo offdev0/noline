@@ -15,8 +15,6 @@ import {
 import { usePlaces } from '@/context/PlacesContext';
 import { useUser } from '@/context/UserContext';
 
-const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
-
 export default function SearchBar() {
     const router = useRouter();
     const { userData } = useUser();
@@ -24,7 +22,8 @@ export default function SearchBar() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
 
-    const profilePic = userData?.photo_url || DEFAULT_PROFILE_PIC;
+    const displayName = userData?.display_name || userData?.email?.split('@')[0] || 'User';
+    const profilePic = userData?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=6366F1&color=fff&size=80`;
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) {
@@ -54,13 +53,13 @@ export default function SearchBar() {
                 console.warn('Geocoding failed in SearchBar, using context fallback');
             }
 
-            // 3. Navigate with the best available data
+            // 3. Navigate to dedicated search results page
             router.push({
-                pathname: '/map',
+                pathname: '/search-results',
                 params: {
-                    searchQuery: searchQuery.trim(),
-                    latitude: targetCoords?.latitude.toString(),
-                    longitude: targetCoords?.longitude.toString(),
+                    query: searchQuery.trim(),
+                    lat: targetCoords?.latitude.toString(),
+                    lon: targetCoords?.longitude.toString(),
                 }
             });
         } catch (error: any) {
@@ -132,9 +131,11 @@ const styles = StyleSheet.create({
     },
     searchInput: {
         flex: 1,
-        paddingHorizontal: 12,
+        paddingHorizontal: 15,
+        paddingVertical: 10,
         fontSize: 16,
         color: '#333',
+        height: 50,
     },
     searchButton: {
         width: 40,

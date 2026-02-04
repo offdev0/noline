@@ -40,6 +40,19 @@ export default function TrendsScreen() {
         });
     };
 
+    const getCategoryIcon = (cat: string) => {
+        const c = cat?.toLowerCase() || '';
+        if (c.includes('restaurant')) return 'restaurant';
+        if (c.includes('cafe') || c.includes('coffee')) return 'cafe';
+        if (c.includes('shop') || c.includes('shopping') || c.includes('mall') || c.includes('store')) return 'cart';
+        if (c.includes('casino') || c.includes('game') || c.includes('play')) return 'game-controller';
+        if (c.includes('fun') || c.includes('entertainment') || c.includes('park')) return 'happy';
+        if (c.includes('bar') || c.includes('club') || c.includes('night')) return 'wine';
+        if (c.includes('must') || c.includes('attraction') || c.includes('landmark')) return 'camera';
+        if (c.includes('vibe') || c.includes('special')) return 'sparkles';
+        return 'location';
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -119,7 +132,7 @@ export default function TrendsScreen() {
                                     </View>
                                     <View style={styles.cardFooter}>
                                         <View style={styles.metaRow}>
-                                            <Ionicons name="location-outline" size={14} color="#94A3B8" />
+                                            <Ionicons name={getCategoryIcon(place.category) as any} size={14} color="#6366F1" />
                                             <Text style={styles.distanceText}>{place.distance} away</Text>
                                         </View>
                                     </View>

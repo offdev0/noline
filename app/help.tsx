@@ -35,8 +35,6 @@ export default function HelpScreen() {
 
     const contactMethods = [
         { icon: 'mail-outline', label: 'Email Support', value: 'support@noline.app' },
-        { icon: 'chatbubble-ellipses-outline', label: 'Live Chat', value: 'Available 9am - 6pm' },
-        { icon: 'earth-outline', label: 'Help Center', value: 'help.noline.app' }
     ];
 
     return (

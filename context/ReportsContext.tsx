@@ -54,6 +54,8 @@ interface ReportsContextType {
     addComment: (reportId: string, text: string) => Promise<void>;
     getComments: (reportId: string, callback: (comments: CommentData[]) => void) => () => void;
     getReportsByPlace: (placeId: string) => ReportData[];
+    getPlaceStatus: (placeId: string) => { status: string; isExpected: boolean };
+    canReport: (placeId: string) => { allowed: boolean; remainingMs: number };
     loading: boolean;
 }
 
@@ -64,6 +66,8 @@ const ReportsContext = createContext<ReportsContextType>({
     addComment: async () => { },
     getComments: () => () => { },
     getReportsByPlace: () => [],
+    getPlaceStatus: () => ({ status: 'Expected to be busy', isExpected: true }),
+    canReport: () => ({ allowed: true, remainingMs: 0 }),
     loading: false,
 });
 
@@ -97,6 +101,11 @@ export const ReportsProvider = ({ children }: { children: React.ReactNode }) => 
     }, []);
 
     const addReport = async (data: Omit<ReportData, 'id' | 'Timestamp' | 'likes' | 'commentsCount' | 'HELPCOUNT'>) => {
+        const cooldown = canReport(data.businessRef);
+        if (!cooldown.allowed) {
+            throw new Error(`You’ve just reported this place. You’ll be able to report again in ${Math.ceil(cooldown.remainingMs / 60000)} minutes.`);
+        }
+
         try {
             await addDoc(collection(db, 'REPRORT'), {
                 ...data,
@@ -106,11 +115,43 @@ export const ReportsProvider = ({ children }: { children: React.ReactNode }) => 
                 HELPCOUNT: '0',
             });
             await addPoints(10);
-            await completeTask('submit_report', 0); // Mark as done for daily mission but don't add extra points as we added 10 above
+            await completeTask('submit_report', 10); // Reward XP/Points for reporting
         } catch (error) {
             console.error('Error adding report:', error);
             throw error;
         }
+    };
+
+    const canReport = (placeId: string) => {
+        if (!user) return { allowed: true, remainingMs: 0 };
+
+        // Find latest report by this user for this place
+        const lastReport = reports
+            .filter(r => r.businessRef === placeId && r.reportBy === user.email)
+            .sort((a, b) => (b.Timestamp?.toMillis() || 0) - (a.Timestamp?.toMillis() || 0))[0];
+
+        if (!lastReport || !lastReport.Timestamp) return { allowed: true, remainingMs: 0 };
+
+        const fiveMinutesMs = 5 * 60 * 1000;
+        const elapsed = Date.now() - lastReport.Timestamp.toMillis();
+        const remaining = fiveMinutesMs - elapsed;
+
+        return {
+            allowed: elapsed >= fiveMinutesMs,
+            remainingMs: Math.max(0, remaining)
+        };
+    };
+
+    const getPlaceStatus = (placeId: string) => {
+        const placeReports = getReportsByPlace(placeId);
+
+        if (placeReports.length === 0) {
+            return { status: 'Expected to be busy', isExpected: true };
+        }
+
+        // Get most recent report status
+        const latest = placeReports[0]; // Already sorted by desc Timestamp in useEffect
+        return { status: latest.liveSituation || 'Busy', isExpected: false };
     };
 
     const toggleLike = async (reportId: string) => {
@@ -186,6 +227,8 @@ export const ReportsProvider = ({ children }: { children: React.ReactNode }) => 
             addComment,
             getComments,
             getReportsByPlace,
+            getPlaceStatus,
+            canReport,
             loading
         }}>
             {children}

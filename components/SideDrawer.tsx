@@ -6,6 +6,7 @@ import {
     Animated,
     Dimensions,
     Image,
+    Linking,
     Modal,
     SafeAreaView,
     ScrollView,
@@ -28,11 +29,11 @@ interface SideDrawerProps {
 
 export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawerProps) {
     const router = useRouter();
-    const { logout, userData } = useUser();
+    const { logout, userData, level, medal, progressToNextLevel, xpToNextLevel, nextMedal, points, streak } = useUser();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-    const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
-    const profilePic = userData?.photo_url || DEFAULT_PROFILE_PIC;
+    const displayName = userData?.display_name || userEmail?.split('@')[0] || 'User';
+    const profilePic = userData?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=6366F1&color=fff&size=128`;
 
     const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -151,17 +152,26 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                         <View style={styles.levelCard}>
                             <View style={styles.levelHeader}>
                                 <View style={styles.medalIcon}>
-                                    <Ionicons name="medal-outline" size={32} color="#666" />
+                                    <Ionicons
+                                        name={medal === 'Bronze' ? 'medal' : 'trophy'}
+                                        size={32}
+                                        color={
+                                            medal === 'Bronze' ? '#CD7F32' :
+                                                medal === 'Silver' ? '#C0C0C0' :
+                                                    medal === 'Gold' ? '#FFD700' :
+                                                        medal === 'Platinum' ? '#E5E4E2' : '#B9F2FF'
+                                        }
+                                    />
                                 </View>
                                 <View style={styles.levelTexts}>
-                                    <Text style={styles.levelTitle}>Level 3 - Keep growing!</Text>
+                                    <Text style={styles.levelTitle}>Level {level} - {medal} Medal</Text>
                                     <View style={styles.progressBarBg}>
-                                        <View style={[styles.progressBarFill, { width: '60%' }]} />
+                                        <View style={[styles.progressBarFill, { width: `${progressToNextLevel}%` }]} />
                                     </View>
-
+                                    <Text style={styles.xpText}>{xpToNextLevel} XP to {nextMedal}!</Text>
                                 </View>
                             </View>
-                            <Text style={styles.reportsText}>You're 3 reports away from your next medal!</Text>
+                            {streak > 0 && <Text style={styles.streakInfo}>🔥 {streak} Day Streak!</Text>}
                         </View>
 
                         <SectionHeader title="My personal area" />
@@ -180,10 +190,10 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
 
                         <SectionHeader title="Settings" />
                         <View style={styles.menuGroup}>
-                            <MenuItem icon="settings" label="General settings" />
-                            <MenuItem icon="person" label="Account details" />
-                            <MenuItem icon="star-half" label="Rate us" />
-                            <MenuItem icon="share-social" label="Tell your friends about NoLine" />
+                            <MenuItem icon="settings" label="General settings" onPress={() => console.log('General settings')} />
+                            <MenuItem icon="person" label="Account details" onPress={() => console.log('Account details')} />
+                            <MenuItem icon="star-half" label="Rate us" onPress={() => console.log('Rate us')} />
+                            <MenuItem icon="share-social" label="Tell your friends about NoLine" onPress={() => console.log('Share')} />
                         </View>
 
                         <SectionHeader title="Support" />
@@ -197,11 +207,10 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                                 }}
                             />
                             <MenuItem
-                                icon="information-circle"
-                                label="About"
+                                icon="mail-outline"
+                                label="Contact us"
                                 onPress={() => {
-                                    onClose();
-                                    router.push('/about');
+                                    Linking.openURL('mailto:support@noline.app');
                                 }}
                             />
                         </View>
@@ -329,13 +338,15 @@ const styles = StyleSheet.create({
     },
     xpText: {
         fontSize: 10,
-        color: '#888',
+        color: '#6366F1',
+        fontWeight: '600'
     },
-    reportsText: {
-        fontSize: 11,
-        color: '#5356FF',
+    streakInfo: {
+        fontSize: 12,
+        color: '#F97316',
         textAlign: 'center',
-        fontWeight: '500'
+        fontWeight: 'bold',
+        marginTop: 4
     },
     sectionHeader: {
         paddingHorizontal: 20,

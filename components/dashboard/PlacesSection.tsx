@@ -33,12 +33,15 @@ const PlaceCard = ({ place, onPress }: { place: PlaceProps; onPress: () => void 
 
     const getCategoryIcon = (cat: string) => {
         const c = cat.toLowerCase();
-        if (c.includes('restaurant')) return 'restaurant-outline';
-        if (c.includes('cafe')) return 'cafe-outline';
-        if (c.includes('shop')) return 'cart-outline';
-        if (c.includes('casino')) return 'cash-outline';
-        if (c.includes('fun')) return 'happy-outline';
-        return 'location-outline';
+        if (c.includes('restaurant')) return 'restaurant';
+        if (c.includes('cafe') || c.includes('coffee')) return 'cafe';
+        if (c.includes('shop') || c.includes('shopping') || c.includes('mall') || c.includes('store')) return 'cart';
+        if (c.includes('casino') || c.includes('game') || c.includes('play')) return 'game-controller';
+        if (c.includes('fun') || c.includes('entertainment') || c.includes('park')) return 'happy';
+        if (c.includes('bar') || c.includes('club') || c.includes('night')) return 'wine';
+        if (c.includes('must') || c.includes('attraction') || c.includes('landmark')) return 'camera';
+        if (c.includes('vibe') || c.includes('special')) return 'sparkles';
+        return 'location';
     };
 
     return (
@@ -81,12 +84,10 @@ const PlaceCard = ({ place, onPress }: { place: PlaceProps; onPress: () => void 
 export default function PlacesSection() {
     const router = useRouter();
     const {
-        mustVisitPlaces,
-        restaurants,
-        casinos,
         hotPlaces,
-        shopping,
-        funPlaces,
+        restaurants,
+        recommendedPlaces,
+        vibePlaces,
         allPlaces,
         loading,
         recordPlaceClick
@@ -110,7 +111,7 @@ export default function PlacesSection() {
         image: p.image
     });
 
-    if (loading && mustVisitPlaces.length === 0) {
+    if (loading && hotPlaces.length === 0) {
         return (
             <View style={styles.loadingContainer}>
                 <Text style={styles.loadingText}>Fetching real-time spots...</Text>
@@ -119,12 +120,10 @@ export default function PlacesSection() {
     }
 
     const sections = [
-        { title: 'Must visit places', emoji: '✨', data: mustVisitPlaces },
         { title: 'Extremely hot places', emoji: '🔥', data: hotPlaces },
         { title: 'Top Restaurants', emoji: '🍕', data: restaurants },
-        { title: 'Casino & Play', emoji: '🎲', data: casinos },
-        { title: 'Shopping Malls', emoji: '🛍️', data: shopping },
-        { title: 'Fun & Entertainment', emoji: '🎡', data: funPlaces },
+        { title: 'Recommended to Discover', emoji: '✨', data: recommendedPlaces },
+        { title: 'Places with a Special Vibe', emoji: '🎭', data: vibePlaces },
     ].filter(s => s.data && s.data.length > 0);
 
     return (

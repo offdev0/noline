@@ -127,10 +127,13 @@ export default function PlacesScreen() {
 
         return (
             <View style={styles.card}>
-                {/* Header: Icon, Name, Category, Status Dot */}
+                {/* Header: Place Image, Name, Category, Status Dot */}
                 <View style={styles.cardHeader}>
-                    <View style={[styles.placeIconBox, { backgroundColor: bannerStyle.bg }]}>
-                        <Ionicons name="location" size={24} color={bannerStyle.text} />
+                    <View style={styles.placeIconBox}>
+                        <Image
+                            source={{ uri: getPlaceById(item.businessRef)?.image || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=100' }}
+                            style={styles.placeImage}
+                        />
                     </View>
                     <View style={styles.placeDetails}>
                         <View style={styles.nameRow}>
@@ -432,11 +435,14 @@ const styles = StyleSheet.create({
         marginBottom: 14,
     },
     placeIconBox: {
-        width: 44,
-        height: 44,
+        width: 48,
+        height: 48,
         borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    placeImage: {
+        width: '100%',
+        height: '100%',
     },
     placeDetails: {
         flex: 1,

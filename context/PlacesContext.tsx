@@ -9,12 +9,10 @@ import { useUser } from './UserContext';
 interface PlacesContextType {
     allPlaces: PlaceData[];
     trendingPlaces: PlaceData[];
-    mustVisitPlaces: PlaceData[];
-    restaurants: PlaceData[];
-    casinos: PlaceData[];
     hotPlaces: PlaceData[];
-    shopping: PlaceData[];
-    funPlaces: PlaceData[];
+    restaurants: PlaceData[];
+    recommendedPlaces: PlaceData[];
+    vibePlaces: PlaceData[];
     loading: boolean;
     searchLocation: (locationName: string) => Promise<void>;
     resetSearch: () => void;
@@ -27,12 +25,10 @@ interface PlacesContextType {
 const PlacesContext = createContext<PlacesContextType>({
     allPlaces: [],
     trendingPlaces: [],
-    mustVisitPlaces: [],
-    restaurants: [],
-    casinos: [],
     hotPlaces: [],
-    shopping: [],
-    funPlaces: [],
+    restaurants: [],
+    recommendedPlaces: [],
+    vibePlaces: [],
     loading: false,
     searchLocation: async () => { },
     resetSearch: () => { },
@@ -184,19 +180,24 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Auto-fetch places when GPS location becomes available (and no manual search is active)
     useEffect(() => {
-        if (location && !isManualSearch && !currentSearchName && allPlaces.length === 0) {
-            console.log(`[PlacesContext] Auto-fetching with GPS: ${location.latitude}, ${location.longitude}`);
-            fetchByCoordinates(location.latitude, location.longitude);
+        if (!isManualSearch && !currentSearchName && allPlaces.length === 0) {
+            if (location) {
+                console.log(`[PlacesContext] Auto-fetching with GPS: ${location.latitude}, ${location.longitude}`);
+                fetchByCoordinates(location.latitude, location.longitude);
+            } else if (!loading) {
+                // FALLBACK: Fetch general Israel places if location is denied or still loading
+                console.log('[PlacesContext] Location unavailable, fetching general Israel places');
+                searchLocation('Top attractions in Tel Aviv and Jerusalem', false);
+            }
         }
     }, [location, isManualSearch, currentSearchName]);
 
     // Memoize filtered arrays to prevent re-renders
-    const mustVisitPlaces = useMemo(() => allPlaces.filter(p => p.category === 'mustVisit'), [allPlaces]);
-    const restaurants = useMemo(() => allPlaces.filter(p => p.category === 'restaurant'), [allPlaces]);
-    const casinos = useMemo(() => allPlaces.filter(p => p.category === 'casino'), [allPlaces]);
+    // Memoize filtered arrays to match Requirement 11 (4 rows)
     const hotPlaces = useMemo(() => allPlaces.filter(p => p.category === 'hot'), [allPlaces]);
-    const shopping = useMemo(() => allPlaces.filter(p => p.category === 'shopping'), [allPlaces]);
-    const funPlaces = useMemo(() => allPlaces.filter(p => p.category === 'fun'), [allPlaces]);
+    const restaurants = useMemo(() => allPlaces.filter(p => p.category === 'restaurant'), [allPlaces]);
+    const recommendedPlaces = useMemo(() => allPlaces.filter(p => p.category === 'mustVisit'), [allPlaces]);
+    const vibePlaces = useMemo(() => allPlaces.filter(p => p.category === 'fun' || p.category === 'casino' || p.category === 'shopping'), [allPlaces]);
     const trendingPlaces = allPlaces;
 
     return (
@@ -204,12 +205,10 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
             value={{
                 allPlaces,
                 trendingPlaces,
-                mustVisitPlaces,
-                restaurants,
-                casinos,
                 hotPlaces,
-                shopping,
-                funPlaces,
+                restaurants,
+                recommendedPlaces,
+                vibePlaces,
                 loading,
                 searchLocation,
                 recordPlaceClick,

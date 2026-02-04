@@ -14,6 +14,11 @@ interface UserContextType {
     addPoints: (amount: number) => Promise<void>;
     completeTask: (taskId: string, points: number) => Promise<void>;
     isTaskCompleted: (taskId: string) => Promise<boolean>;
+    level: number;
+    medal: string;
+    nextMedal: string;
+    xpToNextLevel: number;
+    progressToNextLevel: number;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -27,6 +32,11 @@ const UserContext = createContext<UserContextType>({
     addPoints: async () => { },
     completeTask: async () => { },
     isTaskCompleted: async () => false,
+    level: 1,
+    medal: 'Bronze',
+    nextMedal: 'Silver',
+    xpToNextLevel: 500,
+    progressToNextLevel: 0,
 });
 
 export const useUser = () => useContext(UserContext);
@@ -55,45 +65,47 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
                 const now = new Date();
                 const todayStr = now.toISOString().split('T')[0];
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
+                const yesterdayStr = yesterday.toISOString().split('T')[0];
+
                 const dailyProgress = data.dailyProgress || {};
-                setCompletedTasksToday(dailyProgress[todayStr] || []);
+                const todayTasks = dailyProgress[todayStr] || [];
+                setCompletedTasksToday(todayTasks);
 
                 const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
                 if (lastLogin) {
                     const lastLoginDate = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
                     const differenceInTime = today.getTime() - lastLoginDate.getTime();
-                    const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+                    const differenceInDays = Math.floor(differenceInTime / (1000 * 3600 * 24));
 
                     if (differenceInDays === 1) {
                         // Logged in exactly the next day
-                        const newStreak = currentStreak + 1;
+                        // We will update streak in completeTask if this is the first task of the day
+                        // For now just preserve the current streak
+                        setStreak(currentStreak);
                         await setDoc(userRef, {
-                            streak: newStreak,
                             lastLogin: serverTimestamp(),
                         }, { merge: true });
-                        setStreak(newStreak);
-                        await completeTask('daily_login', 10);
                     } else if (differenceInDays > 1) {
                         // Missed a day, reset streak
                         await setDoc(userRef, {
-                            streak: 1,
+                            streak: 0,
                             lastLogin: serverTimestamp(),
                         }, { merge: true });
-                        setStreak(1);
-                        await completeTask('daily_login', 10);
+                        setStreak(0);
                     } else if (differenceInDays === 0) {
                         // Already logged in today
                         setStreak(currentStreak);
                     }
                 } else {
-                    // First time tracking streak
+                    // First time tracking
                     await setDoc(userRef, {
-                        streak: 1,
+                        streak: 0,
                         lastLogin: serverTimestamp(),
                     }, { merge: true });
-                    setStreak(1);
-                    await completeTask('daily_login', 10);
+                    setStreak(0);
                 }
             } else {
                 // Initialize user document if not exists
@@ -101,21 +113,19 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                 const todayStr = now.toISOString().split('T')[0];
                 const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
                 const initialData = {
-                    streak: 1,
+                    streak: 0,
                     points: 0,
                     lastLogin: serverTimestamp(),
                     email: currentUser.email,
                     displayName: currentUser.displayName,
                     photo_url: currentUser.photoURL || DEFAULT_PROFILE_PIC,
-                    dailyProgress: {
-                        [todayStr]: ['daily_login']
-                    }
+                    dailyProgress: {}
                 };
                 await setDoc(userRef, initialData);
                 setUserData(initialData);
-                setStreak(1);
-                setPoints(10); // 10 points for first login
-                setCompletedTasksToday(['daily_login']);
+                setStreak(0);
+                setPoints(0);
+                setCompletedTasksToday([]);
             }
         } catch (error) {
             console.error('Error updating streak:', error);
@@ -155,32 +165,49 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const completeTask = useCallback(async (taskId: string, taskPoints: number) => {
         if (!user) return;
         try {
-            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-
-            // Using a simpler approach: store daily completion in a field in the user doc
             const userRef = doc(db, 'users', user.uid);
             const userSnap = await getDoc(userRef);
             const userData = userSnap.data() || {};
             const dailyProgress = userData.dailyProgress || {};
             const todayTasks = dailyProgress[today] || [];
+            const currentStreak = userData.streak || 0;
 
             if (todayTasks.includes(taskId)) return;
 
             const updatedTodayTasks = [...todayTasks, taskId];
-
-            await setDoc(userRef, {
+            const updates: any = {
                 points: increment(taskPoints),
-                [`dailyProgress.${today}`]: updatedTodayTasks
-            }, { merge: true });
+                [`dailyProgress.${today}`]: updatedTodayTasks,
+                lastActivity: serverTimestamp()
+            };
+
+            // Streak Logic: 
+            // If this is the first task today, check if yesterday had a task.
+            if (todayTasks.length === 0) {
+                const yesterdayTasks = dailyProgress[yesterdayStr] || [];
+                if (yesterdayTasks.length > 0) {
+                    // Incremental streak
+                    updates.streak = increment(1);
+                    setStreak(prev => prev + 1);
+                } else {
+                    // Start from 1 if no streak, or reset to 1 if yesterday was missed
+                    updates.streak = 1;
+                    setStreak(1);
+                }
+            }
+
+            await setDoc(userRef, updates, { merge: true });
 
             setPoints(prev => prev + taskPoints);
             setCompletedTasksToday(updatedTodayTasks);
-            if (taskPoints > 0) {
-                console.log(`Task ${taskId} completed! Awarded ${taskPoints} points.`);
-            } else {
-                console.log(`Task ${taskId} marked as completed.`);
-            }
+
+            console.log(`Task ${taskId} completed! Awarded ${taskPoints} points.`);
         } catch (error) {
             console.error('Error completing task:', error);
         }
@@ -212,8 +239,45 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, []);
 
+    const level = Math.floor(points / 500) + 1;
+    const xpInLevel = points % 500;
+    const progressToNextLevel = (xpInLevel / 500) * 100;
+    const xpToNextLevel = 500 - xpInLevel;
+
+    const getMedal = (lvl: number) => {
+        if (lvl >= 50) return 'Diamond';
+        if (lvl >= 20) return 'Platinum';
+        if (lvl >= 10) return 'Gold';
+        if (lvl >= 5) return 'Silver';
+        return 'Bronze';
+    };
+
+    const getNextMedal = (lvl: number) => {
+        if (lvl < 5) return 'Silver';
+        if (lvl < 10) return 'Gold';
+        if (lvl < 20) return 'Platinum';
+        if (lvl < 50) return 'Diamond';
+        return 'Max';
+    };
+
     return (
-        <UserContext.Provider value={{ user, loading, logout, streak, points, completedTasksToday, userData, addPoints, completeTask, isTaskCompleted }}>
+        <UserContext.Provider value={{
+            user,
+            loading,
+            logout,
+            streak,
+            points,
+            completedTasksToday,
+            userData,
+            addPoints,
+            completeTask,
+            isTaskCompleted,
+            level,
+            medal: getMedal(level),
+            nextMedal: getNextMedal(level),
+            xpToNextLevel,
+            progressToNextLevel
+        }}>
             {children}
         </UserContext.Provider>
     );

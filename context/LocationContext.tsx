@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 
 import { useUser } from './UserContext';
 
 const LOCATION_STORAGE_KEY = '@user_location';
+const PROMPT_HISTORY_KEY = '@location_prompt_history';
 
 export interface LocationCoords {
     latitude: number;
@@ -115,16 +116,46 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
             const { status: existingStatus } = await Location.getForegroundPermissionsAsync();
 
             if (existingStatus !== 'granted') {
+                // Check prompt frequency
+                const promptData = await AsyncStorage.getItem(PROMPT_HISTORY_KEY);
+                const now = Date.now();
+                let prompts: number[] = promptData ? JSON.parse(promptData) : [];
+
+                // Filter out prompts older than 24 hours
+                prompts = prompts.filter(p => now - p < 24 * 60 * 60 * 1000);
+
+                const promptsInLast5Mins = prompts.filter(p => now - p < 5 * 60 * 1000).length;
+                const promptsInLast24Hrs = prompts.length;
+
+                if (promptsInLast5Mins >= 2 || (promptsInLast24Hrs >= 1 && promptsInLast5Mins < 2 && now - prompts[prompts.length - 1] > 5 * 60 * 1000)) {
+                    // Skip prompt if already prompted twice in 5 mins OR already prompted in last 24h
+                    console.log('[LocationContext] Skipping prompt due to frequency limits');
+                    setLoading(false);
+                    return;
+                }
+
                 // Request permission
                 const { status } = await Location.requestForegroundPermissionsAsync();
                 setPermissionStatus(status);
 
+                // Save this prompt attempt
+                prompts.push(now);
+                await AsyncStorage.setItem(PROMPT_HISTORY_KEY, JSON.stringify(prompts));
+
                 if (status !== 'granted') {
                     setError('Location permission denied');
                     Alert.alert(
-                        'Location Permission',
-                        'Please enable location permissions in your device settings to see places near you.',
-                        [{ text: 'OK' }]
+                        'Location Required',
+                        'We value your privacy, but NoLine works best with location to show you real-time queues nearby in Israel. Still want to proceed without it?',
+                        [
+                            { text: 'Keep Disabled', style: 'cancel' },
+                            {
+                                text: 'Enable in Settings', onPress: () => {
+                                    if (Platform.OS === 'ios') Linking.openURL('app-settings:');
+                                    else Linking.openSettings();
+                                }
+                            }
+                        ]
                     );
                     setLoading(false);
                     return;

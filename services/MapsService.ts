@@ -50,6 +50,22 @@ const SEARCH_CATEGORIES = [
 
 export class MapsService {
     /**
+     * Calculates distance between two points in km
+     */
+    static calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): string {
+        const R = 6371; // Radius of the earth in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c; 
+        return d < 1 ? `${(d * 1000).toFixed(0)} m` : `${d.toFixed(1)} km`;
+    }
+
+    /**
      * Fetches places using coordinates (lat/lng) with multiple category searches
      */
     static async fetchPlacesByCoordinates(
@@ -131,7 +147,7 @@ export class MapsService {
                 name: p.displayName?.text || 'Great Place',
                 description: p.editorialSummary?.text || `A popular ${category} spot in this area.`,
                 category,
-                distance: `${(Math.random() * 5 + 0.5).toFixed(1)} km`,
+                distance: this.calculateDistance(latitude, longitude, p.location.latitude, p.location.longitude),
                 status: statusOptions[index % statusOptions.length],
                 image: imageUrl,
                 rating: p.rating || 4.2,
@@ -202,7 +218,7 @@ export class MapsService {
                         name: p.displayName?.text || 'Great Place',
                         description: p.editorialSummary?.text || `A popular spot in ${locationName}.`,
                         category,
-                        distance: `${(index * 0.3 + 0.4).toFixed(1)} km`,
+                        distance: '--- km', // Need user location for this
                         status: statusOptions[index % statusOptions.length],
                         image: imageUrl,
                         rating: p.rating || 4.2,

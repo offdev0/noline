@@ -1,6 +1,8 @@
 import ReportModal from '@/components/ReportModal';
 import { useFavorites } from '@/context/FavoritesContext';
 import { usePlaces } from '@/context/PlacesContext';
+import { useReports } from '@/context/ReportsContext';
+import { useUser } from '@/context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -29,6 +31,8 @@ export default function PlaceDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { getPlaceById, allPlaces, loading: globalLoading } = usePlaces();
     const { toggleFavorite, isFavorite } = useFavorites();
+    const { reports } = useReports();
+    const { user } = useUser();
     const [isReportVisible, setIsReportVisible] = useState(false);
 
     // Get dynamic data from context
@@ -36,9 +40,28 @@ export default function PlaceDetailScreen() {
     const isPlaceFavorite = useMemo(() => isFavorite(id || ''), [id, isFavorite]);
 
     // Derived coordinates
-    const coordinates = {
-        latitude: 22.5726,
-        longitude: 88.3639,
+    const coordinates = place?.location || {
+        latitude: 32.0853,
+        longitude: 34.7818, // Default to Tel Aviv if location missing
+    };
+
+    const placeReports = useMemo(() =>
+        reports.filter(r => r.businessRef === id)
+            .sort((a: any, b: any) => (b.Timestamp?.seconds || 0) - (a.Timestamp?.seconds || 0)),
+        [reports, id]);
+
+    const latestReport = placeReports[0];
+
+    const formatTimestamp = (ts: any) => {
+        if (!ts) return 'Unknown time';
+        const seconds = ts.seconds || ts._seconds || 0;
+        const now = Math.floor(Date.now() / 1000);
+        const diff = now - seconds;
+
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return `${Math.floor(diff / 86400)}d ago`;
     };
 
     if (globalLoading && !place) {
@@ -66,6 +89,19 @@ export default function PlaceDetailScreen() {
         if (status === 'vacant') return '#22C55E';
         if (status === 'medium') return '#F59E0B';
         return '#EF4444';
+    };
+
+    const getCategoryIcon = (cat: string) => {
+        const c = cat.toLowerCase();
+        if (c.includes('restaurant')) return 'restaurant';
+        if (c.includes('cafe') || c.includes('coffee')) return 'cafe';
+        if (c.includes('shop') || c.includes('shopping') || c.includes('mall') || c.includes('store')) return 'cart';
+        if (c.includes('casino') || c.includes('game') || c.includes('play')) return 'game-controller';
+        if (c.includes('fun') || c.includes('entertainment') || c.includes('park')) return 'happy';
+        if (c.includes('bar') || c.includes('club') || c.includes('night')) return 'wine';
+        if (c.includes('must') || c.includes('attraction') || c.includes('landmark')) return 'camera';
+        if (c.includes('vibe') || c.includes('special')) return 'sparkles';
+        return 'location';
     };
 
     const handleMapNavigation = () => {
@@ -136,9 +172,13 @@ export default function PlaceDetailScreen() {
                         <View style={styles.statusBadgeContainer}>
                             <View style={styles.statusBadge}>
                                 <View style={[styles.statusDot, { backgroundColor: getQueueColor(place.status) }]} />
-                                <Text style={styles.statusText}>{place.status}</Text>
+                                <Text style={styles.statusText}>
+                                    {latestReport ? latestReport.liveSituation : place.status}
+                                </Text>
                             </View>
-                            <Text style={styles.updatedText}>Updated just now</Text>
+                            <Text style={styles.updatedText}>
+                                Reported {formatTimestamp(latestReport?.Timestamp)}
+                            </Text>
                         </View>
                     </SafeAreaView>
                 </LinearGradient>
@@ -186,7 +226,7 @@ export default function PlaceDetailScreen() {
                 {/* Categories */}
                 <View style={styles.infoBox}>
                     <View style={styles.iconCircle}>
-                        <Ionicons name="pricetag-outline" size={18} color="#5356FF" />
+                        <Ionicons name={getCategoryIcon(place.category) as any} size={18} color="#5356FF" />
                     </View>
                     <View style={styles.infoTextContainer}>
                         <Text style={styles.infoLabel}>{place.category.toUpperCase()}</Text>
@@ -210,6 +250,33 @@ export default function PlaceDetailScreen() {
                         <Marker coordinate={coordinates} />
                     </MapView>
                 </View>
+
+                {/* Reports Feed */}
+                {placeReports.length > 0 && (
+                    <>
+                        <Text style={styles.sectionTitle}>Recent activity</Text>
+                        <View style={styles.reportsFeed}>
+                            {placeReports.slice(0, 5).map((report, index) => (
+                                <View key={index} style={styles.reportItem}>
+                                    <Image
+                                        source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(report.reportBy.split('@')[0])}&background=6366F1&color=fff` }}
+                                        style={styles.reporterAvatar}
+                                    />
+                                    <View style={styles.reportContent}>
+                                        <View style={styles.reportHeader}>
+                                            <Text style={styles.reporterName}>{report.reportBy.split('@')[0]}</Text>
+                                            <Text style={styles.reportTime}>{formatTimestamp(report.Timestamp)}</Text>
+                                        </View>
+                                        <Text style={styles.reportStatus}>{report.liveSituation}</Text>
+                                        {report.description ? (
+                                            <Text style={styles.reportText}>{report.description}</Text>
+                                        ) : null}
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </>
+                )}
 
                 {/* Similar Places */}
                 {similarPlaces.length > 0 && (
@@ -248,21 +315,33 @@ export default function PlaceDetailScreen() {
                 <View style={{ height: 120 }} />
             </ScrollView>
 
-            {/* Floating Action Button */}
-            <TouchableOpacity
-                style={styles.fabContainer}
-                onPress={() => setIsReportVisible(true)}
-            >
-                <LinearGradient
-                    colors={['#6366F1', '#4F46E5']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.fabGradient}
+            {/* Floating Action Buttons */}
+            <View style={styles.actionsBar}>
+                <TouchableOpacity
+                    style={[styles.fabContainer, { flex: 1, marginRight: 10 }]}
+                    onPress={() => setIsReportVisible(true)}
                 >
-                    <Ionicons name="flash" size={20} color="#FFD700" />
-                    <Text style={styles.fabText}>Report Queue</Text>
-                </LinearGradient>
-            </TouchableOpacity>
+                    <LinearGradient
+                        colors={['#6366F1', '#4F46E5']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.fabGradient}
+                    >
+                        <Ionicons name="flash" size={20} color="#FFD700" />
+                        <Text style={styles.fabText}>Report Queue</Text>
+                    </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.fabContainer, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#6366F1' }]}
+                    onPress={() => alert('Review functionality coming soon!')}
+                >
+                    <View style={[styles.fabGradient, { backgroundColor: '#fff' }]}>
+                        <Ionicons name="star-outline" size={20} color="#6366F1" />
+                        <Text style={[styles.fabText, { color: '#6366F1' }]}>Add Review</Text>
+                    </View>
+                </TouchableOpacity>
+            </View>
 
             {/* Report Modal Component */}
             <ReportModal
@@ -318,7 +397,17 @@ const styles = StyleSheet.create({
     similarMeta: { flexDirection: 'row', alignItems: 'center' },
     similarRatingText: { fontSize: 12, fontWeight: '800', marginLeft: 4, color: '#475569' },
     similarStatus: { fontSize: 12, fontWeight: '700', marginLeft: 4, textTransform: 'capitalize' },
-    fabContainer: { position: 'absolute', bottom: 35, alignSelf: 'center', borderRadius: 30, overflow: 'hidden', shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 8 },
-    fabGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 35, paddingVertical: 18 },
+    fabContainer: { borderRadius: 30, overflow: 'hidden', shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 8 },
+    fabGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 18, justifyContent: 'center' },
     fabText: { color: '#fff', fontSize: 16, fontWeight: '800', marginLeft: 10 },
+    actionsBar: { position: 'absolute', bottom: 35, left: 20, right: 20, flexDirection: 'row' },
+    reportsFeed: { marginBottom: 30 },
+    reportItem: { flexDirection: 'row', marginBottom: 20, backgroundColor: '#F8FAFC', padding: 12, borderRadius: 16 },
+    reporterAvatar: { width: 40, height: 40, borderRadius: 20 },
+    reportContent: { flex: 1, marginLeft: 12 },
+    reportHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+    reporterName: { fontSize: 14, fontWeight: '700', color: '#1E293B' },
+    reportTime: { fontSize: 12, color: '#94A3B8' },
+    reportStatus: { fontSize: 13, color: '#6366F1', fontWeight: '700', marginBottom: 2 },
+    reportText: { fontSize: 14, color: '#475569', fontWeight: '500' },
 });
