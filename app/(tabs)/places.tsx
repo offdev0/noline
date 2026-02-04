@@ -77,6 +77,9 @@ export default function PlacesScreen() {
     // Main Filtering Logic
     const filteredReports = useMemo(() => {
         return reports.filter(report => {
+            // 0. Exclude User Reviews from the main feed
+            if (report.liveSituation === 'User Review') return false;
+
             // 1. Filter by Crowd Level
             if (selectedType !== 'All') {
                 const type = getStatusType(report.crowdLevel);
@@ -146,15 +149,24 @@ export default function PlacesScreen() {
 
                 {/* Reporter Info */}
                 <View style={styles.reporterRow}>
-                    <Image source={{ uri: `https://i.pravatar.cc/100?img=${avatarId}` }} style={styles.reporterAvatar} />
-                    <Text style={styles.reporterText} numberOfLines={1}>
-                        <Text style={styles.boldText}>{item.reportBy?.split('@')[0] || 'User'}</Text> sent an update
-                    </Text>
-                    <Text style={styles.reportTime}>{formatTimeAgo(item.Timestamp)}</Text>
+                    <Image
+                        source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.reportBy?.split('@')[0] || 'User')}&background=6366F1&color=fff` }}
+                        style={styles.reporterAvatar}
+                    />
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Text style={styles.boldText}>{item.reportBy?.split('@')[0] || 'User'}</Text>
+                            <Text style={styles.reportTime}>{formatTimeAgo(item.Timestamp)}</Text>
+                        </View>
+                        {/* <Text style={styles.reporterText} numberOfLines={2}>
+                            {item.description || item.liveSituation}
+                        </Text> */}
+                    </View>
                 </View>
 
                 {/* Mood/Status Banner */}
                 <View style={[styles.statusBanner, { backgroundColor: bannerStyle.bg, borderColor: bannerStyle.border }]}>
+                    {/* <Ionicons name="flash" size={14} color={bannerStyle.text} style={{ marginRight: 6 }} /> */}
                     <Text style={[styles.statusBannerText, { color: bannerStyle.text }]}>{item.liveSituation}</Text>
                 </View>
 
@@ -479,10 +491,9 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     reporterAvatar: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        marginRight: 8,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         borderWidth: 1,
         borderColor: '#fff',
     },

@@ -1,4 +1,5 @@
 import ReportModal from '@/components/ReportModal';
+import ReviewModal from '@/components/ReviewModal';
 import { useFavorites } from '@/context/FavoritesContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { useReports } from '@/context/ReportsContext';
@@ -13,6 +14,7 @@ import {
     Image,
     ImageBackground,
     Linking,
+    Modal,
     Platform,
     ScrollView,
     Share,
@@ -34,6 +36,8 @@ export default function PlaceDetailScreen() {
     const { reports } = useReports();
     const { user } = useUser();
     const [isReportVisible, setIsReportVisible] = useState(false);
+    const [isReviewVisible, setIsReviewVisible] = useState(false);
+    const [isImageModalVisible, setIsImageModalVisible] = useState(false);
 
     // Get dynamic data from context
     const place = useMemo(() => getPlaceById(id), [id, getPlaceById]);
@@ -185,7 +189,11 @@ export default function PlaceDetailScreen() {
             </ImageBackground>
 
             {/* Content */}
-            <ScrollView style={styles.contentSection} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={styles.contentSection}
+                contentContainerStyle={styles.contentWrapper}
+            >
                 <View style={styles.titleRow}>
                     <Text style={styles.placeName}>{place.name}</Text>
                     <View style={styles.ratingRow}>
@@ -256,7 +264,7 @@ export default function PlaceDetailScreen() {
                     <>
                         <Text style={styles.sectionTitle}>Recent activity</Text>
                         <View style={styles.reportsFeed}>
-                            {placeReports.slice(0, 5).map((report, index) => (
+                            {placeReports.map((report, index) => (
                                 <View key={index} style={styles.reportItem}>
                                     <Image
                                         source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(report.reportBy.split('@')[0])}&background=6366F1&color=fff` }}
@@ -268,6 +276,20 @@ export default function PlaceDetailScreen() {
                                             <Text style={styles.reportTime}>{formatTimestamp(report.Timestamp)}</Text>
                                         </View>
                                         <Text style={styles.reportStatus}>{report.liveSituation}</Text>
+
+                                        {report.rating && report.rating > 0 ? (
+                                            <View style={styles.reportRatingRow}>
+                                                {[1, 2, 3, 4, 5].map(s => (
+                                                    <Ionicons
+                                                        key={s}
+                                                        name={s <= report.rating! ? "star" : "star-outline"}
+                                                        size={12}
+                                                        color="#F59E0B"
+                                                    />
+                                                ))}
+                                            </View>
+                                        ) : null}
+
                                         {report.description ? (
                                             <Text style={styles.reportText}>{report.description}</Text>
                                         ) : null}
@@ -334,7 +356,7 @@ export default function PlaceDetailScreen() {
 
                 <TouchableOpacity
                     style={[styles.fabContainer, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#6366F1' }]}
-                    onPress={() => alert('Review functionality coming soon!')}
+                    onPress={() => setIsReviewVisible(true)}
                 >
                     <View style={[styles.fabGradient, { backgroundColor: '#fff' }]}>
                         <Ionicons name="star-outline" size={20} color="#6366F1" />
@@ -349,6 +371,30 @@ export default function PlaceDetailScreen() {
                 onClose={() => setIsReportVisible(false)}
                 place={place}
             />
+
+            <ReviewModal
+                isVisible={isReviewVisible}
+                onClose={() => setIsReviewVisible(false)}
+                place={place}
+            />
+
+            <Modal
+                visible={isImageModalVisible}
+                animationType="fade"
+                transparent={true}
+                onRequestClose={() => setIsImageModalVisible(false)}
+            >
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }}>
+                    <TouchableOpacity
+                        style={{ position: 'absolute', top: 50, right: 20, zIndex: 10 }}
+                        onPress={() => setIsImageModalVisible(false)}
+                    >
+                        <Ionicons name="close-circle" size={36} color="white" />
+                    </TouchableOpacity>
+                    {/* Placeholder for image content */}
+                    <Text style={{ color: 'white', fontSize: 20 }}>Image Modal Content</Text>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -372,7 +418,8 @@ const styles = StyleSheet.create({
     statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
     statusText: { color: '#fff', fontSize: 13, fontWeight: '700' },
     updatedText: { color: 'rgba(255,255,255,0.9)', fontSize: 11, marginTop: 4, fontWeight: '600' },
-    contentSection: { flex: 1, marginTop: -30, backgroundColor: '#fff', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 24, paddingTop: 30 },
+    contentSection: { flex: 1, marginTop: -30, backgroundColor: '#fff', borderTopLeftRadius: 30, borderTopRightRadius: 30 },
+    contentWrapper: { paddingHorizontal: 24, paddingTop: 30, paddingBottom: 150 },
     titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
     placeName: { fontSize: 26, fontWeight: '800', color: '#0F172A', flex: 1, marginRight: 15 },
     ratingRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
@@ -409,5 +456,6 @@ const styles = StyleSheet.create({
     reporterName: { fontSize: 14, fontWeight: '700', color: '#1E293B' },
     reportTime: { fontSize: 12, color: '#94A3B8' },
     reportStatus: { fontSize: 13, color: '#6366F1', fontWeight: '700', marginBottom: 2 },
-    reportText: { fontSize: 14, color: '#475569', fontWeight: '500' },
+    reportText: { fontSize: 14, color: '#475569', fontWeight: '500', marginTop: 4 },
+    reportRatingRow: { flexDirection: 'row', gap: 2, marginBottom: 4 },
 });

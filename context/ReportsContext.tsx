@@ -45,6 +45,7 @@ export interface ReportData {
     Hplacename: string;
     crowdLevel: number;
     liveSituation: string;
+    rating?: number; // Optional star rating for reviews
 }
 
 interface ReportsContextType {
@@ -113,6 +114,7 @@ export const ReportsProvider = ({ children }: { children: React.ReactNode }) => 
                 likes: [],
                 commentsCount: 0,
                 HELPCOUNT: '0',
+                rating: data.rating || 0,
             });
             await addPoints(10);
             await completeTask('submit_report', 10); // Reward XP/Points for reporting
