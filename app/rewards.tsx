@@ -1,4 +1,4 @@
-import { useUser } from '@/context/UserContext';
+import { ALL_MEDALS, useUser } from '@/context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
@@ -18,19 +18,26 @@ const { width } = Dimensions.get('window');
 export default function RewardsScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const { user, completedTasksToday, userData } = useUser();
+    const {
+        user,
+        userData,
+        level,
+        points,
+        streak,
+        medal,
+        medalName,
+        nextMedalName,
+        xpInLevel,
+        targetXp,
+        progressToNextLevel,
+        isMaxLevel
+    } = useUser();
 
-    const points = parseInt(params.points as string) || 0;
-    const streak = parseInt(params.streak as string) || 0;
     const userName = userData?.display_name || user?.displayName || user?.email?.split('@')[0] || 'Explorer';
     const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
     const profilePic = userData?.photo_url || user?.photoURL || DEFAULT_PROFILE_PIC;
 
-    // Simple logic for level and XP based on points
-    const level = Math.floor(points / 500) + 1;
-    const xpInLevel = points % 500;
-    const progressPercent = (xpInLevel / 500) * 100;
-    const reportsLeft = Math.ceil((500 - xpInLevel) / 50);
+    const reportsLeft = isMaxLevel ? 0 : Math.ceil((targetXp - xpInLevel) / 20); // 20 XP per report (10 + 10)
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -54,8 +61,10 @@ export default function RewardsScreen() {
                         style={styles.avatar}
                     />
                     <Text style={styles.userName}>{userName}</Text>
-                    <View style={styles.levelBadge}>
-                        <Text style={styles.levelBadgeText}>Level {level}</Text>
+                    <View style={[styles.levelBadge, isMaxLevel && { backgroundColor: '#FCD34D' }]}>
+                        <Text style={[styles.levelBadgeText, isMaxLevel && { color: '#92400E' }]}>
+                            {isMaxLevel ? 'MAX LEVEL' : `Level ${level}`}
+                        </Text>
                     </View>
                 </View>
 
@@ -63,31 +72,45 @@ export default function RewardsScreen() {
                 <View style={styles.card}>
                     <View style={styles.progressHeader}>
                         <View style={styles.medalIconWrapper}>
-                            <Ionicons name="medal" size={32} color="#94A3B8" />
+                            {medal ? (
+                                <Image source={medal} style={styles.progressMedal} resizeMode="contain" />
+                            ) : (
+                                <Ionicons name="medal" size={32} color="#94A3B8" />
+                            )}
                         </View>
                         <View style={styles.progressInfo}>
-                            <Text style={styles.progressTitle}>Level {level} - Keep growing!</Text>
+                            <Text style={styles.progressTitle}>
+                                {isMaxLevel ? 'Ultimate Legend' : `${medalName} - Keep growing!`}
+                            </Text>
                             <View style={styles.progressBarContainer}>
-                                <View style={[styles.progressBar, { width: `${progressPercent}%` }]} />
+                                <View style={[styles.progressBar, { width: `${progressToNextLevel}%` }]} />
                             </View>
-                            <Text style={styles.xpText}>{xpInLevel} / 500 XP to the next level</Text>
-                            <Text style={styles.hintText}>You're {reportsLeft} reports away from your next medal!</Text>
+                            <Text style={styles.xpText}>
+                                {isMaxLevel ? `${points} Total XP` : `${xpInLevel} / ${targetXp} XP to the next level`}
+                            </Text>
+                            {!isMaxLevel && (
+                                <Text style={styles.hintText}>
+                                    You're {reportsLeft} reports away from your next medal!
+                                </Text>
+                            )}
                         </View>
                     </View>
                 </View>
 
                 {/* Streak Card */}
-                <View style={styles.card}>
-                    <View style={styles.streakRow}>
-                        <View style={styles.streakIconWrapper}>
-                            <Ionicons name="flame" size={24} color="#FF6B00" />
-                        </View>
-                        <View style={styles.streakInfo}>
-                            <Text style={styles.streakTitle}>Streak: {streak} days in a row</Text>
-                            <Text style={styles.streakSubtitle}>{streak >= 7 ? "You're a legend! Keep it up!" : "Almost a whole week! Crazy."}</Text>
+                {streak >= 2 && (
+                    <View style={styles.card}>
+                        <View style={styles.streakRow}>
+                            <View style={styles.streakIconWrapper}>
+                                <Ionicons name="flame" size={24} color="#FF6B00" />
+                            </View>
+                            <View style={styles.streakInfo}>
+                                <Text style={styles.streakTitle}>Streak: {streak} days in a row</Text>
+                                <Text style={styles.streakSubtitle}>{streak >= 7 ? "You're a legend! Keep it up!" : "Almost a whole week! Crazy."}</Text>
+                            </View>
                         </View>
                     </View>
-                </View>
+                )}
 
 
 
@@ -95,18 +118,34 @@ export default function RewardsScreen() {
                 <View style={styles.achievementsSection}>
                     <Text style={styles.achievementsSectionTitle}>Your achievements</Text>
                     <View style={styles.achievementsGrid}>
-                        <View style={styles.achievementCircle}>
-                            <Ionicons name="trophy-outline" size={24} color="#CBD5E1" />
-                        </View>
-                        <View style={styles.achievementCircle}>
-                            <Ionicons name="star-outline" size={24} color="#CBD5E1" />
-                        </View>
-                        <View style={styles.achievementCircle}>
-                            <Ionicons name="ribbon-outline" size={24} color="#CBD5E1" />
-                        </View>
-                        <View style={styles.achievementCircle}>
-                            <Ionicons name="medal-outline" size={24} color="#CBD5E1" />
-                        </View>
+                        {ALL_MEDALS.map((medalAsset, index) => {
+                            const medalLevel = index + 1;
+                            const isEarned = level >= medalLevel;
+
+                            return (
+                                <View
+                                    key={index}
+                                    style={[
+                                        styles.achievementCircle,
+                                        isEarned && styles.achievementCircleEarned
+                                    ]}
+                                >
+                                    {isEarned ? (
+                                        <Image
+                                            source={medalAsset}
+                                            style={styles.achievementMedal}
+                                            resizeMode="contain"
+                                        />
+                                    ) : (
+                                        <Ionicons
+                                            name="lock-closed-outline"
+                                            size={24}
+                                            color="#CBD5E1"
+                                        />
+                                    )}
+                                </View>
+                            );
+                        })}
                     </View>
                 </View>
 
@@ -211,6 +250,10 @@ const styles = StyleSheet.create({
         marginRight: 16,
         borderWidth: 1,
         borderColor: '#E2E8F0',
+    },
+    progressMedal: {
+        width: 50,
+        height: 50,
     },
     progressInfo: {
         flex: 1,
@@ -351,5 +394,13 @@ const styles = StyleSheet.create({
         borderColor: '#F1F5F9',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    achievementCircleEarned: {
+        backgroundColor: '#EEF2FF',
+        borderColor: '#6366F1',
+    },
+    achievementMedal: {
+        width: 40,
+        height: 40,
     }
 });

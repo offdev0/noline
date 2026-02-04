@@ -3,6 +3,14 @@ import { signOut as firebaseSignOut, onAuthStateChanged, User } from 'firebase/a
 import { doc, getDoc, increment, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
+export const ALL_MEDALS = [
+    require('@/assets/medals/lv1.png'),
+    require('@/assets/medals/lv2.png'),
+    require('@/assets/medals/lv3.png'),
+    require('@/assets/medals/lv4.png'),
+    require('@/assets/medals/lv5.png'),
+];
+
 interface UserContextType {
     user: User | null;
     loading: boolean;
@@ -15,10 +23,16 @@ interface UserContextType {
     completeTask: (taskId: string, points: number) => Promise<void>;
     isTaskCompleted: (taskId: string) => Promise<boolean>;
     level: number;
-    medal: string;
-    nextMedal: string;
+    medal: any; // Using any for require() type
+    medalName: string;
+    nextMedalName: string;
     xpToNextLevel: number;
     progressToNextLevel: number;
+    xpInLevel: number;
+    targetXp: number;
+    isMaxLevel: boolean;
+    lastXpGained: number;
+    clearXpGained: () => void;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -33,10 +47,16 @@ const UserContext = createContext<UserContextType>({
     completeTask: async () => { },
     isTaskCompleted: async () => false,
     level: 1,
-    medal: 'Bronze',
-    nextMedal: 'Silver',
-    xpToNextLevel: 500,
+    medal: null,
+    medalName: 'Bronze',
+    nextMedalName: 'Silver',
+    xpToNextLevel: 50,
     progressToNextLevel: 0,
+    xpInLevel: 0,
+    targetXp: 50,
+    isMaxLevel: false,
+    lastXpGained: 0,
+    clearXpGained: () => { },
 });
 
 export const useUser = () => useContext(UserContext);
@@ -48,6 +68,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const [points, setPoints] = useState(0);
     const [completedTasksToday, setCompletedTasksToday] = useState<string[]>([]);
     const [userData, setUserData] = useState<any>(null);
+    const [lastXpGained, setLastXpGained] = useState(0);
+
+    const clearXpGained = useCallback(() => setLastXpGained(0), []);
 
     const updateStreakAndPoints = async (currentUser: User) => {
         try {
@@ -157,6 +180,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                 points: increment(amount)
             }, { merge: true });
             setPoints(prev => prev + amount);
+            setLastXpGained(amount);
         } catch (error) {
             console.error('Error adding points:', error);
         }
@@ -206,6 +230,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
             setPoints(prev => prev + taskPoints);
             setCompletedTasksToday(updatedTodayTasks);
+            setLastXpGained(taskPoints);
 
             console.log(`Task ${taskId} completed! Awarded ${taskPoints} points.`);
         } catch (error) {
@@ -239,25 +264,53 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, []);
 
-    const level = Math.floor(points / 500) + 1;
-    const xpInLevel = points % 500;
-    const progressToNextLevel = (xpInLevel / 500) * 100;
-    const xpToNextLevel = 500 - xpInLevel;
+    // 5-Level System Constants
+    const LEVEL_THRESHOLDS = [0, 50, 150, 300, 500]; // Total XP needed at start of Lev 1, 2, 3, 4, 5
+    const MEDAL_NAMES = ['Rookie', 'Scout', 'Voyager', 'Elite', 'Legend'];
 
-    const getMedal = (lvl: number) => {
-        if (lvl >= 50) return 'Diamond';
-        if (lvl >= 20) return 'Platinum';
-        if (lvl >= 10) return 'Gold';
-        if (lvl >= 5) return 'Silver';
-        return 'Bronze';
+    const getLevelData = (totalPoints: number) => {
+        let currentLevel = 1;
+        for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+            if (totalPoints >= LEVEL_THRESHOLDS[i]) {
+                currentLevel = i + 1;
+                break;
+            }
+        }
+
+        if (currentLevel >= 5) {
+            return {
+                level: 5,
+                xpInLevel: totalPoints - LEVEL_THRESHOLDS[4],
+                targetXp: 0,
+                progress: 100,
+                xpToNext: 0,
+                isMax: true,
+                medalName: MEDAL_NAMES[4],
+                nextMedalName: 'MAX'
+            };
+        }
+
+        const currentLevelStart = LEVEL_THRESHOLDS[currentLevel - 1];
+        const nextLevelStart = LEVEL_THRESHOLDS[currentLevel];
+        const xpInLevel = totalPoints - currentLevelStart;
+        const targetXp = nextLevelStart - currentLevelStart;
+
+        return {
+            level: currentLevel,
+            xpInLevel,
+            targetXp,
+            progress: (xpInLevel / targetXp) * 100,
+            xpToNext: targetXp - xpInLevel,
+            isMax: false,
+            medalName: MEDAL_NAMES[currentLevel - 1],
+            nextMedalName: MEDAL_NAMES[currentLevel]
+        };
     };
 
-    const getNextMedal = (lvl: number) => {
-        if (lvl < 5) return 'Silver';
-        if (lvl < 10) return 'Gold';
-        if (lvl < 20) return 'Platinum';
-        if (lvl < 50) return 'Diamond';
-        return 'Max';
+    const levelData = getLevelData(points);
+
+    const getMedalAsset = (lvl: number) => {
+        return ALL_MEDALS[lvl - 1] || ALL_MEDALS[0];
     };
 
     return (
@@ -272,11 +325,17 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             addPoints,
             completeTask,
             isTaskCompleted,
-            level,
-            medal: getMedal(level),
-            nextMedal: getNextMedal(level),
-            xpToNextLevel,
-            progressToNextLevel
+            level: levelData.level,
+            medal: getMedalAsset(levelData.level),
+            medalName: levelData.medalName,
+            nextMedalName: levelData.nextMedalName,
+            xpToNextLevel: levelData.xpToNext,
+            progressToNextLevel: levelData.progress,
+            xpInLevel: levelData.xpInLevel,
+            targetXp: levelData.targetXp,
+            isMaxLevel: levelData.isMax,
+            lastXpGained,
+            clearXpGained
         }}>
             {children}
         </UserContext.Provider>

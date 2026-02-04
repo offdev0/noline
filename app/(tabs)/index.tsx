@@ -9,6 +9,7 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MapWidget from '@/components/dashboard/MapWidget';
 import PlacesSection from '@/components/dashboard/PlacesSection';
 import SearchBar from '@/components/dashboard/SearchBar';
+import XPGainAnimation from '@/components/rewards/XPGainAnimation';
 import { useLocation } from '@/context/LocationContext';
 import { useUser } from '@/context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,7 +18,7 @@ import { TouchableOpacity } from 'react-native';
 export default function DashboardScreen() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
-  const { user, streak, points } = useUser();
+  const { user, streak, points, lastXpGained, clearXpGained } = useUser();
   const { permissionStatus, requestLocation } = useLocation();
 
   // Effect to hide tab bar when drawer is open
@@ -46,7 +47,11 @@ export default function DashboardScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-          <DashboardHeader onMenuPress={() => setIsDrawerOpen(true)} points={points} streak={streak} />
+          <DashboardHeader onMenuPress={() => setIsDrawerOpen(true)} />
+
+          {lastXpGained > 0 && (
+            <XPGainAnimation amount={lastXpGained} onComplete={clearXpGained} />
+          )}
 
           <View style={styles.titleContainer}>
             <Text style={styles.titleBlue}>Before you leave</Text>
