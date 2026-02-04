@@ -115,7 +115,7 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
             // Check current permission status
             const { status: existingStatus } = await Location.getForegroundPermissionsAsync();
 
-            if (existingStatus !== 'granted') {
+            if (existingStatus !== Location.PermissionStatus.GRANTED) {
                 // Check prompt frequency
                 const promptData = await AsyncStorage.getItem(PROMPT_HISTORY_KEY);
                 const now = Date.now();
@@ -123,15 +123,33 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
 
                 // Filter out prompts older than 24 hours
                 prompts = prompts.filter(p => now - p < 24 * 60 * 60 * 1000);
-
-                const promptsInLast5Mins = prompts.filter(p => now - p < 5 * 60 * 1000).length;
                 const promptsInLast24Hrs = prompts.length;
 
-                if (promptsInLast5Mins >= 2 || (promptsInLast24Hrs >= 1 && promptsInLast5Mins < 2 && now - prompts[prompts.length - 1] > 5 * 60 * 1000)) {
-                    // Skip prompt if already prompted twice in 5 mins OR already prompted in last 24h
-                    console.log('[LocationContext] Skipping prompt due to frequency limits');
+                if (promptsInLast24Hrs >= 2) {
+                    // Check if the very first prompt of these 2 was more than 5 mins ago
+                    const firstPromptOfPeriod = prompts[0];
+                    if (now - firstPromptOfPeriod < 5 * 60 * 1000) {
+                        // We already did 2 prompts in the "grace" 5-min window
+                        console.log('[LocationContext] Skipping prompt: Already did 2 in 5-min window');
+                        setLoading(false);
+                        return;
+                    }
+
+                    // If we are outside the 5-min window, we only allow one per 24h
+                    // Since we already have >= 1 prompt in last 24h, we skip
+                    console.log('[LocationContext] Skipping prompt: Once per 24h limit reached');
                     setLoading(false);
                     return;
+                } else if (promptsInLast24Hrs === 1) {
+                    // We allowed one prompt, checking if we can allow a second one
+                    const firstPrompt = prompts[0];
+                    if (now - firstPrompt > 5 * 60 * 1000) {
+                        // Only 1 prompt allowed per 24h after the initial 5-min window
+                        console.log('[LocationContext] Skipping prompt: Initial 5-min window closed, 24h limit applies');
+                        setLoading(false);
+                        return;
+                    }
+                    // Proceed with second prompt within 5 mins
                 }
 
                 // Request permission
@@ -142,7 +160,7 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
                 prompts.push(now);
                 await AsyncStorage.setItem(PROMPT_HISTORY_KEY, JSON.stringify(prompts));
 
-                if (status !== 'granted') {
+                if (status !== Location.PermissionStatus.GRANTED) {
                     setError('Location permission denied');
                     Alert.alert(
                         'Location Required',
@@ -195,21 +213,39 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
 
     // Refresh location (when user manually wants to update)
     const refreshLocation = useCallback(async () => {
-        if (permissionStatus === 'granted' || permissionStatus === null) {
+        if (permissionStatus === Location.PermissionStatus.GRANTED || permissionStatus === null) {
             await requestLocation();
         }
     }, [permissionStatus, requestLocation]);
 
-    // Auto-request location when user logs in
+    // Auto-request location when user logs in or app state changes
     useEffect(() => {
-        if (user && !location && !loading) {
-            // Small delay to let the app settle
-            const timer = setTimeout(() => {
-                requestLocation();
-            }, 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [user]);
+        if (!user || loading) return;
+
+        // If permission is already granted, we don't need the prompt cycle
+        if (permissionStatus === Location.PermissionStatus.GRANTED) return;
+
+        // Initial prompt
+        const timer = setTimeout(() => {
+            requestLocation();
+        }, 1000);
+
+        // Re-check periodically in first 5 mins to handle the "twice in 5 mins" requirement
+        const interval = setInterval(() => {
+            // We re-check permission status inside the interval to avoid stale closure issues
+            // and satisfy TS narrowing
+            Location.getForegroundPermissionsAsync().then(({ status }) => {
+                if (status !== Location.PermissionStatus.GRANTED) {
+                    requestLocation();
+                }
+            });
+        }, 2 * 60 * 1000); // Check every 2 mins
+
+        return () => {
+            clearTimeout(timer);
+            clearInterval(interval);
+        };
+    }, [user, permissionStatus, loading, requestLocation]);
 
     return (
         <LocationContext.Provider

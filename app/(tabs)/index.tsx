@@ -9,12 +9,16 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MapWidget from '@/components/dashboard/MapWidget';
 import PlacesSection from '@/components/dashboard/PlacesSection';
 import SearchBar from '@/components/dashboard/SearchBar';
+import { useLocation } from '@/context/LocationContext';
 import { useUser } from '@/context/UserContext';
+import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native';
 
 export default function DashboardScreen() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const { user, streak, points } = useUser();
+  const { permissionStatus, requestLocation } = useLocation();
 
   // Effect to hide tab bar when drawer is open
   useEffect(() => {
@@ -48,6 +52,22 @@ export default function DashboardScreen() {
             <Text style={styles.titleBlue}>Before you leave</Text>
             <Text style={styles.titleBlue}>– Check the queue!</Text>
           </View>
+
+          {permissionStatus !== 'granted' && (
+            <TouchableOpacity
+              style={styles.locationBanner}
+              onPress={requestLocation}
+              activeOpacity={0.9}
+            >
+              <View style={styles.locationBannerContent}>
+                <Ionicons name="location-outline" size={20} color="#6366F1" />
+                <Text style={styles.locationBannerText}>
+                  Enable location for more accurate results nearby
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color="#6366F1" />
+              </View>
+            </TouchableOpacity>
+          )}
 
           <SearchBar />
 
@@ -83,5 +103,26 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: 'bold',
     color: '#4E46E5', // Matches the purple/blue theme
+  },
+  locationBanner: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 15,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E0E7FF',
+  },
+  locationBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  locationBannerText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#4F46E5',
+    fontWeight: '600',
+    marginHorizontal: 10,
   },
 });
