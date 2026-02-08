@@ -173,17 +173,29 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
             } else if (!loading) {
                 // FALLBACK: Fetch general Israel places if location is denied or still loading
                 console.log('[PlacesContext] Location unavailable, fetching general Israel places');
-                searchLocation('Top attractions in Tel Aviv and Jerusalem');
+                searchLocation('Best bars, cafes and restaurants in Tel Aviv and Jerusalem');
             }
         }
     }, [location, isManualSearch, currentSearchName]);
 
     // Memoize filtered arrays to prevent re-renders
     // Memoize filtered arrays to match Requirement 11 (4 rows)
+    // Updated to prioritize "going-out" use case (bars, cafes, restaurants)
     const hotPlaces = useMemo(() => allPlaces.filter(p => p.category === 'hot'), [allPlaces]);
     const restaurants = useMemo(() => allPlaces.filter(p => p.category === 'restaurant'), [allPlaces]);
-    const recommendedPlaces = useMemo(() => allPlaces.filter(p => p.category === 'mustVisit'), [allPlaces]);
-    const vibePlaces = useMemo(() => allPlaces.filter(p => p.category === 'fun' || p.category === 'casino' || p.category === 'shopping'), [allPlaces]);
+
+    const recommendedPlaces = useMemo(() => {
+        const mustVisit = allPlaces.filter(p => p.category === 'mustVisit');
+        // Fallback: If no "must visit" attractions, show top-rated places from any category
+        return mustVisit.length > 0 ? mustVisit : [...allPlaces].sort((a, b) => b.rating - a.rating);
+    }, [allPlaces]);
+
+    const vibePlaces = useMemo(() => {
+        const vibes = allPlaces.filter(p => p.category === 'fun' || p.category === 'casino' || p.category === 'shopping');
+        // Fallback: If no specific "vibe" categories, show nightlife/bars (hot category)
+        return vibes.length > 0 ? vibes : allPlaces.filter(p => p.category === 'hot');
+    }, [allPlaces]);
+
     const trendingPlaces = allPlaces;
 
     return (

@@ -8,8 +8,10 @@ import {
     Image,
     Linking,
     Modal,
+    Platform,
     SafeAreaView,
     ScrollView,
+    Share,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -29,7 +31,7 @@ interface SideDrawerProps {
 
 export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawerProps) {
     const router = useRouter();
-    const { logout, userData, level, medal, progressToNextLevel, xpToNextLevel, nextMedal, points, streak } = useUser();
+    const { logout, userData, level, medal, medalName, progressToNextLevel, xpToNextLevel, nextMedalName, points, streak } = useUser();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const displayName = userData?.display_name || userEmail?.split('@')[0] || 'User';
@@ -168,7 +170,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                                     <View style={styles.progressBarBg}>
                                         <View style={[styles.progressBarFill, { width: `${progressToNextLevel}%` }]} />
                                     </View>
-                                    <Text style={styles.xpText}>{xpToNextLevel} XP to {nextMedal}!</Text>
+                                    <Text style={styles.xpText}>{xpToNextLevel} XP to {nextMedalName}!</Text>
                                 </View>
                             </View>
                             {streak > 0 && <Text style={styles.streakInfo}>🔥 {streak} Day Streak!</Text>}
@@ -184,16 +186,70 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                                     router.push('/favorites');
                                 }}
                             />
-                            <MenuItem icon="notifications" label="Customized notifications" />
-                            <MenuItem icon="person-add" label="Profile sharing" />
+                            <MenuItem
+                                icon="notifications"
+                                label="Customized notifications"
+                                onPress={() => {
+                                    onClose();
+                                    router.push('/(tabs)/customized');
+                                }}
+                            />
+                            <MenuItem
+                                icon="person-add"
+                                label="Profile sharing"
+                                onPress={async () => {
+                                    try {
+                                        await Share.share({
+                                            message: `Check out my profile on NoLine! I'm level ${level} with a ${medalName} medal. Download the app to find the best spots: https://noline.app`,
+                                        });
+                                    } catch (error: any) {
+                                        console.error(error.message);
+                                    }
+                                }}
+                            />
                         </View>
 
                         <SectionHeader title="Settings" />
                         <View style={styles.menuGroup}>
-                            <MenuItem icon="settings" label="General settings" onPress={() => console.log('General settings')} />
-                            <MenuItem icon="person" label="Account details" onPress={() => console.log('Account details')} />
-                            <MenuItem icon="star-half" label="Rate us" onPress={() => console.log('Rate us')} />
-                            <MenuItem icon="share-social" label="Tell your friends about NoLine" onPress={() => console.log('Share')} />
+                            <MenuItem
+                                icon="settings"
+                                label="General settings"
+                                onPress={() => {
+                                    onClose();
+                                    router.push('/settings/general');
+                                }}
+                            />
+                            <MenuItem
+                                icon="person"
+                                label="Account details"
+                                onPress={() => {
+                                    onClose();
+                                    router.push('/account/details');
+                                }}
+                            />
+                            <MenuItem
+                                icon="star-half"
+                                label="Rate us"
+                                onPress={() => {
+                                    const storeUrl = Platform.OS === 'ios'
+                                        ? 'https://apps.apple.com/app/noline' // Replace with actual ID
+                                        : 'https://play.google.com/store/apps/details?id=app.noline.user';
+                                    Linking.openURL(storeUrl).catch(err => console.error("Couldn't open store", err));
+                                }}
+                            />
+                            <MenuItem
+                                icon="share-social"
+                                label="Tell your friends about NoLine"
+                                onPress={async () => {
+                                    try {
+                                        await Share.share({
+                                            message: 'Check out NoLine! The best way to find great spots and bypass the crowds. https://noline.app',
+                                        });
+                                    } catch (error: any) {
+                                        console.error(error.message);
+                                    }
+                                }}
+                            />
                         </View>
 
                         <SectionHeader title="Support" />

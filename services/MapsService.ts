@@ -18,34 +18,35 @@ export interface PlaceData {
 const GOOGLE_MAPS_API_KEY = 'AIzaSyDlLpauOduyhpqXWPzczYs9Ad3MfvJ35EM';
 
 const CATEGORY_MAPPING: Record<string, PlaceData['category']> = {
-    'restaurant': 'restaurant',
-    'cafe': 'restaurant',
-    'food': 'restaurant',
     'bar': 'hot',
     'night_club': 'hot',
+    'liquor_store': 'hot',
+    'restaurant': 'restaurant',
+    'cafe': 'restaurant',
+    'bakery': 'restaurant',
+    'meal_takeaway': 'restaurant',
+    'food': 'restaurant',
     'casino': 'casino',
     'shopping_mall': 'shopping',
-    'department_store': 'shopping',
-    'clothing_store': 'shopping',
     'store': 'shopping',
     'amusement_park': 'fun',
-    'entertainment_center': 'fun',
     'movie_theater': 'fun',
+    'event_venue': 'fun',
     'tourist_attraction': 'mustVisit',
     'park': 'mustVisit',
     'museum': 'mustVisit',
-    'art_gallery': 'mustVisit',
     'stadium': 'mustVisit'
 };
 
 // Category-specific search queries to get diverse results
+// Category-specific search queries to focus on "going-out" use case
 const SEARCH_CATEGORIES = [
-    { query: 'popular restaurants', category: 'restaurant' as const },
-    { query: 'cafes and coffee shops', category: 'restaurant' as const },
-    { query: 'tourist attractions landmarks', category: 'mustVisit' as const },
-    { query: 'shopping malls', category: 'shopping' as const },
-    { query: 'nightlife bars clubs', category: 'hot' as const },
-    { query: 'entertainment parks fun activities', category: 'fun' as const },
+    { query: 'best cocktail bars and rooftop lounges', category: 'hot' as const },
+    { query: 'top-rated restaurants and fine dining', category: 'restaurant' as const },
+    { query: 'specialty coffee shops and cozy cafes', category: 'restaurant' as const },
+    { query: 'popular nightclubs and dance floors', category: 'hot' as const },
+    { query: 'craft beer pubs and wine bars', category: 'hot' as const },
+    { query: 'trendy brunch spots and bistros', category: 'restaurant' as const },
 ];
 
 export class MapsService {
@@ -180,7 +181,7 @@ export class MapsService {
                     'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.types,places.photos,places.editorialSummary,places.location'
                 },
                 body: JSON.stringify({
-                    textQuery: `top attractions restaurants cafes and spots in ${locationName}`,
+                    textQuery: `best bars, cafes, restaurants, and nightlife in ${locationName}`,
                     maxResultCount: 20
                 })
             });
