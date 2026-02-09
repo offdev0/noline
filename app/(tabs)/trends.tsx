@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
     Dimensions,
-    Image,
     ScrollView,
     StyleSheet,
     Text,
@@ -71,6 +71,9 @@ export default function TrendsScreen() {
         return 'location';
     };
 
+    // Use a smaller image source when available to reduce memory usage
+    const getImageForPlace = (place: PlaceData) => (place.thumbnail || place.thumb || place.image);
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -96,7 +99,7 @@ export default function TrendsScreen() {
                                     styles.moodWrapper,
                                     selectedMood === mood.label && styles.selectedMoodWrapper
                                 ]}
-                                onPress={() => setSelectedMood(selectedMood === mood.label ? null : mood.label)}
+                                onPress={() => router.push(`/trends/${mood.label}`)}
                             >
                                 <LinearGradient
                                     colors={mood.colors as any}
@@ -131,33 +134,30 @@ export default function TrendsScreen() {
                             <Text style={{ color: '#666', textAlign: 'center' }}>Updating live trends...</Text>
                         </View>
                     ) : (
-                        (filteredTrendingPlaces.length > 0
-                            ? (showAllTrending ? filteredTrendingPlaces : filteredTrendingPlaces.slice(0, 3))
-                            : []
-                        ).map((place) => (
+                        (showAllTrending ? filteredTrendingPlaces.slice(0, 12) : filteredTrendingPlaces.slice(0, 3)).map((item) => (
                             <TouchableOpacity
-                                key={place.id}
+                                key={item.id}
                                 style={styles.premiumCard}
-                                onPress={() => handlePlacePress(place.id)}
+                                onPress={() => handlePlacePress(item.id)}
                                 activeOpacity={0.9}
                             >
-                                <Image source={{ uri: place.image }} style={styles.cardCover} />
+                                <Image source={{ uri: getImageForPlace(item) }} style={styles.cardCover} priority="low" cachePolicy="disk" contentFit="cover" />
                                 <View style={styles.cardOverlay}>
                                     <View style={styles.statusChip}>
                                         <Ionicons name="flash" size={14} color="#16A34A" />
-                                        <Text style={styles.statusChipText}>{place.status}</Text>
+                                        <Text style={styles.statusChipText}>{item.status}</Text>
                                     </View>
                                 </View>
 
                                 <View style={styles.cardBody}>
                                     <View style={styles.cardHeader}>
                                         <View style={styles.nameContent}>
-                                            <Text style={styles.placeName}>{place.name}</Text>
-                                            <Text style={styles.placeDescription}>{place.description}</Text>
+                                            <Text style={styles.placeName}>{item.name}</Text>
+                                            <Text style={styles.placeDescription}>{item.description}</Text>
                                         </View>
                                         <TouchableOpacity
                                             style={styles.quickVisitBtn}
-                                            onPress={() => handlePlacePress(place.id)}
+                                            onPress={() => handlePlacePress(item.id)}
                                         >
                                             <LinearGradient colors={['#6366F1', '#4F46E5']} style={styles.visitGradient}>
                                                 <Text style={styles.visitText}>Visit</Text>
@@ -166,8 +166,8 @@ export default function TrendsScreen() {
                                     </View>
                                     <View style={styles.cardFooter}>
                                         <View style={styles.metaRow}>
-                                            <Ionicons name={getCategoryIcon(place.category) as any} size={14} color="#6366F1" />
-                                            <Text style={styles.distanceText}>{place.distance} away</Text>
+                                            <Ionicons name={getCategoryIcon(item.category) as any} size={14} color="#6366F1" />
+                                            <Text style={styles.distanceText}>{item.distance} away</Text>
                                         </View>
                                     </View>
                                 </View>
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     },
     cardCover: {
         width: '100%',
-        height: 180,
+        height: 120,
     },
     cardOverlay: {
         position: 'absolute',
