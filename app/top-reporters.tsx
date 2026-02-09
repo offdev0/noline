@@ -1,5 +1,6 @@
 import { db } from '@/configs/firebaseConfig';
 import { ALL_MEDALS, useUser } from '@/context/UserContext';
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
@@ -38,7 +39,7 @@ export default function TopReportersScreen() {
             setError(null);
         }, (err) => {
             console.error('TopReporters snapshot error', err);
-            setError(err?.message || 'Failed to load leaderboard');
+            setError(err?.message || t('leaderboard.loadErrorTitle'));
             setUsers([]);
             setLoading(false);
         });
@@ -47,9 +48,9 @@ export default function TopReportersScreen() {
     }, []);
 
     const renderItem = ({ item, index }: { item: any; index: number }) => {
-        const rawName = item.displayName || item.display_name || (item.email ? item.email.split('@')[0] : 'Explorer');
+        const rawName = item.displayName || item.display_name || (item.email ? item.email.split('@')[0] : t('places.user'));
         const isCurrentUser = !!user && item.id === user.uid;
-        const name = isCurrentUser ? 'You' : rawName;
+        const name = isCurrentUser ? t('leaderboard.you') : rawName;
         const avatar = item.photo_url || item.photoURL || DEFAULT_PROFILE_PIC;
         const level = getLevelFromPoints(item.points || 0);
         const medalAsset: any = ALL_MEDALS[level - 1] || ALL_MEDALS[0];
@@ -72,7 +73,7 @@ export default function TopReportersScreen() {
 
                 <View style={styles.pointsBox}>
                     <Text style={styles.points}>{item.points || 0}</Text>
-                    <Text style={styles.pointsLabel}>XP</Text>
+                    <Text style={styles.pointsLabel}>{t('leaderboard.xp')}</Text>
                 </View>
             </View>
         );
@@ -84,7 +85,7 @@ export default function TopReportersScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#333" />
                 </TouchableOpacity>
-                <Text style={styles.title}>Top Reporters</Text>
+                <Text style={styles.title}>{t('leaderboard.title')}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -92,9 +93,9 @@ export default function TopReportersScreen() {
                 <View style={styles.loading}><ActivityIndicator size="large" color="#6366F1" /></View>
             ) : error ? (
                 <View style={{ padding: 20 }}>
-                    <Text style={{ color: '#DC2626', fontWeight: '700', marginBottom: 8 }}>Unable to load leaderboard</Text>
+                    <Text style={{ color: '#DC2626', fontWeight: '700', marginBottom: 8 }}>{t('leaderboard.loadErrorTitle')}</Text>
                     <Text style={{ color: '#64748B' }}>{error}</Text>
-                    <Text style={{ color: '#64748B', marginTop: 8 }}>Check your Firestore rules or sign in with an account that can read the users collection.</Text>
+                    <Text style={{ color: '#64748B', marginTop: 8 }}>{t('leaderboard.loadErrorHint')}</Text>
                 </View>
             ) : (
                 <FlatList

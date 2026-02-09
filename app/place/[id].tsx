@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     similarStatus: { fontSize: 12, fontWeight: '700', marginLeft: 4, textTransform: 'capitalize' },
     fabContainer: { borderRadius: 30, overflow: 'hidden', shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 8 },
     fabGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 18, justifyContent: 'center' },
-    fabText: { color: '#fff', fontSize: 16, fontWeight: '800', marginLeft: 10 },
+    fabText: { color: '#fff', fontSize: 14, fontWeight: '800', marginLeft: 10 },
     actionsBar: { position: 'absolute', bottom: 35, left: 20, right: 20, flexDirection: 'row' },
     reportsFeed: { marginBottom: 30 },
     reportItem: { flexDirection: 'row', marginBottom: 20, backgroundColor: '#F8FAFC', padding: 12, borderRadius: 16 },

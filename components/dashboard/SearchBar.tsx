@@ -15,6 +15,7 @@ import {
 
 import { usePlaces } from '@/context/PlacesContext';
 import { useUser } from '@/context/UserContext';
+import { t } from '@/i18n';
 
 export default function SearchBar() {
     const router = useRouter();
@@ -23,7 +24,7 @@ export default function SearchBar() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
 
-    const displayName = userData?.display_name || userData?.email?.split('@')[0] || 'User';
+    const displayName = userData?.display_name || userData?.email?.split('@')[0] || t('places.user');
     const profilePic = userData?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=6366F1&color=fff&size=80`;
 
     const handleSearch = async () => {
@@ -82,7 +83,7 @@ export default function SearchBar() {
                 style={styles.avatar}
             />
             <TextInput
-                placeholder="Search for a place or address"
+                placeholder={t('search.placeholder')}
                 style={styles.searchInput}
                 placeholderTextColor="#999"
                 value={searchQuery}

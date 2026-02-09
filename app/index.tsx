@@ -28,6 +28,7 @@ import AuthLinks from '@/components/auth/AuthLinks';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import TermsCheckbox from '@/components/auth/TermsCheckbox';
 import { AUTH_GRADIENT_COLORS, authStyles } from '@/components/auth/authStyles';
+import { t } from '@/i18n';
 
 const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
 
@@ -41,14 +42,11 @@ export default function LoginScreen() {
     const [isChecked, setChecked] = useState(false);
     const [isLoginMode, setIsLoginMode] = useState(false); // Default to Signup
     const [isLoading, setIsLoading] = useState(false);
-
-    // Initialize Google Sign-In
     useEffect(() => {
         if (GoogleSignin) {
             try {
                 GoogleSignin.configure({
                     webClientId: '83234148402-llr9kih19oh0hmmadf1pl916rrkn90go.apps.googleusercontent.com',
-                    offlineAccess: true,
                 });
             } catch (e) {
                 console.error('GoogleSignin configuration failed:', e);
@@ -64,12 +62,10 @@ export default function LoginScreen() {
         Animated.sequence([
             Animated.timing(buttonScale, {
                 toValue: 0.95,
-                duration: 100,
                 useNativeDriver: true,
             }),
             Animated.timing(buttonScale, {
                 toValue: 1,
-                duration: 100,
                 useNativeDriver: true,
             }),
         ]).start();
@@ -89,20 +85,20 @@ export default function LoginScreen() {
 
     const handleAuth = async () => {
         if (!email || !password) {
-            Alert.alert("Error", "Please enter email and password");
+            Alert.alert(t('auth.errorTitle'), t('auth.enterEmailPassword'));
             return;
         }
 
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            Alert.alert("Error", "Please enter a valid email address");
+            Alert.alert(t('auth.errorTitle'), t('auth.invalidEmail'));
             return;
         }
 
         // Validate password length
         if (password.length < 6) {
-            Alert.alert("Error", "Password must be at least 6 characters");
+            Alert.alert(t('auth.errorTitle'), t('auth.passwordMin'));
             return;
         }
 
@@ -118,12 +114,12 @@ export default function LoginScreen() {
                 // Signup Logic
                 if (password !== confirmPassword) {
                     setIsLoading(false);
-                    Alert.alert("Error", "Passwords do not match");
+                    Alert.alert(t('auth.errorTitle'), t('auth.passwordsDontMatch'));
                     return;
                 }
                 if (!isChecked) {
                     setIsLoading(false);
-                    Alert.alert("Error", "Please agree to the terms");
+                    Alert.alert(t('auth.errorTitle'), t('auth.agreeTerms'));
                     return;
                 }
 
@@ -171,24 +167,24 @@ export default function LoginScreen() {
 
             // User-friendly error messages
             if (error.code === 'auth/user-not-found') {
-                errorMessage = 'No account found with this email. Please sign up first.';
+                errorMessage = t('auth.noAccountFound');
             } else if (error.code === 'auth/wrong-password') {
-                errorMessage = 'Incorrect password. Please try again.';
+                errorMessage = t('auth.incorrectPassword');
             } else if (error.code === 'auth/email-already-in-use') {
-                errorMessage = 'An account already exists with this email. Please log in.';
+                errorMessage = t('auth.emailInUse');
             } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'Invalid email format.';
+                errorMessage = t('auth.invalidEmailFormat');
             } else if (error.code === 'auth/weak-password') {
-                errorMessage = 'Password is too weak. Use at least 6 characters.';
+                errorMessage = t('auth.weakPassword');
             } else if (error.code === 'auth/network-request-failed') {
-                errorMessage = 'Network error. Please check your internet connection.';
+                errorMessage = t('auth.networkError');
             } else if (error.code === 'auth/too-many-requests') {
-                errorMessage = 'Too many failed attempts. Please try again later.';
+                errorMessage = t('auth.tooManyRequests');
             } else if (error.code === 'auth/invalid-credential') {
-                errorMessage = 'Invalid email or password. Please check and try again.';
+                errorMessage = t('auth.invalidCredentials');
             }
 
-            Alert.alert("Authentication Error", errorMessage);
+            Alert.alert(t('auth.authErrorTitle'), errorMessage);
         }
     };
 
@@ -200,9 +196,9 @@ export default function LoginScreen() {
         try {
             if (!GoogleSignin) {
                 Alert.alert(
-                    "Development Build Required",
-                    "Native Google Sign-In requires a development build. For now, please use Email/Password sign-in.",
-                    [{ text: "OK", onPress: () => setIsLoading(false) }]
+                    t('auth.googleBuildRequiredTitle'),
+                    t('auth.googleBuildRequiredMessage'),
+                    [{ text: t('auth.ok'), onPress: () => setIsLoading(false) }]
                 );
                 return;
             }
@@ -252,11 +248,11 @@ export default function LoginScreen() {
 
             if (error.code === 'DEVELOPER_ERROR') {
                 Alert.alert(
-                    "Configuration Error",
-                    "Google Sign-In is not configured correctly. Please check your Web Client ID and SHA-1 certificate fingerprint in Firebase Console."
+                    t('auth.configErrorTitle'),
+                    t('auth.configErrorMessage')
                 );
             } else if (error.code !== 'SIGN_IN_CANCELLED') {
-                Alert.alert("Google Login Error", error.message);
+                Alert.alert(t('auth.googleLoginErrorTitle'), error.message);
             }
         }
     };
@@ -277,13 +273,10 @@ export default function LoginScreen() {
                 <AuthHeader />
 
                 <View style={authStyles.contentContainer}>
-                    <ScrollView contentContainerStyle={authStyles.scrollContent} showsVerticalScrollIndicator={false}>
-                        <Text style={authStyles.title}>Let's get started.</Text>
-                        <Text style={authStyles.subtitle}>Controlling your time starts here.</Text>
-
-                        {/* Email Input */}
+                    <ScrollView contentContainerStyle={authStyles.scrollContent}>
+                        <Text style={authStyles.subtitle}>{t('auth.subtitle')}</Text>
                         <AuthInput
-                            label="Email"
+                            label={t('auth.email')}
                             value={email}
                             onChangeText={setEmail}
                             placeholder=""
@@ -293,7 +286,7 @@ export default function LoginScreen() {
 
                         {/* Password Input */}
                         <AuthInput
-                            label="Password"
+                            label={t('auth.password')}
                             isPassword
                             showPassword={showPassword}
                             onTogglePassword={() => setShowPassword(!showPassword)}
@@ -305,7 +298,7 @@ export default function LoginScreen() {
                         {/* Confirm Password Input - Only for Signup */}
                         {!isLoginMode && (
                             <AuthInput
-                                label="Confirm Password"
+                                label={t('auth.confirmPassword')}
                                 isPassword
                                 showPassword={showConfirmPassword}
                                 onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}

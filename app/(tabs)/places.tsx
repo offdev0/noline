@@ -3,6 +3,7 @@ import { useLocation } from '@/context/LocationContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { ReportData, useReports } from '@/context/ReportsContext';
 import { useUser } from '@/context/UserContext';
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
@@ -52,15 +53,15 @@ export default function PlacesScreen() {
     const deg2rad = (deg: number) => deg * (Math.PI / 180);
 
     const formatTimeAgo = (timestamp: any) => {
-        if (!timestamp) return 'Just now';
+        if (!timestamp) return t('time.justNow');
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
         const now = new Date();
         const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-        if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-        return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        if (diffInSeconds < 60) return t('time.secondsAgo', { count: diffInSeconds });
+        if (diffInSeconds < 3600) return t('time.minutesAgo', { count: Math.floor(diffInSeconds / 60) });
+        if (diffInSeconds < 86400) return t('time.hoursAgo', { count: Math.floor(diffInSeconds / 3600) });
+        return t('time.daysAgo', { count: Math.floor(diffInSeconds / 86400) });
     };
 
     const getStatusType = (level: number) => {
@@ -143,19 +144,19 @@ export default function PlacesScreen() {
                             <Text style={styles.placeName} numberOfLines={1}>{item.placeName}</Text>
                             <View style={[styles.inlineStatusDot, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]} />
                         </View>
-                        <Text style={styles.placeCategory}>Community Reported</Text>
+                        <Text style={styles.placeCategory}>{t('places.communityReported')}</Text>
                     </View>
                 </View>
 
                 {/* Reporter Info */}
                 <View style={styles.reporterRow}>
                     <Image
-                        source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.reportBy?.split('@')[0] || 'User')}&background=6366F1&color=fff` }}
+                        source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.reportBy?.split('@')[0] || t('places.user'))}&background=6366F1&color=fff` }}
                         style={styles.reporterAvatar}
                     />
                     <View style={{ flex: 1, marginLeft: 10 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Text style={styles.boldText}>{item.reportBy?.split('@')[0] || 'User'}</Text>
+                            <Text style={styles.boldText}>{item.reportBy?.split('@')[0] || t('places.user')}</Text>
                             <Text style={styles.reportTime}>{formatTimeAgo(item.Timestamp)}</Text>
                         </View>
                         {/* <Text style={styles.reporterText} numberOfLines={2}>
@@ -202,7 +203,7 @@ export default function PlacesScreen() {
                             onPress={() => router.push(`/place/${item.businessRef}`)}
                         >
                             <Ionicons name="information-circle-outline" size={18} color="#64748B" />
-                            <Text style={styles.statLabel}>Details</Text>
+                            <Text style={styles.statLabel}>{t('places.details')}</Text>
                         </TouchableOpacity>
                     </View>
                     <View style={[styles.typeBadge, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]}>
@@ -216,7 +217,7 @@ export default function PlacesScreen() {
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Real-time reports</Text>
+                <Text style={styles.headerTitle}>{t('places.title')}</Text>
                 <TouchableOpacity style={styles.circularButton}>
                     <Ionicons name="search-outline" size={20} color="#1E293B" />
                 </TouchableOpacity>
@@ -225,20 +226,20 @@ export default function PlacesScreen() {
             <View style={styles.filterBar}>
                 <TouchableOpacity style={styles.filterButton} onPress={() => setFilterVisible(true)}>
                     <Ionicons name="options-outline" size={22} color="#1E293B" />
-                    <Text style={styles.filterButtonText}>Filter</Text>
+                    <Text style={styles.filterButtonText}>{t('places.filter')}</Text>
                 </TouchableOpacity>
             </View>
 
             {reportsLoading ? (
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     <ActivityIndicator size="large" color="#6366F1" />
-                    <Text style={{ color: '#666', marginTop: 12 }}>Syncing community reports...</Text>
+                    <Text style={{ color: '#666', marginTop: 12 }}>{t('places.syncing')}</Text>
                 </View>
             ) : filteredReports.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <Ionicons name="chatbubbles-outline" size={64} color="#CBD5E1" />
-                    <Text style={styles.emptyTitle}>No matching reports</Text>
-                    <Text style={styles.emptySubtitle}>Try adjusting your filters or be the first to report!</Text>
+                    <Text style={styles.emptyTitle}>{t('places.noMatching')}</Text>
+                    <Text style={styles.emptySubtitle}>{t('places.adjustFilters')}</Text>
                 </View>
             ) : (
                 <FlatList
@@ -249,8 +250,12 @@ export default function PlacesScreen() {
                     showsVerticalScrollIndicator={false}
                     ListHeaderComponent={() => (
                         <View style={styles.summaryBox}>
-                            <Text style={styles.summaryTitle}>{selectedType === 'All' ? 'Live Feed Updates' : `${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} Sports`}</Text>
-                            <Text style={styles.summarySubtitle}>Showing {filteredReports.length} reports matching your criteria</Text>
+                            <Text style={styles.summaryTitle}>
+                                {selectedType === 'All'
+                                    ? t('places.liveFeedUpdates')
+                                    : `${t('places.crowdLevel')}: ${t(`places.${selectedType}`)}`}
+                            </Text>
+                            <Text style={styles.summarySubtitle}>{t('places.showingReports', { count: filteredReports.length })}</Text>
                         </View>
                     )}
                 />
@@ -278,32 +283,39 @@ export default function PlacesScreen() {
                     <View style={styles.filterSheet}>
                         <View style={styles.sheetHandle} />
                         <View style={styles.sheetHeader}>
-                            <Text style={styles.sheetTitle}>Refine View</Text>
+                            <Text style={styles.sheetTitle}>{t('places.refineView')}</Text>
                             <TouchableOpacity onPress={() => setFilterVisible(false)} style={styles.closeBtn}>
                                 <Ionicons name="close" size={24} color="#1E293B" />
                             </TouchableOpacity>
                         </View>
 
                         <ScrollView showsVerticalScrollIndicator={false}>
-                            <Text style={styles.filterLabel}>Distance</Text>
+                            <Text style={styles.filterLabel}>{t('places.distance')}</Text>
                             <View style={styles.filterOptions}>
-                                {['Any', '1-5 km', '5-10 km', '10-20 km', '20+ km'].map(d => (
+                                {[
+                                    { value: 'Any', label: t('places.any') },
+                                    { value: '1-5 km', label: t('places.distance1_5') },
+                                    { value: '5-10 km', label: t('places.distance5_10') },
+                                    { value: '10-20 km', label: t('places.distance10_20') },
+                                    { value: '20+ km', label: t('places.distance20_plus') },
+                                ].map(({ value, label }) => (
                                     <TouchableOpacity
-                                        key={d}
-                                        style={[styles.optionChip, selectedDistance === d && styles.activeChip]}
-                                        onPress={() => setSelectedDistance(d)}
+                                        key={value}
+                                        style={[styles.optionChip, selectedDistance === value && styles.activeChip]}
+                                        onPress={() => setSelectedDistance(value)}
                                     >
-                                        <Text style={[styles.optionText, selectedDistance === d && styles.activeChipText]}>{d}</Text>
+                                        <Text style={[styles.optionText, selectedDistance === value && styles.activeChipText]}>{label}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </View>
 
-                            <Text style={styles.filterLabel}>Crowd Level</Text>
+                            <Text style={styles.filterLabel}>{t('places.crowdLevel')}</Text>
                             <View style={styles.filterOptions}>
                                 {['All', 'vacant', 'medium', 'loaded'
                                 ].map(s => {
                                     const color = s === 'vacant' ? '#22C55E' : s === 'medium' ? '#F59E0B' : s === 'loaded' ? '#EF4444' : '#64748B';
                                     const icon = s === 'vacant' ? 'leaf-outline' : s === 'medium' ? 'people-outline' : s === 'loaded' ? 'flame-outline' : 'apps-outline';
+                                    const labelKey = s === 'All' ? 'places.all' : `places.${s}`;
                                     return (
                                         <TouchableOpacity
                                             key={s}
@@ -314,27 +326,33 @@ export default function PlacesScreen() {
                                             onPress={() => setSelectedType(s)}
                                         >
                                             <Ionicons name={icon as any} size={16} color={selectedType === s ? '#fff' : color} />
-                                            <Text style={[styles.statusChipText, { color: selectedType === s ? '#fff' : color }]}>{s.charAt(0).toUpperCase() + s.slice(1)}</Text>
+                                            <Text style={[styles.statusChipText, { color: selectedType === s ? '#fff' : color }]}>{t(labelKey)}</Text>
                                         </TouchableOpacity>
                                     );
                                 })}
                             </View>
 
-                            <Text style={styles.filterLabel}>Store Type</Text>
+                            <Text style={styles.filterLabel}>{t('places.storeType')}</Text>
                             <View style={styles.filterOptions}>
-                                {['All', 'Food', 'Fun', 'Medical', 'Shopping'].map(c => (
+                                {[
+                                    { value: 'All', label: t('places.all') },
+                                    { value: 'Food', label: t('places.food') },
+                                    { value: 'Fun', label: t('places.fun') },
+                                    { value: 'Medical', label: t('places.medical') },
+                                    { value: 'Shopping', label: t('places.shopping') },
+                                ].map(({ value, label }) => (
                                     <TouchableOpacity
-                                        key={c}
-                                        style={[styles.optionChip, selectedCategory === c && styles.activeChip]}
-                                        onPress={() => setSelectedCategory(c)}
+                                        key={value}
+                                        style={[styles.optionChip, selectedCategory === value && styles.activeChip]}
+                                        onPress={() => setSelectedCategory(value)}
                                     >
-                                        <Text style={[styles.optionText, selectedCategory === c && styles.activeChipText]}>{c}</Text>
+                                        <Text style={[styles.optionText, selectedCategory === value && styles.activeChipText]}>{label}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </View>
 
                             <TouchableOpacity style={styles.applyBtn} onPress={() => setFilterVisible(false)}>
-                                <Text style={styles.applyBtnText}>Apply Filters</Text>
+                                <Text style={styles.applyBtnText}>{t('places.applyFilters')}</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity style={styles.resetBtn} onPress={() => {
@@ -342,7 +360,7 @@ export default function PlacesScreen() {
                                 setSelectedType('All');
                                 setSelectedCategory('All');
                             }}>
-                                <Text style={styles.resetBtnText}>Reset to default</Text>
+                                <Text style={styles.resetBtnText}>{t('places.resetDefault')}</Text>
                             </TouchableOpacity>
                             <View style={{ height: 40 }} />
                         </ScrollView>

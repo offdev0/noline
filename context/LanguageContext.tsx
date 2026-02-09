@@ -1,3 +1,4 @@
+import { configureI18n } from '@/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
@@ -29,9 +30,13 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
                 const stored = await AsyncStorage.getItem(STORAGE_KEY);
                 if (stored === 'en' || stored === 'he') {
                     setLanguageState(stored);
+                    configureI18n(stored);
+                } else {
+                    configureI18n('en');
                 }
             } catch {
                 // Ignore storage errors and fall back to default
+                configureI18n('en');
             } finally {
                 setLoading(false);
             }
@@ -42,6 +47,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
 
     const setLanguage = useCallback(async (next: LanguageCode) => {
         setLanguageState(next);
+        configureI18n(next);
         try {
             await AsyncStorage.setItem(STORAGE_KEY, next);
         } catch {

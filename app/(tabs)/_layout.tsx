@@ -4,6 +4,7 @@ import React from 'react';
 import { HapticTab } from '@/components/haptic-tab';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
@@ -52,7 +53,7 @@ export default function TabLayout() {
         name="index"
 
         options={{
-          title: 'Home',
+          title: t('tabs.home'),
 
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
@@ -68,7 +69,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="places"
         options={{
-          title: 'Places',
+          title: t('tabs.places'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "location" : "location-outline"}
@@ -83,7 +84,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="trends"
         options={{
-          title: 'Trends',
+          title: t('tabs.trends'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "trending-up" : "trending-up-outline"}
@@ -106,7 +107,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="customized"
         options={{
-          title: 'Route',
+          title: t('tabs.route'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "gift" : "gift-outline"}

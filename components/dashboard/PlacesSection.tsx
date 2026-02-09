@@ -1,4 +1,5 @@
 import { usePlaces } from '@/context/PlacesContext';
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -72,7 +73,7 @@ const PlaceCard = ({ place, onPress }: { place: PlaceProps; onPress: () => void 
                         end={{ x: 1, y: 0 }}
                         style={styles.ctaGradient}
                     >
-                        <Text style={styles.ctaText}>View details</Text>
+                        <Text style={styles.ctaText}>{t('placesSection.viewDetails')}</Text>
                         <Ionicons name="arrow-forward" size={14} color="#fff" style={{ marginLeft: 4 }} />
                     </LinearGradient>
                 </TouchableOpacity>
@@ -106,7 +107,11 @@ export default function PlacesSection() {
         name: p.name,
         rating: p.rating,
         category: p.category.charAt(0).toUpperCase() + p.category.slice(1),
-        queueStatus: p.status === 'vacant' ? 'Short queue' : p.status === 'medium' ? 'Medium queue' : 'Long queue',
+        queueStatus: p.status === 'vacant'
+            ? t('placesSection.shortQueue')
+            : p.status === 'medium'
+                ? t('placesSection.mediumQueue')
+                : t('placesSection.longQueue'),
         distance: p.distance,
         image: p.image
     });
@@ -114,16 +119,16 @@ export default function PlacesSection() {
     if (loading && hotPlaces.length === 0) {
         return (
             <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Fetching real-time spots...</Text>
+                <Text style={styles.loadingText}>{t('placesSection.fetching')}</Text>
             </View>
         );
     }
 
     const sections = [
-        { title: 'Extremely hot places', emoji: '🔥', data: hotPlaces },
-        { title: 'Top Restaurants', emoji: '🍕', data: restaurants },
-        { title: 'Recommended to Discover', emoji: '✨', data: recommendedPlaces },
-        { title: 'Places with a Special Vibe', emoji: '🎭', data: vibePlaces },
+        { title: t('placesSection.hot'), emoji: '🔥', data: hotPlaces },
+        { title: t('placesSection.topRestaurants'), emoji: '🍕', data: restaurants },
+        { title: t('placesSection.recommended'), emoji: '✨', data: recommendedPlaces },
+        { title: t('placesSection.vibe'), emoji: '🎭', data: vibePlaces },
     ].filter(s => s.data && s.data.length > 0);
 
     return (
@@ -147,7 +152,7 @@ export default function PlacesSection() {
             ))}
             {sections.length === 0 && !loading && (
                 <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>Search for a location to see local spots!</Text>
+                    <Text style={styles.emptyText}>{t('placesSection.empty')}</Text>
                 </View>
             )}
         </View>

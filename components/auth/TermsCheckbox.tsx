@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import Checkbox from 'expo-checkbox';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -20,7 +21,7 @@ export default function TermsCheckbox({
                 color={isChecked ? '#4A6CFA' : undefined}
             />
             <Text style={styles.checkboxLabel}>
-                I agree to the Terms of Use and Privacy Policy and allow the use of my location to see real queues and hot spots near me!
+                {t('auth.termsAgreement')}
             </Text>
         </View>
     );

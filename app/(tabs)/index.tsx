@@ -12,6 +12,7 @@ import SearchBar from '@/components/dashboard/SearchBar';
 import XPGainAnimation from '@/components/rewards/XPGainAnimation';
 import { useLocation } from '@/context/LocationContext';
 import { useUser } from '@/context/UserContext';
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
 
@@ -54,8 +55,8 @@ export default function DashboardScreen() {
           )}
 
           <View style={styles.titleContainer}>
-            <Text style={styles.titleBlue}>Before you leave</Text>
-            <Text style={styles.titleBlue}>– Check the queue!</Text>
+            <Text style={styles.titleBlue}>{t('dashboard.titleLine1')}</Text>
+            <Text style={styles.titleBlue}>{t('dashboard.titleLine2')}</Text>
           </View>
 
           {permissionStatus !== 'granted' && (
@@ -67,7 +68,7 @@ export default function DashboardScreen() {
               <View style={styles.locationBannerContent}>
                 <Ionicons name="location-outline" size={20} color="#6366F1" />
                 <Text style={styles.locationBannerText}>
-                  Enable location for more accurate results nearby
+                  {t('dashboard.enableLocation')}
                 </Text>
                 <Ionicons name="chevron-forward" size={16} color="#6366F1" />
               </View>

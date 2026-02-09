@@ -1,4 +1,5 @@
 import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -46,50 +47,50 @@ export default function GeneralSettings() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#333" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>General settings</Text>
+                <Text style={styles.headerTitle}>{t('settings.title')}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Text style={styles.sectionTitle}>Notifications</Text>
+                <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
                 <View style={styles.section}>
                     <SettingItem
                         icon="notifications"
-                        label="Push Notifications"
-                        description="Receive alerts about places near you"
+                        label={t('settings.pushNotifications')}
+                        description={t('settings.pushNotificationsDesc')}
                         value={pushNotifications}
                         onToggle={setPushNotifications}
                     />
                     <View style={styles.divider} />
                     <SettingItem
                         icon="mail"
-                        label="Email Updates"
-                        description="Get weekly summaries of your activity"
+                        label={t('settings.emailUpdates')}
+                        description={t('settings.emailUpdatesDesc')}
                         value={emailNotifications}
                         onToggle={setEmailNotifications}
                     />
                 </View>
 
-                <Text style={styles.sectionTitle}>App Preferences</Text>
+                <Text style={styles.sectionTitle}>{t('settings.appPreferences')}</Text>
                 <View style={styles.section}>
                     <SettingItem
                         icon="moon"
-                        label="Dark Mode"
-                        description="Toggle between light and dark themes"
+                        label={t('settings.darkMode')}
+                        description={t('settings.darkModeDesc')}
                         value={darkMode}
                         onToggle={setDarkMode}
                     />
                     <View style={styles.divider} />
                     <SettingItem
                         icon="location"
-                        label="Location Services"
-                        description="Improve discovery precision"
+                        label={t('settings.locationServices')}
+                        description={t('settings.locationServicesDesc')}
                         value={locationServices}
                         onToggle={setLocationServices}
                     />
                 </View>
 
-                <Text style={styles.sectionTitle}>Language</Text>
+                <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
                 <View style={styles.section}>
                     <View style={styles.languageRow}>
                         <View style={styles.settingInfo}>
@@ -97,8 +98,8 @@ export default function GeneralSettings() {
                                 <Ionicons name="language" size={20} color="#5356FF" />
                             </View>
                             <View style={styles.textContainer}>
-                                <Text style={styles.settingLabel}>App Language</Text>
-                                <Text style={styles.settingDescription}>Choose Hebrew or English</Text>
+                                <Text style={styles.settingLabel}>{t('settings.appLanguage')}</Text>
+                                <Text style={styles.settingDescription}>{t('settings.languageDesc')}</Text>
                             </View>
                         </View>
                     </View>
@@ -108,32 +109,32 @@ export default function GeneralSettings() {
                             onPress={() => setLanguage('en')}
                             activeOpacity={0.85}
                         >
-                            <Text style={[styles.langButtonText, language === 'en' && styles.langButtonTextActive]}>English</Text>
+                            <Text style={[styles.langButtonText, language === 'en' && styles.langButtonTextActive]}>{t('settings.english')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.langButton, language === 'he' && styles.langButtonActive]}
                             onPress={() => setLanguage('he')}
                             activeOpacity={0.85}
                         >
-                            <Text style={[styles.langButtonText, language === 'he' && styles.langButtonTextActive]}>Hebrew</Text>
+                            <Text style={[styles.langButtonText, language === 'he' && styles.langButtonTextActive]}>{t('settings.hebrew')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
-                <Text style={styles.sectionTitle}>About</Text>
+                <Text style={styles.sectionTitle}>{t('settings.about')}</Text>
                 <View style={styles.section}>
                     <TouchableOpacity style={styles.listItem}>
-                        <Text style={styles.listItemText}>Privacy Policy</Text>
+                        <Text style={styles.listItemText}>{t('settings.privacyPolicy')}</Text>
                         <Ionicons name="chevron-forward" size={18} color="#CCC" />
                     </TouchableOpacity>
                     <View style={styles.divider} />
                     <TouchableOpacity style={styles.listItem}>
-                        <Text style={styles.listItemText}>Terms of Service</Text>
+                        <Text style={styles.listItemText}>{t('settings.termsOfService')}</Text>
                         <Ionicons name="chevron-forward" size={18} color="#CCC" />
                     </TouchableOpacity>
                     <View style={styles.divider} />
                     <View style={styles.listItem}>
-                        <Text style={styles.listItemText}>Version</Text>
+                        <Text style={styles.listItemText}>{t('settings.version')}</Text>
                         <Text style={styles.versionText}>1.0.4 (Build 42)</Text>
                     </View>
                 </View>

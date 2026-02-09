@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -86,7 +87,7 @@ export default function TrendsScreen() {
 
                 {/* Main Hero Title */}
                 <View style={styles.titleContainer}>
-                    <Text style={styles.mainTitle}>What do you{"\n"}want now?</Text>
+                    <Text style={styles.mainTitle}>{t('trends.heroTitle')}</Text>
                 </View>
 
                 {/* Mood Selection */}
@@ -110,7 +111,7 @@ export default function TrendsScreen() {
                                 >
                                     <Ionicons name={mood.icon as any} size={22} color={mood.iconColor} />
                                 </LinearGradient>
-                                <Text style={[styles.moodLabel, { color: mood.iconColor }]}>{mood.label}</Text>
+                                <Text style={[styles.moodLabel, { color: mood.iconColor }]}>{t(`moods.${mood.label}`)}</Text>
                             </TouchableOpacity>
                         </View>
                     ))}
@@ -118,11 +119,11 @@ export default function TrendsScreen() {
 
                 {/* Trending Section */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Trending Near You</Text>
+                    <Text style={styles.sectionTitle}>{t('trends.trendingNearYou')}</Text>
                     {trendingPlaces.length > 3 && (
                         <TouchableOpacity onPress={() => setShowAllTrending(!showAllTrending)}>
                             <Text style={styles.seeAllText}>
-                                {showAllTrending ? 'Show less' : 'See all'}
+                                {showAllTrending ? t('trends.showLess') : t('trends.seeAll')}
                             </Text>
                         </TouchableOpacity>
                     )}
@@ -131,7 +132,7 @@ export default function TrendsScreen() {
                 <View style={styles.trendingContainer}>
                     {loading && trendingPlaces.length === 0 ? (
                         <View style={{ padding: 20 }}>
-                            <Text style={{ color: '#666', textAlign: 'center' }}>Updating live trends...</Text>
+                            <Text style={{ color: '#666', textAlign: 'center' }}>{t('trends.updating')}</Text>
                         </View>
                     ) : (
                         (showAllTrending ? filteredTrendingPlaces.slice(0, 12) : filteredTrendingPlaces.slice(0, 3)).map((item) => (
@@ -160,7 +161,7 @@ export default function TrendsScreen() {
                                             onPress={() => handlePlacePress(item.id)}
                                         >
                                             <LinearGradient colors={['#6366F1', '#4F46E5']} style={styles.visitGradient}>
-                                                <Text style={styles.visitText}>Visit</Text>
+                                                <Text style={styles.visitText}>{t('trends.visit')}</Text>
                                             </LinearGradient>
                                         </TouchableOpacity>
                                     </View>
@@ -181,11 +182,11 @@ export default function TrendsScreen() {
                     <View style={styles.sectionHeader}>
                         <View style={styles.favTitleRow}>
                             <Ionicons name="heart" size={20} color="#EF4444" />
-                            <Text style={styles.sectionTitle}> Your Favorites</Text>
+                            <Text style={styles.sectionTitle}> {t('trends.yourFavorites')}</Text>
                         </View>
                         {favorites.length > 0 && (
                             <TouchableOpacity onPress={() => router.push('/favorites')}>
-                                <Text style={styles.seeAllText}>See all</Text>
+                                <Text style={styles.seeAllText}>{t('trends.seeAll')}</Text>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -199,7 +200,7 @@ export default function TrendsScreen() {
                         {favorites.length === 0 ? (
                             <View style={styles.emptyFavBox}>
                                 <Ionicons name="heart-outline" size={32} color="#CBD5E1" />
-                                <Text style={styles.emptyFavText}>Places you heart will appear here</Text>
+                                <Text style={styles.emptyFavText}>{t('trends.favoritesEmpty')}</Text>
                             </View>
                         ) : (
                             favorites.map((fav) => (
@@ -213,7 +214,7 @@ export default function TrendsScreen() {
                                     <View style={styles.favInfo}>
                                         <Text style={styles.favName} numberOfLines={1}>{fav.name}</Text>
                                         <View style={styles.goBackBadge}>
-                                            <Text style={styles.goBackText}>Go back</Text>
+                                            <Text style={styles.goBackText}>{t('trends.goBack')}</Text>
                                             <Ionicons name="chevron-forward" size={10} color="#fff" />
                                         </View>
                                     </View>

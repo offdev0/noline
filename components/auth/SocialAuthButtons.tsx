@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -13,7 +14,7 @@ export default function SocialAuthButtons({ onGooglePress, isLoading, mode }: So
         <View style={styles.container}>
             <View style={styles.dividerContainer}>
                 <View style={styles.line} />
-                <Text style={styles.orText}>OR</Text>
+                <Text style={styles.orText}>{t('auth.or')}</Text>
                 <View style={styles.line} />
             </View>
 
@@ -27,7 +28,7 @@ export default function SocialAuthButtons({ onGooglePress, isLoading, mode }: So
                     <Ionicons name="logo-google" size={24} color="#DB4437" />
                 </View>
                 <Text style={styles.buttonText}>
-                    {mode === 'login' ? 'Continue with Google' : 'Sign up with Google'}
+                    {mode === 'login' ? t('auth.continueWithGoogle') : t('auth.signupWithGoogle')}
                 </Text>
             </TouchableOpacity>
         </View>

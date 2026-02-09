@@ -1,4 +1,5 @@
 import { ALL_MEDALS, useUser } from '@/context/UserContext';
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
@@ -47,12 +48,12 @@ export default function RewardsScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.topReportersButton} onPress={() => router.push('/top-reporters')}>
                     <Ionicons name="trophy" size={20} color="#FFD700" />
-                    <Text style={styles.topReportersText}>Top Reporters</Text>
+                    <Text style={styles.topReportersText}>{t('rewards.topReporters')}</Text>
                 </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                <Text style={styles.pageTitle}>Your progress</Text>
+                <Text style={styles.pageTitle}>{t('rewards.yourProgress')}</Text>
 
                 {/* Profile Card */}
                 <View style={styles.profileCard}>
@@ -63,7 +64,7 @@ export default function RewardsScreen() {
                     <Text style={styles.userName}>{userName}</Text>
                     <View style={[styles.levelBadge, isMaxLevel && { backgroundColor: '#FCD34D' }]}>
                         <Text style={[styles.levelBadgeText, isMaxLevel && { color: '#92400E' }]}>
-                            {isMaxLevel ? 'MAX LEVEL' : `Level ${level}`}
+                            {isMaxLevel ? t('rewards.maxLevel') : t('rewards.level', { level })}
                         </Text>
                     </View>
                 </View>
@@ -80,17 +81,17 @@ export default function RewardsScreen() {
                         </View>
                         <View style={styles.progressInfo}>
                             <Text style={styles.progressTitle}>
-                                {isMaxLevel ? 'Ultimate Legend' : `${medalName} - Keep growing!`}
+                                {isMaxLevel ? t('rewards.ultimateLegend') : t('rewards.keepGrowing', { medal: medalName })}
                             </Text>
                             <View style={styles.progressBarContainer}>
                                 <View style={[styles.progressBar, { width: `${progressToNextLevel}%` }]} />
                             </View>
                             <Text style={styles.xpText}>
-                                {isMaxLevel ? `${points} Total XP` : `${xpInLevel} / ${targetXp} XP to the next level`}
+                                {isMaxLevel ? t('rewards.totalXp', { points }) : t('rewards.xpToNext', { current: xpInLevel, target: targetXp })}
                             </Text>
                             {!isMaxLevel && (
                                 <Text style={styles.hintText}>
-                                    You're {reportsLeft} reports away from your next medal!
+                                    {t('rewards.reportsAway', { count: reportsLeft })}
                                 </Text>
                             )}
                         </View>
@@ -105,8 +106,8 @@ export default function RewardsScreen() {
                                 <Ionicons name="flame" size={24} color="#FF6B00" />
                             </View>
                             <View style={styles.streakInfo}>
-                                <Text style={styles.streakTitle}>Streak: {streak} days in a row</Text>
-                                <Text style={styles.streakSubtitle}>{streak >= 7 ? "You're a legend! Keep it up!" : "Almost a whole week! Crazy."}</Text>
+                                <Text style={styles.streakTitle}>{t('rewards.streakDays', { count: streak })}</Text>
+                                <Text style={styles.streakSubtitle}>{streak >= 7 ? t('rewards.streakLegend') : t('rewards.streakAlmost')}</Text>
                             </View>
                         </View>
                     </View>
@@ -116,7 +117,7 @@ export default function RewardsScreen() {
 
                 {/* Achievements */}
                 <View style={styles.achievementsSection}>
-                    <Text style={styles.achievementsSectionTitle}>Your achievements</Text>
+                    <Text style={styles.achievementsSectionTitle}>{t('rewards.achievements')}</Text>
                     <View style={styles.achievementsGrid}>
                         {ALL_MEDALS.map((medalAsset, index) => {
                             const medalLevel = index + 1;

@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 
 import { useUser } from '@/context/UserContext';
+import { t } from '@/i18n';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DRAWER_WIDTH = SCREEN_WIDTH * 0.85;
@@ -34,7 +35,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
     const { logout, userData, level, medal, medalName, progressToNextLevel, xpToNextLevel, nextMedalName, points, streak } = useUser();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-    const displayName = userData?.display_name || userEmail?.split('@')[0] || 'User';
+    const displayName = userData?.display_name || userEmail?.split('@')[0] || t('places.user');
     const profilePic = userData?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=6366F1&color=fff&size=128`;
 
     const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
@@ -101,7 +102,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                     )}
                 </View>
                 <Text style={[styles.menuItemLabel, isDestructive && styles.destructiveLabel]}>
-                    {isLoading ? 'Logging out...' : label}
+                    {isLoading ? t('drawer.loggingOut') : label}
                 </Text>
             </View>
             {!isLoading && <Ionicons name="chevron-forward" size={16} color="#ccc" />}
@@ -137,7 +138,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             <TouchableOpacity onPress={onClose} disabled={isLoggingOut}>
                                 <Ionicons name="arrow-back" size={24} color="#333" />
                             </TouchableOpacity>
-                            <Text style={styles.headerTitle}>My profile</Text>
+                            <Text style={styles.headerTitle}>{t('drawer.myProfile')}</Text>
                             <View style={{ width: 24 }} />
                         </View>
 
@@ -148,7 +149,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                                     style={styles.avatar}
                                 />
                             </View>
-                            <Text style={styles.displayName}>{userData?.display_name || userEmail?.split('@')[0] || '[Display Name]'}</Text>
+                            <Text style={styles.displayName}>{userData?.display_name || userEmail?.split('@')[0] || t('places.user')}</Text>
                         </View>
 
                         <View style={styles.levelCard}>
@@ -166,21 +167,21 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                                     />
                                 </View>
                                 <View style={styles.levelTexts}>
-                                    <Text style={styles.levelTitle}>Level {level} - {medal} Medal</Text>
+                                    <Text style={styles.levelTitle}>{t('drawer.levelMedal', { level, medal: medalName })}</Text>
                                     <View style={styles.progressBarBg}>
                                         <View style={[styles.progressBarFill, { width: `${progressToNextLevel}%` }]} />
                                     </View>
-                                    <Text style={styles.xpText}>{xpToNextLevel} XP to {nextMedalName}!</Text>
+                                    <Text style={styles.xpText}>{t('drawer.xpToNext', { xp: xpToNextLevel, nextMedal: nextMedalName })}</Text>
                                 </View>
                             </View>
-                            {streak > 0 && <Text style={styles.streakInfo}>🔥 {streak} Day Streak!</Text>}
+                            {streak > 0 && <Text style={styles.streakInfo}>{t('drawer.streak', { count: streak })}</Text>}
                         </View>
 
-                        <SectionHeader title="My personal area" />
+                        <SectionHeader title={t('drawer.personalArea')} />
                         <View style={styles.menuGroup}>
                             <MenuItem
                                 icon="star"
-                                label="Favorites"
+                                label={t('drawer.favorites')}
                                 onPress={() => {
                                     onClose();
                                     router.push('/favorites');
@@ -188,7 +189,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             />
                             <MenuItem
                                 icon="notifications"
-                                label="Customized notifications"
+                                label={t('drawer.customNotifications')}
                                 onPress={() => {
                                     onClose();
                                     router.push('/(tabs)/customized');
@@ -196,11 +197,11 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             />
                             <MenuItem
                                 icon="person-add"
-                                label="Profile sharing"
+                                label={t('drawer.profileSharing')}
                                 onPress={async () => {
                                     try {
                                         await Share.share({
-                                            message: `Check out my profile on NoLine! I'm level ${level} with a ${medalName} medal. Download the app to find the best spots: https://noline.app`,
+                                            message: t('drawer.shareProfile', { level, medal: medalName }),
                                         });
                                     } catch (error: any) {
                                         console.error(error.message);
@@ -209,11 +210,11 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             />
                         </View>
 
-                        <SectionHeader title="Settings" />
+                        <SectionHeader title={t('drawer.settings')} />
                         <View style={styles.menuGroup}>
                             <MenuItem
                                 icon="settings"
-                                label="General settings"
+                                label={t('drawer.generalSettings')}
                                 onPress={() => {
                                     onClose();
                                     router.push('/settings/general');
@@ -221,7 +222,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             />
                             <MenuItem
                                 icon="person"
-                                label="Account details"
+                                label={t('drawer.accountDetails')}
                                 onPress={() => {
                                     onClose();
                                     router.push('/account/details');
@@ -229,7 +230,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             />
                             <MenuItem
                                 icon="star-half"
-                                label="Rate us"
+                                label={t('drawer.rateUs')}
                                 onPress={() => {
                                     const storeUrl = Platform.OS === 'ios'
                                         ? 'https://apps.apple.com/app/noline' // Replace with actual ID
@@ -239,11 +240,11 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             />
                             <MenuItem
                                 icon="share-social"
-                                label="Tell your friends about NoLine"
+                                label={t('drawer.tellFriends')}
                                 onPress={async () => {
                                     try {
                                         await Share.share({
-                                            message: 'Check out NoLine! The best way to find great spots and bypass the crowds. https://noline.app',
+                                            message: t('drawer.shareApp'),
                                         });
                                     } catch (error: any) {
                                         console.error(error.message);
@@ -252,11 +253,11 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             />
                         </View>
 
-                        <SectionHeader title="Support" />
+                        <SectionHeader title={t('drawer.support')} />
                         <View style={styles.menuGroup}>
                             <MenuItem
                                 icon="help-circle"
-                                label="Help and support"
+                                label={t('drawer.helpSupport')}
                                 onPress={() => {
                                     onClose();
                                     router.push('/help');
@@ -264,19 +265,19 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             />
                             <MenuItem
                                 icon="mail-outline"
-                                label="Contact us"
+                                label={t('drawer.contactUs')}
                                 onPress={() => {
                                     Linking.openURL('mailto:support@noline.app');
                                 }}
                             />
                         </View>
 
-                        <SectionHeader title="Account" />
+                        <SectionHeader title={t('drawer.account')} />
                         <View style={styles.menuGroup}>
-                            <MenuItem icon="swap-horizontal" label="Account switching" />
+                            <MenuItem icon="swap-horizontal" label={t('drawer.accountSwitch')} />
                             <MenuItem
                                 icon="log-out-outline"
-                                label="Exit"
+                                label={t('drawer.exit')}
                                 onPress={handleLogout}
                                 isDestructive
                                 isLoading={isLoggingOut}

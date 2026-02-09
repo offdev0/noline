@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import React from 'react';
 import {
     ActivityIndicator,
@@ -33,12 +34,12 @@ export default function AuthButton({
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="small" color="#fff" />
                         <Text style={[styles.buttonText, { marginLeft: 10 }]}>
-                            {isLoginMode ? 'Logging in...' : 'Creating account...'}
+                            {isLoginMode ? t('auth.loggingIn') : t('auth.creatingAccount')}
                         </Text>
                     </View>
                 ) : (
                     <Text style={styles.buttonText}>
-                        {isLoginMode ? 'Log In' : 'Create Account'}
+                        {isLoginMode ? t('auth.login') : t('auth.signup')}
                     </Text>
                 )}
             </TouchableOpacity>

@@ -1,4 +1,5 @@
 import { usePlaces } from '@/context/PlacesContext';
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -90,7 +91,7 @@ export default function TrendsCategoryScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#333" />
                 </TouchableOpacity>
-                <Text style={styles.title}>{(selectedMood || 'Trends').toString().toUpperCase()}</Text>
+                <Text style={styles.title}>{(selectedMood ? t(`moods.${selectedMood}`) : t('tabs.trends')).toString().toUpperCase()}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -102,10 +103,10 @@ export default function TrendsCategoryScreen() {
                         <View style={[styles.moodCircleLarge, { borderColor: moodObj.iconColor }]}>
                             <Ionicons name={moodObj.icon as any} size={36} color={moodObj.iconColor} />
                         </View>
-                        <Text style={styles.moodTitle}>{moodObj.label.toUpperCase()}</Text>
-                        <Text style={styles.moodSubtitle}>Places for {moodObj.label}</Text>
+                        <Text style={styles.moodTitle}>{t(`moods.${moodObj.label}`).toString().toUpperCase()}</Text>
+                        <Text style={styles.moodSubtitle}>{t('trends.placesFor', { mood: t(`moods.${moodObj.label}`) })}</Text>
                         <TouchableOpacity style={styles.changeBtn} onPress={() => router.push('/(tabs)/trends')}>
-                            <Text style={styles.changeBtnText}>Change mood</Text>
+                            <Text style={styles.changeBtnText}>{t('trends.changeMood')}</Text>
                         </TouchableOpacity>
                     </View>
                 );
@@ -123,10 +124,10 @@ export default function TrendsCategoryScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ padding: 16 }}
                 getItemLayout={(data, index) => ({ length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index })}
-                ListEmptyComponent={() => <Text style={{ textAlign: 'center', color: '#64748B', marginTop: 20 }}>{loading ? 'Loading...' : 'No places found for this mood.'}</Text>}
+                ListEmptyComponent={() => <Text style={{ textAlign: 'center', color: '#64748B', marginTop: 20 }}>{loading ? t('common.loading') : t('trends.noPlaces')}</Text>}
                 ListFooterComponent={() => (
                     filtered.length > MAX_DISPLAY ? (
-                        <Text style={{ textAlign: 'center', color: '#64748B', marginTop: 8 }}>Showing first {MAX_DISPLAY} of {filtered.length} places</Text>
+                        <Text style={{ textAlign: 'center', color: '#64748B', marginTop: 8 }}>{t('trends.showingFirst', { count: MAX_DISPLAY, total: filtered.length })}</Text>
                     ) : null
                 )}
             />
