@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 
 import MedalUpgradeModal from '@/components/rewards/MedalUpgradeModal';
 import { FavoritesProvider } from '@/context/FavoritesContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 import { LocationProvider } from '@/context/LocationContext';
 import { PlacesProvider } from '@/context/PlacesContext';
 import { ReportsProvider } from '@/context/ReportsContext';
@@ -97,17 +98,19 @@ function MainLayout() {
 
 export default function RootLayout() {
   return (
-    <UserProvider>
-      <LocationProvider>
-        <PlacesProvider>
-          <FavoritesProvider>
-            <ReportsProvider>
-              <MainLayout />
-            </ReportsProvider>
-          </FavoritesProvider>
-        </PlacesProvider>
-      </LocationProvider>
-    </UserProvider>
+    <LanguageProvider>
+      <UserProvider>
+        <LocationProvider>
+          <PlacesProvider>
+            <FavoritesProvider>
+              <ReportsProvider>
+                <MainLayout />
+              </ReportsProvider>
+            </FavoritesProvider>
+          </PlacesProvider>
+        </LocationProvider>
+      </UserProvider>
+    </LanguageProvider>
   );
 }
 
