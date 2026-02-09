@@ -45,7 +45,7 @@ export default function RewardsScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#333" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.topReportersButton}>
+                <TouchableOpacity style={styles.topReportersButton} onPress={() => router.push('/top-reporters')}>
                     <Ionicons name="trophy" size={20} color="#FFD700" />
                     <Text style={styles.topReportersText}>Top Reporters</Text>
                 </TouchableOpacity>
@@ -131,11 +131,13 @@ export default function RewardsScreen() {
                                     ]}
                                 >
                                     {isEarned ? (
-                                        <Image
-                                            source={medalAsset}
-                                            style={styles.achievementMedal}
-                                            resizeMode="contain"
-                                        />
+                                        <TouchableOpacity onPress={() => router.push('/top-reporters')} activeOpacity={0.8}>
+                                            <Image
+                                                source={medalAsset}
+                                                style={styles.achievementMedal}
+                                                resizeMode="contain"
+                                            />
+                                        </TouchableOpacity>
                                     ) : (
                                         <Ionicons
                                             name="lock-closed-outline"
