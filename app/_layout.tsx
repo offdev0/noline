@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import 'react-native-reanimated';
 
+import MedalUpgradeModal from '@/components/rewards/MedalUpgradeModal';
 import { FavoritesProvider } from '@/context/FavoritesContext';
 import { LocationProvider } from '@/context/LocationContext';
 import { PlacesProvider } from '@/context/PlacesContext';
@@ -88,6 +89,7 @@ function MainLayout() {
         <Stack.Screen name="account/details" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
+      <MedalUpgradeModal />
       <StatusBar style="auto" />
     </ThemeProvider>
   );

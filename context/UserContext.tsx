@@ -1,7 +1,7 @@
 import { auth, db } from '@/configs/firebaseConfig';
 import { signOut as firebaseSignOut, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, increment, serverTimestamp, setDoc } from 'firebase/firestore';
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 export const ALL_MEDALS = [
     require('@/assets/medals/lv1.png'),
@@ -33,6 +33,15 @@ interface UserContextType {
     isMaxLevel: boolean;
     lastXpGained: number;
     clearXpGained: () => void;
+    medalUpgrade: MedalUpgradeInfo | null;
+    clearMedalUpgrade: () => void;
+}
+
+interface MedalUpgradeInfo {
+    level: number;
+    medalName: string;
+    medalAsset: any;
+    points: number;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -57,6 +66,8 @@ const UserContext = createContext<UserContextType>({
     isMaxLevel: false,
     lastXpGained: 0,
     clearXpGained: () => { },
+    medalUpgrade: null,
+    clearMedalUpgrade: () => { },
 });
 
 export const useUser = () => useContext(UserContext);
@@ -69,8 +80,11 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const [completedTasksToday, setCompletedTasksToday] = useState<string[]>([]);
     const [userData, setUserData] = useState<any>(null);
     const [lastXpGained, setLastXpGained] = useState(0);
+    const [medalUpgrade, setMedalUpgrade] = useState<MedalUpgradeInfo | null>(null);
+    const prevLevelRef = useRef<number | null>(null);
 
     const clearXpGained = useCallback(() => setLastXpGained(0), []);
+    const clearMedalUpgrade = useCallback(() => setMedalUpgrade(null), []);
 
     const updateStreakAndPoints = async (currentUser: User) => {
         try {
@@ -313,6 +327,32 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         return ALL_MEDALS[lvl - 1] || ALL_MEDALS[0];
     };
 
+    useEffect(() => {
+        if (loading) return;
+
+        if (!user) {
+            prevLevelRef.current = null;
+            setMedalUpgrade(null);
+            return;
+        }
+
+        if (prevLevelRef.current === null) {
+            prevLevelRef.current = levelData.level;
+            return;
+        }
+
+        if (levelData.level > prevLevelRef.current) {
+            setMedalUpgrade({
+                level: levelData.level,
+                medalName: levelData.medalName,
+                medalAsset: getMedalAsset(levelData.level),
+                points,
+            });
+        }
+
+        prevLevelRef.current = levelData.level;
+    }, [loading, user, levelData.level, levelData.medalName, points]);
+
     return (
         <UserContext.Provider value={{
             user,
@@ -335,7 +375,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             targetXp: levelData.targetXp,
             isMaxLevel: levelData.isMax,
             lastXpGained,
-            clearXpGained
+            clearXpGained,
+            medalUpgrade,
+            clearMedalUpgrade
         }}>
             {children}
         </UserContext.Provider>
