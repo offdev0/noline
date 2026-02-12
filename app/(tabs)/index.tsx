@@ -1,6 +1,6 @@
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useNavigation } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,26 +22,7 @@ export default function DashboardScreen() {
   const { user, streak, points, lastXpGained, clearXpGained } = useUser();
   const { permissionStatus, requestLocation } = useLocation();
 
-  // Effect to hide tab bar when drawer is open
-  useEffect(() => {
-    navigation.setOptions({
-      tabBarStyle: isDrawerOpen ? { display: 'none' } : {
-        position: 'absolute',
-        bottom: 25,
-        left: 20,
-        right: 20,
-        marginHorizontal: 20,
-        backgroundColor: '#eeececff',
-        borderRadius: 20,
-        height: 70,
-        borderTopWidth: 0,
-        paddingBottom: 2,
-        paddingTop: 0,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }
-    });
-  }, [isDrawerOpen, navigation]);
+
 
   return (
     <View style={{ flex: 1 }}>

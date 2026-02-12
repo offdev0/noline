@@ -38,34 +38,34 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
     const displayName = userData?.display_name || userEmail?.split('@')[0] || t('places.user');
     const profilePic = userData?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=6366F1&color=fff&size=128`;
 
-    const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+    const slideAnim = useRef(new Animated.Value(DRAWER_WIDTH)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
-    // Animate drawer visibility
     useEffect(() => {
+        const duration = 150; // Instant feel
         if (isVisible) {
             Animated.parallel([
                 Animated.timing(slideAnim, {
                     toValue: 0,
-                    duration: 300,
+                    duration,
                     useNativeDriver: true,
                 }),
                 Animated.timing(fadeAnim, {
                     toValue: 0.5,
-                    duration: 300,
+                    duration,
                     useNativeDriver: true,
                 }),
             ]).start();
         } else {
             Animated.parallel([
                 Animated.timing(slideAnim, {
-                    toValue: -DRAWER_WIDTH,
-                    duration: 300,
+                    toValue: DRAWER_WIDTH,
+                    duration,
                     useNativeDriver: true,
                 }),
                 Animated.timing(fadeAnim, {
                     toValue: 0,
-                    duration: 300,
+                    duration,
                     useNativeDriver: true,
                 }),
             ]).start();
@@ -134,13 +134,11 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
             <Animated.View style={[styles.drawerContainer, { transform: [{ translateX: slideAnim }] }]}>
                 <SafeAreaView style={styles.safeArea}>
                     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                        <View style={styles.headerRow}>
-                            <TouchableOpacity onPress={onClose} disabled={isLoggingOut}>
-                                <Ionicons name="arrow-back" size={24} color="#333" />
-                            </TouchableOpacity>
-                            <Text style={styles.headerTitle}>{t('drawer.myProfile')}</Text>
-                            <View style={{ width: 24 }} />
-                        </View>
+                        <View style={{ width: 24 }} />
+                        <Text style={styles.headerTitle}>{t('drawer.myProfile')}</Text>
+                        <TouchableOpacity onPress={onClose} disabled={isLoggingOut}>
+                            <Ionicons name="close" size={28} color="#333" />
+                        </TouchableOpacity>
 
                         <View style={styles.profileInfoContainer}>
                             <View style={styles.avatarContainer}>
@@ -309,13 +307,13 @@ const styles = StyleSheet.create({
     drawerContainer: {
         position: 'absolute',
         top: 0,
-        left: 0,
+        right: 0,
         bottom: 0,
         width: DRAWER_WIDTH,
         backgroundColor: '#F8F9FA',
         zIndex: 101,
         shadowColor: '#000',
-        shadowOffset: { width: 2, height: 0 },
+        shadowOffset: { width: -2, height: 0 },
         shadowOpacity: 0.2,
         shadowRadius: 10,
         elevation: 10,

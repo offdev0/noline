@@ -170,9 +170,13 @@ export default function CustomizedScreen() {
             >
                 {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity style={styles.menuButton}>
-                        <Ionicons name="menu" size={28} color="#333" />
-                    </TouchableOpacity>
+                    {router.canGoBack() ? (
+                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                            <Ionicons name="arrow-back" size={24} color="#333" />
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={{ width: 24 }} />
+                    )}
                 </View>
 
                 {/* Title */}
@@ -316,7 +320,7 @@ const styles = StyleSheet.create({
         paddingTop: 8,
         paddingBottom: 16,
     },
-    menuButton: {
+    backButton: {
         padding: 4,
     },
     pageTitle: {

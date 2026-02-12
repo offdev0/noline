@@ -26,25 +26,25 @@ export default function TabLayout() {
           bottom: 25,
           left: 20,
           right: 20,
-          marginHorizontal: 20,
-          backgroundColor: '#eeececff',
-          borderRadius: 20,
-          height: 70,
-
+          backgroundColor: '#FFFFFF',
+          borderRadius: 25,
+          height: 75,
           borderTopWidth: 0,
-          paddingBottom: 2, // Reset default padding
-          paddingTop: 0,
-          justifyContent: 'center',
-          alignItems: 'center',
+          borderWidth: 1,
+          borderColor: '#F1F5F9',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.1,
+          shadowRadius: 20,
+          elevation: 5,
         },
         tabBarItemStyle: {
-          paddingTop: 6, // Center icons vertically in the new height
+          paddingTop: 10,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '800',
-          marginTop: 4,
-          paddingBottom: 6
+          fontSize: 10,
+          fontWeight: '700',
+          paddingBottom: 10,
         }
       }}>
 
