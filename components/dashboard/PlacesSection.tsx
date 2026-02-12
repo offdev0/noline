@@ -1,10 +1,11 @@
 import { usePlaces } from '@/context/PlacesContext';
 import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Dimensions, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 60) / 2;
@@ -48,7 +49,13 @@ const PlaceCard = ({ place, onPress }: { place: PlaceProps; onPress: () => void 
     return (
         <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
             <View style={styles.imageContainer}>
-                <Image source={{ uri: place.image }} style={styles.cardImage} resizeMode="cover" />
+                <Image
+                    source={{ uri: place.image }}
+                    style={styles.cardImage}
+                    contentFit="cover"
+                    transition={300}
+                    cachePolicy="memory-disk"
+                />
                 <View style={styles.categoryBadge}>
                     <Ionicons name={getCategoryIcon(place.category) as any} size={10} color="#fff" />
                     <Text style={styles.categoryBadgeText}>{place.category}</Text>
@@ -139,8 +146,13 @@ export default function PlacesSection() {
                         <Text style={styles.sectionTitle}>{section.title}</Text>
                         <Text style={styles.emoji}>{section.emoji}</Text>
                     </View>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardsContainer}>
-                        {section.data.slice(0, 8).map((place) => (
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.cardsContainer}
+                        nestedScrollEnabled={true}
+                    >
+                        {section.data.slice(0, 12).map((place) => (
                             <PlaceCard
                                 key={place.id}
                                 place={mapPlace(place)}

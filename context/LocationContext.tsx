@@ -128,7 +128,7 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
                 if (promptsInLast24Hrs >= 2) {
                     // Check if the very first prompt of these 2 was more than 5 mins ago
                     const firstPromptOfPeriod = prompts[0];
-                    if (now - firstPromptOfPeriod < 5 * 60 * 1000) {
+                    if (now - firstPromptOfPeriod < 15 * 60 * 1000) {
                         // We already did 2 prompts in the "grace" 5-min window
                         console.log('[LocationContext] Skipping prompt: Already did 2 in 5-min window');
                         setLoading(false);
@@ -143,7 +143,7 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
                 } else if (promptsInLast24Hrs === 1) {
                     // We allowed one prompt, checking if we can allow a second one
                     const firstPrompt = prompts[0];
-                    if (now - firstPrompt > 5 * 60 * 1000) {
+                    if (now - firstPrompt > 15 * 60 * 1000) {
                         // Only 1 prompt allowed per 24h after the initial 5-min window
                         console.log('[LocationContext] Skipping prompt: Initial 5-min window closed, 24h limit applies');
                         setLoading(false);
@@ -220,32 +220,27 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
 
     // Auto-request location when user logs in or app state changes
     useEffect(() => {
-        if (!user || loading) return;
+        if (!user || loading || permissionStatus === Location.PermissionStatus.GRANTED) return;
 
-        // If permission is already granted, we don't need the prompt cycle
-        if (permissionStatus === Location.PermissionStatus.GRANTED) return;
-
-        // Initial prompt
+        // Initial prompt after a short delay
         const timer = setTimeout(() => {
             requestLocation();
         }, 1000);
 
         // Re-check periodically in first 5 mins to handle the "twice in 5 mins" requirement
         const interval = setInterval(() => {
-            // We re-check permission status inside the interval to avoid stale closure issues
-            // and satisfy TS narrowing
             Location.getForegroundPermissionsAsync().then(({ status }) => {
                 if (status !== Location.PermissionStatus.GRANTED) {
                     requestLocation();
                 }
             });
-        }, 2 * 60 * 1000); // Check every 2 mins
+        }, 60 * 1000); // Check every 1 min (less aggressive than before)
 
         return () => {
             clearTimeout(timer);
             clearInterval(interval);
         };
-    }, [user, permissionStatus, loading, requestLocation]);
+    }, [user, permissionStatus]); // Removed 'loading' and 'requestLocation' to prevent infinite loops
 
     return (
         <LocationContext.Provider

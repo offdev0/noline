@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { usePlaces } from '@/context/PlacesContext';
 import { PlaceData } from '@/services/MapsService';
@@ -55,7 +56,13 @@ export default function SearchResultsScreen() {
                 onPress={() => handlePlacePress(item)}
                 activeOpacity={0.9}
             >
-                <Image source={{ uri: item.image }} style={styles.resultImage} />
+                <Image
+                    source={{ uri: item.image }}
+                    style={styles.resultImage}
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
+                />
                 <View style={styles.resultInfo}>
                     <View style={styles.nameRow}>
                         <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>

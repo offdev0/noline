@@ -32,10 +32,10 @@ export default function MapWidget() {
     const { location, address: userAddress, refreshLocation, loading, error } = useLocation();
     const { allPlaces, currentSearchCenter, currentSearchName, resetSearch } = usePlaces();
 
-    // Default location (can be city center or any default)
+    // Default location (Tel Aviv, Israel)
     const defaultLocation = {
-        latitude: 22.5726,  // Kolkata, India as default
-        longitude: 88.3639,
+        latitude: 32.0853,
+        longitude: 34.7818,
     };
 
     // Determine target location (Search takes priority over current location)
@@ -45,11 +45,11 @@ export default function MapWidget() {
     const mapRegion = {
         latitude: targetLatitude,
         longitude: targetLongitude,
-        latitudeDelta: 0.04, // Broader view for city searches
-        longitudeDelta: 0.04,
+        latitudeDelta: 0.1, // Slightly broader view for fallback
+        longitudeDelta: 0.1,
     };
 
-    const displayAddress = currentSearchName || userAddress || 'Detecting location...';
+    const displayAddress = currentSearchName || userAddress || (location ? 'Current Location' : 'Israel (General)');
 
     const handleRefresh = async () => {
         resetSearch();
@@ -71,23 +71,14 @@ export default function MapWidget() {
     return (
         <View style={styles.mapWidgetContainer}>
             <View style={styles.mapPreview}>
-                {loading ? (
+                {loading && allPlaces.length === 0 ? (
                     // Loading state
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#5356FF" />
                         <Text style={styles.loadingText}>Getting your location...</Text>
                     </View>
-                ) : error && !location ? (
-                    // Error state (but no location)
-                    <View style={styles.errorContainer}>
-                        <Ionicons name="location-outline" size={48} color="#999" />
-                        <Text style={styles.errorText}>Location unavailable</Text>
-                        <TouchableOpacity style={styles.retryButton} onPress={refreshLocation}>
-                            <Text style={styles.retryText}>Enable Location</Text>
-                        </TouchableOpacity>
-                    </View>
                 ) : (
-                    // Map view
+                    // Show map if we have location OR places (fallback)
                     <>
                         <MapView
                             style={styles.map}

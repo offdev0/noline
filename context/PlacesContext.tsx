@@ -101,6 +101,8 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
             if (searchName) {
                 setCurrentSearchName(searchName);
                 await saveSearchHistory(searchName, searchName);
+            } else {
+                setCurrentSearchName(null);
             }
         } catch (error) {
             console.error('[PlacesContext] Error fetching by coordinates:', error);
@@ -166,17 +168,21 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Auto-fetch places when GPS location becomes available (and no manual search is active)
     useEffect(() => {
-        if (!isManualSearch && !currentSearchName && allPlaces.length === 0) {
+        const isFallbackActive = currentSearchName === 'Israel';
+
+        if (!isManualSearch && (!currentSearchName || isFallbackActive)) {
             if (location) {
+                // If we have a real location, and we haven't already fetched it (or we are on fallback)
                 console.log(`[PlacesContext] Auto-fetching with GPS: ${location.latitude}, ${location.longitude}`);
                 fetchByCoordinates(location.latitude, location.longitude);
-            } else if (!loading) {
+            } else if (allPlaces.length === 0 && !loading) {
                 // FALLBACK: Fetch general Israel places if location is denied or still loading
-                console.log('[PlacesContext] Location unavailable, fetching general Israel places');
-                searchLocation('Best bars, cafes and restaurants in Tel Aviv and Jerusalem');
+                const TEL_AVIV_COORDS = { latitude: 32.0853, longitude: 34.7818 };
+                console.log('[PlacesContext] Location unavailable, fetching general Israel places (Tel Aviv)');
+                fetchByCoordinates(TEL_AVIV_COORDS.latitude, TEL_AVIV_COORDS.longitude, 'Israel');
             }
         }
-    }, [location, isManualSearch, currentSearchName]);
+    }, [location, isManualSearch, currentSearchName]); // Removed 'loading' to prevent infinite loops
 
     // Memoize filtered arrays to prevent re-renders
     // Memoize filtered arrays to match Requirement 11 (4 rows)

@@ -5,12 +5,12 @@ import { ReportData, useReports } from '@/context/ReportsContext';
 import { useUser } from '@/context/UserContext';
 import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
-    Image,
     Modal,
     ScrollView,
     StyleSheet,
@@ -137,6 +137,8 @@ export default function PlacesScreen() {
                         <Image
                             source={{ uri: getPlaceById(item.businessRef)?.image || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=100' }}
                             style={styles.placeImage}
+                            contentFit="cover"
+                            transition={200}
                         />
                     </View>
                     <View style={styles.placeDetails}>
@@ -153,6 +155,7 @@ export default function PlacesScreen() {
                     <Image
                         source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.reportBy?.split('@')[0] || t('places.user'))}&background=6366F1&color=fff` }}
                         style={styles.reporterAvatar}
+                        transition={200}
                     />
                     <View style={{ flex: 1, marginLeft: 10 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

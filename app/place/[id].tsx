@@ -5,13 +5,13 @@ import { usePlaces } from '@/context/PlacesContext';
 import { useReports } from '@/context/ReportsContext';
 import { useUser } from '@/context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
-    Image,
     ImageBackground,
     Linking,
     Modal,
@@ -269,6 +269,7 @@ export default function PlaceDetailScreen() {
                                     <Image
                                         source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(report.reportBy.split('@')[0])}&background=6366F1&color=fff` }}
                                         style={styles.reporterAvatar}
+                                        transition={200}
                                     />
                                     <View style={styles.reportContent}>
                                         <View style={styles.reportHeader}>
@@ -308,6 +309,7 @@ export default function PlaceDetailScreen() {
                             horizontal
                             showsHorizontalScrollIndicator={false}
                             style={styles.similarScroll}
+                            nestedScrollEnabled={true}
                         >
                             {similarPlaces.map((sibling) => (
                                 <TouchableOpacity
@@ -316,7 +318,12 @@ export default function PlaceDetailScreen() {
                                     onPress={() => router.push(`/place/${sibling.id}`)}
                                 >
                                     <View style={styles.similarThumbnailBox}>
-                                        <Image source={{ uri: sibling.image }} style={styles.similarThumb} />
+                                        <Image
+                                            source={{ uri: sibling.image }}
+                                            style={styles.similarThumb}
+                                            contentFit="cover"
+                                            transition={200}
+                                        />
                                     </View>
                                     <View style={styles.similarInfo}>
                                         <Text style={styles.similarName} numberOfLines={1}>{sibling.name}</Text>
