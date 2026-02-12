@@ -37,19 +37,32 @@ export default function TrendsScreen() {
     const [selectedMood, setSelectedMood] = useState<string | null>(null);
 
     const filteredTrendingPlaces = useMemo(() => {
-        if (!selectedMood) return trendingPlaces;
+        if (!selectedMood) return trendingPlaces || [];
 
-        return trendingPlaces.filter((place: PlaceData) => {
-            const mood = selectedMood.toLowerCase();
+        const moodStr = selectedMood.toLowerCase();
+
+        let results = trendingPlaces.filter((place: PlaceData) => {
             const category = place.category.toLowerCase();
+            const description = place.description.toLowerCase();
 
-            if (mood === 'calm') return category === 'mustvisit' || place.description.toLowerCase().includes('relaxed');
-            if (mood === 'social') return category === 'restaurant' || category === 'hot';
-            if (mood === 'adventure') return category === 'fun' || category === 'casino';
-            if (mood === 'freedom') return category === 'shopping' || category === 'mustvisit';
+            if (moodStr === 'calm') {
+                return category === 'mustvisit' || category === 'cafe' || description.includes('relaxed') || description.includes('quiet');
+            }
+            if (moodStr === 'social') {
+                return category === 'restaurant' || category === 'hot' || category === 'bar' || description.includes('lively');
+            }
+            if (moodStr === 'adventure') {
+                return category === 'fun' || category === 'casino' || category === 'park' || description.includes('exciting');
+            }
+            if (moodStr === 'freedom') {
+                return category === 'shopping' || category === 'mustvisit' || category === 'outdoor';
+            }
 
             return true;
         });
+
+        // Fallback to ensure results are never empty
+        return results.length > 0 ? results : trendingPlaces;
     }, [selectedMood, trendingPlaces]);
 
     const handlePlacePress = (id: string) => {
@@ -72,18 +85,14 @@ export default function TrendsScreen() {
         return 'location';
     };
 
-    // Use a smaller image source when available to reduce memory usage
-    const getImageForPlace = (place: PlaceData) => (place.thumbnail || place.thumb || place.image);
+    // Use the available image source from PlaceData
+    const getImageForPlace = (place: PlaceData) => place.image;
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                {/* Header Section */}
-                <View style={styles.header}>
-                    <TouchableOpacity style={styles.circularButton}>
-                        <Ionicons name="search-outline" size={20} color="#1E293B" />
-                    </TouchableOpacity>
-                </View>
+                {/* Content space where header was */}
+                <View style={{ height: 20 }} />
 
                 {/* Main Hero Title */}
                 <View style={styles.titleContainer}>
@@ -257,7 +266,6 @@ const styles = StyleSheet.create({
     titleContainer: {
         paddingHorizontal: 20,
         marginBottom: 25,
-        marginTop: -40
     },
     mainTitle: {
         fontSize: 34,

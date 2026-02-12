@@ -23,19 +23,40 @@ export default function TrendsCategoryScreen() {
     const [selectedMood, setSelectedMood] = useState<string | null>(mood || null);
 
     const filtered = useMemo(() => {
-        if (!selectedMood) return trendingPlaces || [];
+        if (!selectedMood || !trendingPlaces.length) return trendingPlaces || [];
 
-        return (trendingPlaces || []).filter((place: any) => {
-            const moodStr = selectedMood.toLowerCase();
+        const moodStr = selectedMood.toLowerCase();
+
+        let results = (trendingPlaces || []).filter((place: any) => {
             const category = (place.category || '').toLowerCase();
+            const description = (place.description || '').toLowerCase();
 
-            if (moodStr === 'calm') return category === 'mustvisit' || (place.description || '').toLowerCase().includes('relaxed');
-            if (moodStr === 'social') return category === 'restaurant' || category === 'hot';
-            if (moodStr === 'adventure') return category === 'fun' || category === 'casino';
-            if (moodStr === 'freedom') return category === 'shopping' || category === 'mustvisit';
+            if (moodStr === 'calm') {
+                return category === 'mustvisit' || category === 'cafe' || description.includes('relaxed') || description.includes('quiet');
+            }
+            if (moodStr === 'social') {
+                return category === 'restaurant' || category === 'hot' || category === 'bar' || description.includes('lively');
+            }
+            if (moodStr === 'adventure') {
+                return category === 'fun' || category === 'casino' || category === 'park' || description.includes('exciting');
+            }
+            if (moodStr === 'freedom') {
+                return category === 'shopping' || category === 'mustvisit' || category === 'outdoor';
+            }
 
             return true;
         });
+
+        // FALLBACK: If specific mood results are empty, provide a smart fallback to ensure the screen is never blank
+        if (results.length === 0) {
+            console.log(`[TrendsCategory] No results for mood: ${moodStr}, providing fallback results`);
+            if (moodStr === 'calm') results = trendingPlaces.filter(p => (p.rating || 0) >= 4.5); // Highly rated
+            else if (moodStr === 'social') results = trendingPlaces.filter(p => p.category === 'restaurant');
+            else results = [...trendingPlaces].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 10);
+        }
+
+        // Global fallback to ensure SOMETHING is always shown
+        return results.length > 0 ? results : trendingPlaces;
     }, [selectedMood, trendingPlaces]);
 
     // Limit number of displayed items to avoid memory pressure on devices with many results
@@ -47,7 +68,7 @@ export default function TrendsCategoryScreen() {
     const renderCard = ({ item }: { item: any }) => (
         <TouchableOpacity style={styles.premiumCard} onPress={() => router.push({ pathname: '/place/[id]', params: { id: item.id } })} activeOpacity={0.9}>
             <Image
-                source={{ uri: item.thumbnail || item.thumb || item.image }}
+                source={{ uri: item.image }}
                 style={styles.cardCover}
                 priority="low"
                 cachePolicy="disk"
