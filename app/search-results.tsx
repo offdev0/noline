@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { usePlaces } from '@/context/PlacesContext';
 import { PlaceData } from '@/services/MapsService';
@@ -11,18 +11,20 @@ const { width } = Dimensions.get('window');
 
 export default function SearchResultsScreen() {
     const router = useRouter();
-    const { query, lat, lon } = useLocalSearchParams();
-    const { performSearch, searchResults, loading, recordPlaceClick } = usePlaces();
-    const [results, setResults] = useState<PlaceData[]>([]);
+    const { query: initialQuery } = useLocalSearchParams();
+    const { performSearch, searchResults, loading, recordPlaceClick, searchHistory } = usePlaces();
+    const [searchQuery, setSearchQuery] = useState((initialQuery as string) || '');
+    const [isInputFocused, setIsInputFocused] = useState(false);
 
     useEffect(() => {
-        if (query) {
-            handleSearch();
+        if (initialQuery) {
+            handleSearch(initialQuery as string);
         }
-    }, [query]);
+    }, [initialQuery]);
 
-    const handleSearch = async () => {
-        await performSearch(query as string);
+    const handleSearch = async (val: string) => {
+        if (!val.trim()) return;
+        await performSearch(val.trim());
     };
 
     const handlePlacePress = (place: PlaceData) => {
@@ -94,11 +96,46 @@ export default function SearchResultsScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#0F172A" />
                 </TouchableOpacity>
-                <View style={styles.headerTextContainer}>
-                    <Text style={styles.headerTitle}>Search Results</Text>
-                    <Text style={styles.headerSubtitle}>"{query}"</Text>
+                <View style={styles.searchBarWrapper}>
+                    <TextInput
+                        style={styles.searchInput}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        placeholder="Search for a location..."
+                        onSubmitEditing={() => handleSearch(searchQuery)}
+                        onFocus={() => setIsInputFocused(true)}
+                        onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
+                        returnKeyType="search"
+                    />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                            <Ionicons name="close-circle" size={18} color="#94A3B8" />
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
+
+            {/* Recent Searches Overlay/Section */}
+            {isInputFocused && searchHistory.length > 0 && (
+                <View style={styles.historyContainer}>
+                    <Text style={styles.historyTitle}>Recent Searches</Text>
+                    <View style={styles.historyChips}>
+                        {searchHistory.map((item, idx) => (
+                            <TouchableOpacity
+                                key={idx}
+                                style={styles.historyChip}
+                                onPress={() => {
+                                    setSearchQuery(item);
+                                    handleSearch(item);
+                                }}
+                            >
+                                <Ionicons name="time-outline" size={14} color="#6366F1" />
+                                <Text style={styles.historyChipText}>{item}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </View>
+            )}
 
             {loading ? (
                 <View style={styles.centerContainer}>
@@ -118,7 +155,7 @@ export default function SearchResultsScreen() {
                     <Ionicons name="search-outline" size={64} color="#CBD5E1" />
                     <Text style={styles.emptyTitle}>No places found</Text>
                     <Text style={styles.emptySubtitle}>Try searching for a different location or place name.</Text>
-                    <TouchableOpacity style={styles.retryBtn} onPress={handleSearch}>
+                    <TouchableOpacity style={styles.retryBtn} onPress={() => handleSearch(searchQuery)}>
                         <Text style={styles.retryBtnText}>Retry Search</Text>
                     </TouchableOpacity>
                 </View>
@@ -140,6 +177,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderBottomWidth: 1,
         borderBottomColor: '#F1F5F9',
+        gap: 12,
     },
     backButton: {
         width: 40,
@@ -148,20 +186,24 @@ const styles = StyleSheet.create({
         backgroundColor: '#F1F5F9',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 15,
     },
-    headerTextContainer: {
+    searchBarWrapper: {
         flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F1F5F9',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        height: 44,
     },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '800',
+    searchInput: {
+        flex: 1,
+        fontSize: 15,
         color: '#0F172A',
-    },
-    headerSubtitle: {
-        fontSize: 14,
-        color: '#64748B',
         fontWeight: '500',
+    },
+    clearButton: {
+        padding: 4,
     },
     listContent: {
         padding: 20,
@@ -278,5 +320,37 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '700',
+    },
+    historyContainer: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F1F5F9',
+    },
+    historyTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#64748B',
+        marginBottom: 12,
+        textTransform: 'uppercase',
+    },
+    historyChips: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    historyChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F1F5F9',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 20,
+        gap: 6,
+    },
+    historyChipText: {
+        fontSize: 14,
+        color: '#1E293B',
+        fontWeight: '600',
     },
 });

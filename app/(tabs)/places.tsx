@@ -130,7 +130,11 @@ export default function PlacesScreen() {
         const avatarId = (item.reportBy?.length || 0) % 70;
 
         return (
-            <View style={styles.card}>
+            <TouchableOpacity
+                style={styles.card}
+                activeOpacity={0.9}
+                onPress={() => router.push(`/place/${item.businessRef}`)}
+            >
                 {/* Header: Place Image, Name, Category, Status Dot */}
                 <View style={styles.cardHeader}>
                     <View style={styles.placeIconBox}>
@@ -162,15 +166,11 @@ export default function PlacesScreen() {
                             <Text style={styles.boldText}>{item.reportBy?.split('@')[0] || t('places.user')}</Text>
                             <Text style={styles.reportTime}>{formatTimeAgo(item.Timestamp)}</Text>
                         </View>
-                        {/* <Text style={styles.reporterText} numberOfLines={2}>
-                            {item.description || item.liveSituation}
-                        </Text> */}
                     </View>
                 </View>
 
                 {/* Mood/Status Banner */}
                 <View style={[styles.statusBanner, { backgroundColor: bannerStyle.bg, borderColor: bannerStyle.border }]}>
-                    {/* <Ionicons name="flash" size={14} color={bannerStyle.text} style={{ marginRight: 6 }} /> */}
                     <Text style={[styles.statusBannerText, { color: bannerStyle.text }]}>{item.liveSituation}</Text>
                 </View>
 
@@ -200,20 +200,12 @@ export default function PlacesScreen() {
                             <Ionicons name="chatbubble-outline" size={18} color="#64748B" />
                             <Text style={styles.statLabel}>{item.commentsCount || 0}</Text>
                         </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.statItem}
-                            onPress={() => router.push(`/place/${item.businessRef}`)}
-                        >
-                            <Ionicons name="information-circle-outline" size={18} color="#64748B" />
-                            <Text style={styles.statLabel}>{t('places.details')}</Text>
-                        </TouchableOpacity>
                     </View>
                     <View style={[styles.typeBadge, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]}>
                         <Text style={styles.typeBadgeText}>{type.toUpperCase()}</Text>
                     </View>
                 </View>
-            </View>
+            </TouchableOpacity>
         );
     };
 
