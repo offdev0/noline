@@ -1,6 +1,7 @@
 import { useLocation } from '@/context/LocationContext';
 import { useReports } from '@/context/ReportsContext';
 import { useUser } from '@/context/UserContext';
+import { t } from '@/i18n';
 import { PlaceData } from '@/services/MapsService';
 import { Ionicons } from '@expo/vector-icons';
 import { GeoPoint } from 'firebase/firestore';
@@ -45,7 +46,7 @@ export default function ReviewModal({ isVisible, onClose, place }: ReviewModalPr
 
     const handleSubmit = async () => {
         if (rating === 0) {
-            alert("Please select a star rating");
+            alert(t('common.selectRating'));
             return;
         }
 
@@ -58,15 +59,15 @@ export default function ReviewModal({ isVisible, onClose, place }: ReviewModalPr
                     location?.latitude || 0,
                     location?.longitude || 0
                 ),
-                description: reviewText || "Shared a review",
+                description: reviewText || t('reviewModal.description'),
                 notes: '',
                 irrelevant: '',
                 businessRef: place.id,
                 reportNumberCount: 1,
-                reportBy: user?.email || 'Guest',
+                reportBy: user?.email || t('places.user'),
                 Hplacename: place.name,
                 crowdLevel: 0, // Not a crowd report
-                liveSituation: "User Review",
+                liveSituation: t('reviewModal.title'),
                 rating: rating
             });
 
@@ -74,7 +75,7 @@ export default function ReviewModal({ isVisible, onClose, place }: ReviewModalPr
             startSuccessFlow();
         } catch (error: any) {
             console.error("Review submission failed:", error);
-            alert("Failed to submit review.");
+            alert(t('common.failedToSubmit'));
         } finally {
             setIsSubmitting(false);
         }
@@ -163,15 +164,15 @@ export default function ReviewModal({ isVisible, onClose, place }: ReviewModalPr
                                 <View style={styles.successIconCircle}>
                                     <Ionicons name="star" size={50} color="#F59E0B" />
                                 </View>
-                                <Text style={styles.successTitle}>Review Posted!</Text>
+                                <Text style={styles.successTitle}>{t('reviewModal.success')}</Text>
                                 <Text style={styles.successSubtitle}>
-                                    Thanks — you’ve helped everyone nearby.
+                                    {t('reportModal.successDesc')}
                                 </Text>
 
                                 <View style={styles.countdownContainer}>
                                     <View style={[styles.countdownBar, { width: `${(countdown / 5) * 100}%` }]} />
                                 </View>
-                                <Text style={styles.closingText}>Closing in {countdown}s...</Text>
+                                <Text style={styles.closingText}>{t('reportModal.closingIn', { count: countdown })}</Text>
                             </View>
                         ) : (
                             <>
@@ -179,7 +180,7 @@ export default function ReviewModal({ isVisible, onClose, place }: ReviewModalPr
                                     <Image source={{ uri: place.image }} style={styles.businessImage} />
                                     <View style={styles.headerInfo}>
                                         <Text style={styles.businessName}>{place.name}</Text>
-                                        <Text style={styles.subtitle}>Rate your experience</Text>
+                                        <Text style={styles.subtitle}>{t('reviewModal.rating')}</Text>
                                     </View>
                                 </View>
 
@@ -202,7 +203,7 @@ export default function ReviewModal({ isVisible, onClose, place }: ReviewModalPr
                                 <View style={styles.inputWrapper}>
                                     <TextInput
                                         style={styles.textInput}
-                                        placeholder="Tell others about your visit... (optional)"
+                                        placeholder={t('reviewModal.description')}
                                         multiline
                                         numberOfLines={4}
                                         value={reviewText}
@@ -219,7 +220,7 @@ export default function ReviewModal({ isVisible, onClose, place }: ReviewModalPr
                                     {isSubmitting ? (
                                         <ActivityIndicator color="#fff" />
                                     ) : (
-                                        <Text style={styles.submitBtnText}>Post Review</Text>
+                                        <Text style={styles.submitBtnText}>{t('reviewModal.submit')}</Text>
                                     )}
                                 </TouchableOpacity>
                             </>

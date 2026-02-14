@@ -1,5 +1,6 @@
 import { usePlaces } from '@/context/PlacesContext';
 import { t } from '@/i18n';
+import { formatDistance } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -109,17 +110,19 @@ export default function PlacesSection() {
         router.push({ pathname: '/place/[id]', params: { id } });
     };
 
+
+
     const mapPlace = (p: any): PlaceProps => ({
         id: p.id,
         name: p.name,
         rating: p.rating,
-        category: p.category.charAt(0).toUpperCase() + p.category.slice(1),
+        category: t(`categories.${p.category}`),
         queueStatus: p.status === 'vacant'
             ? t('placesSection.shortQueue')
             : p.status === 'medium'
                 ? t('placesSection.mediumQueue')
                 : t('placesSection.longQueue'),
-        distance: p.distance,
+        distance: formatDistance(p.distance),
         image: p.image
     });
 

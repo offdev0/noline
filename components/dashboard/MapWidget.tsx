@@ -1,5 +1,6 @@
 import { useLocation } from '@/context/LocationContext';
 import { usePlaces } from '@/context/PlacesContext';
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -49,7 +50,7 @@ export default function MapWidget() {
         longitudeDelta: 0.1,
     };
 
-    const displayAddress = currentSearchName || userAddress || (location ? 'Current Location' : 'Israel (General)');
+    const displayAddress = currentSearchName || userAddress || (location ? t('map.currentLocation') : t('map.israelGeneral'));
 
     const handleRefresh = async () => {
         resetSearch();
@@ -75,7 +76,7 @@ export default function MapWidget() {
                     // Loading state
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#5356FF" />
-                        <Text style={styles.loadingText}>Getting your location...</Text>
+                        <Text style={styles.loadingText}>{t('map.gettingLocation')}</Text>
                     </View>
                 ) : (
                     // Show map if we have location OR places (fallback)
@@ -97,8 +98,8 @@ export default function MapWidget() {
                                         latitude: location.latitude,
                                         longitude: location.longitude,
                                     }}
-                                    title="You are here"
-                                    description={userAddress || 'Your current location'}
+                                    title={t('map.youAreHere')}
+                                    description={userAddress || t('map.yourCurrentLocation')}
                                     zIndex={10}
                                 >
                                     <View style={styles.userMarkerWrapper}>
@@ -152,7 +153,7 @@ export default function MapWidget() {
                                 <View style={styles.overlayLeft}>
                                     <View style={styles.overlayHeader}>
                                         <Ionicons name="location" size={20} color="#6366F1" />
-                                        <Text style={styles.overlayTitle}>Target Location</Text>
+                                        <Text style={styles.overlayTitle}>{t('map.targetLocation')}</Text>
                                     </View>
                                     <Text style={styles.overlayText} numberOfLines={2}>
                                         {displayAddress}
@@ -190,7 +191,7 @@ export default function MapWidget() {
                                     style={styles.openMapGradient}
                                 >
                                     <Ionicons name="map-outline" size={20} color="white" style={{ marginRight: 8 }} />
-                                    <Text style={styles.openMapText}>Open full map</Text>
+                                    <Text style={styles.openMapText}>{t('map.openFullMap')}</Text>
                                 </LinearGradient>
                             </TouchableOpacity>
                         </View>

@@ -12,9 +12,16 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { ColorMatrix } from 'react-native-color-matrix-image-filters';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
+const GRAYSCALE_MATRIX = [
+    0.2126, 0.7152, 0.0722, 0, 0,
+    0.2126, 0.7152, 0.0722, 0, 0,
+    0.2126, 0.7152, 0.0722, 0, 0,
+    0, 0, 0, 1, 0,
+];
 
 export default function RewardsScreen() {
     const router = useRouter();
@@ -31,7 +38,8 @@ export default function RewardsScreen() {
         xpInLevel,
         targetXp,
         progressToNextLevel,
-        isMaxLevel
+        isMaxLevel,
+        completedTasksToday
     } = useUser();
 
     const userName = userData?.display_name || user?.displayName || user?.email?.split('@')[0] || 'Explorer';
@@ -39,6 +47,22 @@ export default function RewardsScreen() {
     const profilePic = userData?.photo_url || user?.photoURL || DEFAULT_PROFILE_PIC;
 
     const reportsLeft = isMaxLevel ? 0 : Math.ceil((targetXp - xpInLevel) / 20); // 20 XP per report (10 + 10)
+    const missions = [
+        {
+            id: 'submit_report',
+            title: t('rewards.missions.submitReportTitle'),
+            subtitle: t('rewards.missions.submitReportDesc'),
+            points: 20,
+            icon: 'megaphone',
+        },
+        {
+            id: 'save_favorite',
+            title: t('rewards.missions.saveFavoriteTitle'),
+            subtitle: t('rewards.missions.saveFavoriteDesc'),
+            points: 5,
+            icon: 'heart',
+        },
+    ];
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -57,11 +81,14 @@ export default function RewardsScreen() {
 
                 {/* Profile Card */}
                 <View style={styles.profileCard}>
-                    <Image
-                        source={{ uri: profilePic }}
-                        style={styles.avatar}
-                    />
-                    <Text style={styles.userName}>{userName}</Text>
+                     <View style={styles.medalIconWrapper}>
+                            {medal ? (
+                                <Image source={medal} style={styles.progressMedal} resizeMode="cover" />
+                            ) : (
+                                <Ionicons name="medal" size={32} color="#94A3B8" />
+                            )}
+                        </View>
+                    {/* <Text style={styles.userName}>{userName}</Text> */}
                     <View style={[styles.levelBadge, isMaxLevel && { backgroundColor: '#FCD34D' }]}>
                         <Text style={[styles.levelBadgeText, isMaxLevel && { color: '#92400E' }]}>
                             {isMaxLevel ? t('rewards.maxLevel') : t('rewards.level', { level })}
@@ -72,17 +99,9 @@ export default function RewardsScreen() {
                 {/* XP Progress Section */}
                 <View style={styles.card}>
                     <View style={styles.progressHeader}>
-                        <View style={styles.medalIconWrapper}>
-                            {medal ? (
-                                <Image source={medal} style={styles.progressMedal} resizeMode="cover" />
-                            ) : (
-                                <Ionicons name="medal" size={32} color="#94A3B8" />
-                            )}
-                        </View>
+                      
                         <View style={styles.progressInfo}>
-                            <Text style={styles.progressTitle}>
-                                {isMaxLevel ? t('rewards.ultimateLegend') : t('rewards.keepGrowing', { medal: medalName })}
-                            </Text>
+                            
                             <View style={styles.progressBarContainer}>
                                 <View style={[styles.progressBar, { width: `${progressToNextLevel}%` }]} />
                             </View>
@@ -113,12 +132,51 @@ export default function RewardsScreen() {
                     </View>
                 )}
 
+                {/* Missions */}
+                <View style={styles.card}>
+                    <Text style={styles.missionsTitle}>{t('rewards.missions.title')}</Text>
+                    {missions.map((mission, index) => {
+                        const isCompleted = completedTasksToday.includes(mission.id);
+
+                        return (
+                            <View key={mission.id}>
+                                <View style={styles.taskItem}>
+                                    <View style={styles.taskIconWrapper}>
+                                        <Ionicons
+                                        //@ts-ignore
+                                            name={mission.icon}
+                                            size={20}
+                                            color={isCompleted ? '#10B981' : '#6366F1'}
+                                        />
+                                    </View>
+                                    <View style={styles.taskContent}>
+                                        <Text style={styles.taskTitle}>{mission.title}</Text>
+                                        <Text style={styles.taskSubtitle}>{mission.subtitle}</Text>
+                                    </View>
+                                    <View style={styles.taskMeta}>
+                                        <Text style={styles.taskPoints}>+{mission.points} XP</Text>
+                                        {isCompleted && (
+                                            <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                                        )}
+                                    </View>
+                                </View>
+                                {index < missions.length - 1 && <View style={styles.separator} />}
+                            </View>
+                        );
+                    })}
+                </View>
+
 
 
                 {/* Achievements */}
                 <View style={styles.achievementsSection}>
                     <Text style={styles.achievementsSectionTitle}>{t('rewards.achievements')}</Text>
-                    <View style={styles.achievementsGrid}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.forceLtr}
+                        contentContainerStyle={[styles.achievementsGrid, styles.forceLtr]}
+                    >
                         {ALL_MEDALS.map((medalAsset, index) => {
                             const medalLevel = index + 1;
                             const isEarned = level >= medalLevel;
@@ -140,16 +198,25 @@ export default function RewardsScreen() {
                                             />
                                         </TouchableOpacity>
                                     ) : (
-                                        <Ionicons
-                                            name="lock-closed-outline"
-                                            size={24}
-                                            color="#CBD5E1"
-                                        />
+                                        <View style={styles.achievementLockedWrap}>
+                                            <ColorMatrix 
+                                            //@ts-ignore
+                                            matrix={GRAYSCALE_MATRIX}>
+                                                <Image
+                                                    source={medalAsset}
+                                                    style={styles.achievementMedal}
+                                                    resizeMode="contain"
+                                                />
+                                            </ColorMatrix>
+                                            <View style={styles.achievementLockBadge}>
+                                                <Ionicons name="lock-closed" size={16} color="#FFFFFF" />
+                                            </View>
+                                        </View>
                                     )}
                                 </View>
                             );
                         })}
-                    </View>
+                    </ScrollView>
                 </View>
 
                 <View style={{ height: 40 }} />
@@ -223,6 +290,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 6,
         borderRadius: 12,
+        marginTop:30,
+        marginLeft:-15
     },
     levelBadgeText: {
         color: '#6366F1',
@@ -251,8 +320,8 @@ const styles = StyleSheet.create({
         marginRight: 16,
     },
     progressMedal: {
-        width: 80,
-        height: 80,
+        width: 160,
+        height: 160,
     },
     progressInfo: {
         flex: 1,
@@ -330,6 +399,12 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#1E293B',
     },
+    missionsTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1E293B',
+        marginBottom: 8,
+    },
     taskItem: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -356,6 +431,15 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#64748B',
     },
+    taskMeta: {
+        alignItems: 'flex-end',
+        gap: 6,
+    },
+    taskPoints: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#6366F1',
+    },
     separator: {
         height: 1,
         backgroundColor: '#F1F5F9',
@@ -381,8 +465,13 @@ const styles = StyleSheet.create({
     },
     achievementsGrid: {
         flexDirection: 'row',
-        justifyContent: 'center',
+        alignItems: 'center',
         gap: 12,
+        paddingHorizontal: 16,
+    },
+    forceLtr: {
+        direction: 'ltr',
+        writingDirection: 'ltr',
     },
     achievementCircle: {
         width: 60,
@@ -394,7 +483,23 @@ const styles = StyleSheet.create({
         // Remove background and border as per user preference for a "clean" look
     },
     achievementMedal: {
-        width: 60,
-        height: 60,
-    }
+        width: 70,
+        height: 70,
+    },
+    achievementLockedWrap: {
+        position: 'relative',
+        width: 70,
+        height: 70,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    achievementLockBadge: {
+        position: 'absolute',
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+        backgroundColor: 'rgba(15, 23, 42, 0.75)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 });

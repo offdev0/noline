@@ -4,6 +4,7 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { useReports } from '@/context/ReportsContext';
 import { useUser } from '@/context/UserContext';
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -57,22 +58,22 @@ export default function PlaceDetailScreen() {
     const latestReport = placeReports[0];
 
     const formatTimestamp = (ts: any) => {
-        if (!ts) return 'Unknown time';
+        if (!ts) return t('common.unknown');
         const seconds = ts.seconds || ts._seconds || 0;
         const now = Math.floor(Date.now() / 1000);
         const diff = now - seconds;
 
-        if (diff < 60) return 'just now';
-        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-        return `${Math.floor(diff / 86400)}d ago`;
+        if (diff < 60) return t('time.justNow');
+        if (diff < 3600) return t('time.minutesAgo', { count: Math.floor(diff / 60) });
+        if (diff < 86400) return t('time.hoursAgo', { count: Math.floor(diff / 3600) });
+        return t('time.daysAgo', { count: Math.floor(diff / 86400) });
     };
 
     if (globalLoading && !place) {
         return (
             <View style={styles.loaderContainer}>
                 <ActivityIndicator size="large" color="#5356FF" />
-                <Text style={styles.loaderText}>Loading venue details...</Text>
+                <Text style={styles.loaderText}>{t('placeDetail.loading')}</Text>
             </View>
         );
     }
@@ -81,9 +82,9 @@ export default function PlaceDetailScreen() {
         return (
             <SafeAreaView style={styles.errorContainer}>
                 <Ionicons name="alert-circle-outline" size={64} color="#64748B" />
-                <Text style={styles.errorText}>Venue not found</Text>
+                <Text style={styles.errorText}>{t('placeDetail.notFound')}</Text>
                 <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-                    <Text style={styles.backBtnText}>Go Back</Text>
+                    <Text style={styles.backBtnText}>{t('common.goBack')}</Text>
                 </TouchableOpacity>
             </SafeAreaView>
         );
@@ -123,8 +124,13 @@ export default function PlaceDetailScreen() {
         if (!place) return;
         try {
             await Share.share({
-                message: `Check out ${place.name} on NoLine!\n\n📍 Address: ${place.address}\n⭐ Rating: ${place.rating}/5\n🚦 Current Status: ${place.status}`,
-                title: `Share ${place.name}`
+                message: t('placeDetail.shareMessage', {
+                    name: place.name,
+                    address: place.address,
+                    rating: place.rating,
+                    status: t(`places.${place.status}`)
+                }),
+                title: t('placeDetail.shareTitle', { name: place.name })
             });
         } catch (error: any) {
             console.error('Error sharing:', error.message);
@@ -177,11 +183,11 @@ export default function PlaceDetailScreen() {
                             <View style={styles.statusBadge}>
                                 <View style={[styles.statusDot, { backgroundColor: getQueueColor(place.status) }]} />
                                 <Text style={styles.statusText}>
-                                    {latestReport ? latestReport.liveSituation : place.status}
+                                    {latestReport ? latestReport.liveSituation : t(`places.${place.status}`)}
                                 </Text>
                             </View>
                             <Text style={styles.updatedText}>
-                                Reported {formatTimestamp(latestReport?.Timestamp)}
+                                {t('time.reported', { time: formatTimestamp(latestReport?.Timestamp) })}
                             </Text>
                         </View>
                     </SafeAreaView>
@@ -205,7 +211,7 @@ export default function PlaceDetailScreen() {
                 <Text style={styles.descriptionText}>{place.description}</Text>
 
                 {/* Useful Information Section */}
-                <Text style={styles.sectionTitle}>Useful information</Text>
+                <Text style={styles.sectionTitle}>{t('placeDetail.usefulInfo')}</Text>
 
                 {/* Opening Hours */}
                 <View style={styles.infoBox}>
@@ -213,8 +219,8 @@ export default function PlaceDetailScreen() {
                         <Ionicons name="time-outline" size={18} color="#5356FF" />
                     </View>
                     <View style={styles.infoTextContainer}>
-                        <Text style={styles.infoLabel}>General Hours</Text>
-                        <Text style={styles.infoValue}>Open now · Closes 10:00 PM</Text>
+                        <Text style={styles.infoLabel}>{t('placeDetail.hours')}</Text>
+                        <Text style={styles.infoValue}>{t('time.openNow')} · {t('time.closesAt', { time: '10:00 PM' })}</Text>
                     </View>
                 </View>
 
@@ -226,7 +232,7 @@ export default function PlaceDetailScreen() {
                     <View style={styles.infoTextContainer}>
                         <Text style={styles.infoLabel} numberOfLines={2}>{place.address}</Text>
                         <TouchableOpacity onPress={handleMapNavigation}>
-                            <Text style={styles.infoLink}>Get Directions</Text>
+                            <Text style={styles.infoLink}>{t('placeDetail.getDirections')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -237,8 +243,8 @@ export default function PlaceDetailScreen() {
                         <Ionicons name={getCategoryIcon(place.category) as any} size={18} color="#5356FF" />
                     </View>
                     <View style={styles.infoTextContainer}>
-                        <Text style={styles.infoLabel}>{place.category.toUpperCase()}</Text>
-                        <Text style={styles.infoValue}>Verified business category</Text>
+                        <Text style={styles.infoLabel}>{t(`categories.${place.category}`).toUpperCase()}</Text>
+                        <Text style={styles.infoValue}>{t('placeDetail.verifiedCategory')}</Text>
                     </View>
                 </View>
 
@@ -262,7 +268,7 @@ export default function PlaceDetailScreen() {
                 {/* Reports Feed */}
                 {placeReports.length > 0 && (
                     <>
-                        <Text style={styles.sectionTitle}>Recent activity</Text>
+                        <Text style={styles.sectionTitle}>{t('placeDetail.recentActivity')}</Text>
                         <View style={styles.reportsFeed}>
                             {placeReports.map((report, index) => (
                                 <View key={index} style={styles.reportItem}>
@@ -304,7 +310,7 @@ export default function PlaceDetailScreen() {
                 {/* Similar Places */}
                 {similarPlaces.length > 0 && (
                     <>
-                        <Text style={styles.sectionTitle}>Similar businesses nearby</Text>
+                        <Text style={styles.sectionTitle}>{t('placeDetail.similarPlaces')}</Text>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -331,7 +337,7 @@ export default function PlaceDetailScreen() {
                                             <Ionicons name="star" size={12} color="#FFD700" />
                                             <Text style={styles.similarRatingText}>{sibling.rating}</Text>
                                             <Text style={[styles.similarStatus, { color: getQueueColor(sibling.status) }]}>
-                                                · {sibling.status}
+                                                · {t(`places.${sibling.status}`)}
                                             </Text>
                                         </View>
                                     </View>
@@ -357,7 +363,7 @@ export default function PlaceDetailScreen() {
                         style={styles.fabGradient}
                     >
                         <Ionicons name="flash" size={20} color="#FFD700" />
-                        <Text style={styles.fabText}>Report Queue</Text>
+                        <Text style={styles.fabText}>{t('placeDetail.reportQueue')}</Text>
                     </LinearGradient>
                 </TouchableOpacity>
 
@@ -367,7 +373,7 @@ export default function PlaceDetailScreen() {
                 >
                     <View style={[styles.fabGradient, { backgroundColor: '#fff' }]}>
                         <Ionicons name="star-outline" size={20} color="#6366F1" />
-                        <Text style={[styles.fabText, { color: '#6366F1' }]}>Add Review</Text>
+                        <Text style={[styles.fabText, { color: '#6366F1' }]}>{t('placeDetail.addReview')}</Text>
                     </View>
                 </TouchableOpacity>
             </View>

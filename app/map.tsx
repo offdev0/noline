@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const { width, height } = Dimensions.get('window');
 
 import { usePlaces } from '@/context/PlacesContext';
+import { t } from '@/i18n';
 
 export default function FullMapScreen() {
     const router = useRouter();
@@ -54,7 +55,7 @@ export default function FullMapScreen() {
                 setSearchedLocation({
                     latitude: lat,
                     longitude: lng,
-                    query: params.searchQuery || 'Searched Location',
+                    query: params.searchQuery || t('map.searchedLocation'),
                 });
 
                 // Animate to searched location after a short delay
@@ -164,8 +165,8 @@ export default function FullMapScreen() {
                             latitude: location.latitude,
                             longitude: location.longitude,
                         }}
-                        title="You are here"
-                        description={address || 'Your current location'}
+                        title={t('map.youAreHere')}
+                        description={address || t('map.yourCurrentLocation')}
                         zIndex={10}
                     >
                         <View style={styles.userMarker}>
@@ -202,7 +203,7 @@ export default function FullMapScreen() {
                             longitude: searchedLocation.longitude,
                         }}
                         title={searchedLocation.query}
-                        description="Searched location"
+                        description={t('map.searchedLocation')}
                     >
                         <View style={styles.searchMarker}>
                             <View style={styles.searchMarkerInner}>
@@ -225,12 +226,12 @@ export default function FullMapScreen() {
 
                 <View style={styles.headerTitle}>
                     <Text style={styles.headerTitleText}>
-                        {searchedLocation ? 'Search Results' : 'Explore Map'}
+                        {searchedLocation ? t('map.searchResults') : t('map.exploreMap')}
                     </Text>
                     <Text style={styles.headerSubtitle}>
                         {searchedLocation
                             ? `"${searchedLocation.query}"`
-                            : `${allPlaces.length} real places nearby`
+                            : t('map.realPlacesNearby', { count: allPlaces.length })
                         }
                     </Text>
                 </View>
@@ -262,7 +263,7 @@ export default function FullMapScreen() {
                 <Text style={styles.locationText} numberOfLines={1}>
                     {searchedLocation
                         ? searchedLocation.query
-                        : (address || 'Detecting location...')
+                        : (address || t('map.detectingLocation'))
                     }
                 </Text>
                 {searchedLocation && (
@@ -336,7 +337,7 @@ export default function FullMapScreen() {
                                 end={{ x: 1, y: 0 }}
                                 style={styles.viewButtonGradient}
                             >
-                                <Text style={styles.viewButtonText}>View Details</Text>
+                                <Text style={styles.viewButtonText}>{t('map.viewDetails')}</Text>
                                 <Ionicons name="arrow-forward" size={18} color="#fff" />
                             </LinearGradient>
                         </TouchableOpacity>
@@ -348,15 +349,15 @@ export default function FullMapScreen() {
             <View style={[styles.legend, { bottom: selectedPlace ? 240 : 120 }]}>
                 <View style={styles.legendItem}>
                     <View style={[styles.legendDot, { backgroundColor: '#22C55E' }]} />
-                    <Text style={styles.legendText}>Short</Text>
+                    <Text style={styles.legendText}>{t('map.short')}</Text>
                 </View>
                 <View style={styles.legendItem}>
                     <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
-                    <Text style={styles.legendText}>Medium</Text>
+                    <Text style={styles.legendText}>{t('map.medium')}</Text>
                 </View>
                 <View style={styles.legendItem}>
                     <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
-                    <Text style={styles.legendText}>Long</Text>
+                    <Text style={styles.legendText}>{t('map.long')}</Text>
                 </View>
             </View>
         </View>

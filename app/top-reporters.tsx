@@ -111,7 +111,7 @@ export default function TopReportersScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F8FAFC' },
+    container: { flex: 1, backgroundColor: '#ffffff' },
     header: { height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12 },
     backButton: { padding: 8 },
     title: { fontSize: 18, fontWeight: '800', color: '#1E293B' },

@@ -1,5 +1,7 @@
 import { useFavorites } from '@/context/FavoritesContext';
+import { t } from '@/i18n';
 import { PlaceData } from '@/services/MapsService';
+import { formatDistance } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -71,10 +73,10 @@ export default function FavoritesScreen() {
                     <View style={[styles.statusBadge, { backgroundColor: getQueueBgColor(item.status) }]}>
                         <View style={[styles.statusDot, { backgroundColor: getQueueColor(item.status) }]} />
                         <Text style={[styles.statusText, { color: getQueueColor(item.status) }]}>
-                            {item.status === 'vacant' ? 'Short queue' : item.status === 'medium' ? 'Medium queue' : 'Long queue'}
+                            {item.status === 'vacant' ? t('placesSection.shortQueue') : item.status === 'medium' ? t('placesSection.mediumQueue') : t('placesSection.longQueue')}
                         </Text>
                     </View>
-                    <Text style={styles.distanceText}>{item.distance}</Text>
+                    <Text style={styles.distanceText}>{formatDistance(item.distance)}</Text>
                 </View>
             </TouchableOpacity>
         );
@@ -86,7 +88,7 @@ export default function FavoritesScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#0F172A" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Favorite Places</Text>
+                <Text style={styles.headerTitle}>{t('trends.yourFavorites')}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -95,8 +97,8 @@ export default function FavoritesScreen() {
                     <View style={styles.emptyIconCircle}>
                         <Ionicons name="star-outline" size={48} color="#94A3B8" />
                     </View>
-                    <Text style={styles.emptyTitle}>No Favorites Yet</Text>
-                    <Text style={styles.emptySubtitle}>Start exploring and save your favorite spots to see them here.</Text>
+                    <Text style={styles.emptyTitle}>{t('trends.favoritesEmpty')}</Text>
+                    <Text style={styles.emptySubtitle}>{t('places.adjustFilters')}</Text>
                     <TouchableOpacity
                         style={styles.exploreBtn}
                         onPress={() => router.replace('/(tabs)')}
@@ -105,7 +107,7 @@ export default function FavoritesScreen() {
                             colors={['#6366F1', '#4F46E5']}
                             style={styles.exploreGradient}
                         >
-                            <Text style={styles.exploreBtnText}>Discover Places</Text>
+                            <Text style={styles.exploreBtnText}>{t('common.retry')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
@@ -120,7 +122,7 @@ export default function FavoritesScreen() {
                     showsVerticalScrollIndicator={false}
                     ListHeaderComponent={() => (
                         <View style={styles.listHeader}>
-                            <Text style={styles.countText}>{favorites.length} saved places</Text>
+                            <Text style={styles.countText}>{t('favorites.savedPlacesCount', { count: favorites.length })}</Text>
                         </View>
                     )}
                 />

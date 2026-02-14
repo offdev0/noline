@@ -1,5 +1,6 @@
 import { usePlaces } from '@/context/PlacesContext';
 import { t } from '@/i18n';
+import { formatDistance } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -77,7 +78,7 @@ export default function TrendsCategoryScreen() {
             <View style={styles.cardOverlay}>
                 <View style={styles.statusChip}>
                     <Ionicons name="flash" size={14} color="#16A34A" />
-                    <Text style={styles.statusChipText}>{item.status}</Text>
+                    <Text style={styles.statusChipText}>{t(`places.${item.status}`)}</Text>
                 </View>
             </View>
 
@@ -92,14 +93,14 @@ export default function TrendsCategoryScreen() {
                         onPress={() => router.push({ pathname: '/place/[id]', params: { id: item.id } })}
                     >
                         <View style={styles.visitGradient}>
-                            <Text style={styles.visitText}>Visit</Text>
+                            <Text style={styles.visitText}>{t('trends.visit')}</Text>
                         </View>
                     </TouchableOpacity>
                 </View>
                 <View style={styles.cardFooter}>
                     <View style={styles.metaRow}>
                         <Ionicons name="location" size={14} color="#6366F1" />
-                        <Text style={styles.distanceText}>{item.distance} away</Text>
+                        <Text style={styles.distanceText}>{formatDistance(item.distance)}</Text>
                     </View>
                 </View>
             </View>

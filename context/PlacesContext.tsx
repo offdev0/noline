@@ -3,6 +3,7 @@ import { MapsService, PlaceData } from '@/services/MapsService';
 import * as ExpoLocation from 'expo-location';
 import { addDoc, collection, doc, serverTimestamp } from 'firebase/firestore';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useLanguage } from './LanguageContext';
 import { useLocation } from './LocationContext';
 import { useUser } from './UserContext';
 
@@ -49,6 +50,7 @@ const PlacesContext = createContext<PlacesContextType>({
 export const usePlaces = () => useContext(PlacesContext);
 
 export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
+    const { language } = useLanguage();
     const { user, completeTask } = useUser();
     const { address, location } = useLocation();
     const [allPlaces, setAllPlaces] = useState<PlaceData[]>([]);
@@ -103,7 +105,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(true);
 
         try {
-            const data = await MapsService.fetchPlacesByCoordinates(lat, lng);
+            const data = await MapsService.fetchPlacesByCoordinates(lat, lng, language);
             console.log(`[PlacesContext] Received ${data.length} places`);
             setAllPlaces(data);
             setCurrentSearchCenter({ latitude: lat, longitude: lng });
@@ -143,9 +145,9 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
 
             let data: PlaceData[] = [];
             if (targetCoords) {
-                data = await MapsService.fetchPlacesByCoordinates(targetCoords.latitude, targetCoords.longitude);
+                data = await MapsService.fetchPlacesByCoordinates(targetCoords.latitude, targetCoords.longitude, language);
             } else {
-                data = await MapsService.fetchNearbyPlaces(queryWithIsrael);
+                data = await MapsService.fetchNearbyPlaces(queryWithIsrael, language);
             }
 
             if (targetCoords) {
@@ -200,7 +202,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                 fetchByCoordinates(TEL_AVIV_COORDS.latitude, TEL_AVIV_COORDS.longitude, 'Israel');
             }
         }
-    }, [location, isManualSearch, currentSearchName]);
+    }, [location, isManualSearch, currentSearchName, language]);
 
     const memoizedHotPlaces = useMemo(() => allPlaces.filter(p => p.category === 'hot'), [allPlaces]);
     const memoizedRestaurants = useMemo(() => allPlaces.filter(p => p.category === 'restaurant'), [allPlaces]);

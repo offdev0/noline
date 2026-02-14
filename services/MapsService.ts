@@ -1,3 +1,5 @@
+import { t } from '@/i18n';
+
 export interface PlaceData {
     id: string;
     name: string;
@@ -39,7 +41,6 @@ const CATEGORY_MAPPING: Record<string, PlaceData['category']> = {
 };
 
 // Category-specific search queries to get diverse results
-// Category-specific search queries to focus on "going-out" use case
 const SEARCH_CATEGORIES = [
     { query: 'best cocktail bars and rooftop lounges', category: 'hot' as const },
     { query: 'top-rated restaurants and fine dining', category: 'restaurant' as const },
@@ -79,14 +80,14 @@ export class MapsService {
     static async fetchPlacesByCoordinates(
         latitude: number,
         longitude: number,
+        languageCode: string = 'en',
         radiusMeters: number = 10000
     ): Promise<PlaceData[]> {
-        console.log(`[MapsService] Fetching places near: ${latitude}, ${longitude}`);
+        console.log(`[MapsService] Fetching places near: ${latitude}, ${longitude} (Language: ${languageCode})`);
 
         const allPlaces: PlaceData[] = [];
         const seenIds = new Set<string>();
 
-        // Make parallel requests for different categories
         const promises = SEARCH_CATEGORIES.map(async ({ query, category }) => {
             try {
                 const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
@@ -94,7 +95,8 @@ export class MapsService {
                     headers: {
                         'Content-Type': 'application/json',
                         'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
-                        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.types,places.photos,places.editorialSummary,places.location'
+                        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.types,places.photos,places.editorialSummary,places.location',
+                        'X-Goog-Language-Code': languageCode
                     },
                     body: JSON.stringify({
                         textQuery: query,
@@ -127,9 +129,6 @@ export class MapsService {
         const results = await Promise.all(promises);
         const flatResults = results.flat();
 
-        console.log(`[MapsService] Total raw places fetched: ${flatResults.length}`);
-
-        // Process and deduplicate
         flatResults.forEach((p: any, index: number) => {
             if (!p.location?.latitude || !p.location?.longitude) return;
             if (seenIds.has(p.id)) return;
@@ -153,7 +152,7 @@ export class MapsService {
             allPlaces.push({
                 id: p.id,
                 name: p.displayName?.text || 'Great Place',
-                description: p.editorialSummary?.text || `A popular ${category} spot in this area.`,
+                description: p.editorialSummary?.text || t('places.popularSpot', { category: t(`categories.${category}`) }),
                 category,
                 distance: this.calculateDistance(latitude, longitude, p.location.latitude, p.location.longitude),
                 status: statusOptions[index % statusOptions.length],
@@ -167,25 +166,23 @@ export class MapsService {
             });
         });
 
-        console.log(`[MapsService] Returning ${allPlaces.length} unique places`);
         return allPlaces;
     }
 
     /**
      * Legacy method - now uses coordinates internally
      */
-    static async fetchNearbyPlaces(locationName: string): Promise<PlaceData[]> {
-        console.log(`[MapsService] fetchNearbyPlaces called with: "${locationName}"`);
+    static async fetchNearbyPlaces(locationName: string, languageCode: string = 'en'): Promise<PlaceData[]> {
+        console.log(`[MapsService] fetchNearbyPlaces called for: "${locationName}" (Language: ${languageCode})`);
 
-        // This method is kept for backward compatibility but now the PlacesContext
-        // should prefer using fetchPlacesByCoordinates directly
         try {
             const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
-                    'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.types,places.photos,places.editorialSummary,places.location'
+                    'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.types,places.photos,places.editorialSummary,places.location',
+                    'X-Goog-Language-Code': languageCode
                 },
                 body: JSON.stringify({
                     textQuery: `best bars, cafes, restaurants, and nightlife in ${locationName}`,
@@ -200,8 +197,6 @@ export class MapsService {
 
             const data = await response.json();
             const places = data.places || [];
-
-            console.log(`[MapsService] Found ${places.length} places for "${locationName}"`);
 
             return places
                 .filter((p: any) => p.location?.latitude && p.location?.longitude)
@@ -224,9 +219,9 @@ export class MapsService {
                     return {
                         id: p.id,
                         name: p.displayName?.text || 'Great Place',
-                        description: p.editorialSummary?.text || `A popular spot in ${locationName}.`,
+                        description: p.editorialSummary?.text || t('places.popularSpot', { category: t(`categories.${category}`) }),
                         category,
-                        distance: '--- km', // Need user location for this
+                        distance: '--- km',
                         status: statusOptions[index % statusOptions.length],
                         image: imageUrl,
                         rating: p.rating || 4.2,

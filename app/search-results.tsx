@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -80,7 +81,7 @@ export default function SearchResultsScreen() {
                         <View style={[styles.statusBadge, { backgroundColor: getQueueColor(item.status) + '20' }]}>
                             <View style={[styles.statusDot, { backgroundColor: getQueueColor(item.status) }]} />
                             <Text style={[styles.statusText, { color: getQueueColor(item.status) }]}>
-                                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                                {t(`places.${item.status}`)}
                             </Text>
                         </View>
                     </View>
@@ -101,7 +102,7 @@ export default function SearchResultsScreen() {
                         style={styles.searchInput}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        placeholder="Search for a location..."
+                        placeholder={t('search.placeholder')}
                         onSubmitEditing={() => handleSearch(searchQuery)}
                         onFocus={() => setIsInputFocused(true)}
                         onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
@@ -118,7 +119,7 @@ export default function SearchResultsScreen() {
             {/* Recent Searches Overlay/Section */}
             {isInputFocused && searchHistory.length > 0 && (
                 <View style={styles.historyContainer}>
-                    <Text style={styles.historyTitle}>Recent Searches</Text>
+                    <Text style={styles.historyTitle}>{t('search.recentSearches').toUpperCase()}</Text>
                     <View style={styles.historyChips}>
                         {searchHistory.map((item, idx) => (
                             <TouchableOpacity
@@ -140,7 +141,7 @@ export default function SearchResultsScreen() {
             {loading ? (
                 <View style={styles.centerContainer}>
                     <ActivityIndicator size="large" color="#6366F1" />
-                    <Text style={styles.loadingText}>Searching for places...</Text>
+                    <Text style={styles.loadingText}>{t('placesSection.fetching')}</Text>
                 </View>
             ) : searchResults.length > 0 ? (
                 <FlatList
@@ -153,10 +154,10 @@ export default function SearchResultsScreen() {
             ) : (
                 <View style={styles.centerContainer}>
                     <Ionicons name="search-outline" size={64} color="#CBD5E1" />
-                    <Text style={styles.emptyTitle}>No places found</Text>
-                    <Text style={styles.emptySubtitle}>Try searching for a different location or place name.</Text>
+                    <Text style={styles.emptyTitle}>{t('places.noMatching')}</Text>
+                    <Text style={styles.emptySubtitle}>{t('places.adjustFilters')}</Text>
                     <TouchableOpacity style={styles.retryBtn} onPress={() => handleSearch(searchQuery)}>
-                        <Text style={styles.retryBtnText}>Retry Search</Text>
+                        <Text style={styles.retryBtnText}>{t('common.retry')}</Text>
                     </TouchableOpacity>
                 </View>
             )}

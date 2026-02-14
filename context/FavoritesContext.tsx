@@ -51,6 +51,9 @@ export const FavoritesProvider = ({ children }: { children: React.ReactNode }) =
 
             setFavorites(nextFavorites);
             await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(nextFavorites));
+            if (!exists) {
+                await completeTask('save_favorite', 5);
+            }
         } catch (error) {
             console.error('Error toggling favorite:', error);
         }

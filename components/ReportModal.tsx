@@ -1,6 +1,7 @@
 import { useLocation } from '@/context/LocationContext';
 import { useReports } from '@/context/ReportsContext';
 import { useUser } from '@/context/UserContext';
+import { t } from '@/i18n';
 import { PlaceData } from '@/services/MapsService';
 import { Ionicons } from '@expo/vector-icons';
 import { GeoPoint } from 'firebase/firestore';
@@ -16,20 +17,20 @@ interface ReportModalProps {
 }
 
 const QUESTIONS = {
-    STEP_1: "Is the place open?",
-    STEP_2: "What is the queue like?"
+    get STEP_1() { return t('reportModal.step1'); },
+    get STEP_2() { return t('reportModal.step2'); }
 };
 
 const OPEN_OPTIONS = [
-    { id: 'yes', label: 'Yes, it is open ✅', isOpen: true },
-    { id: 'no', label: 'No, it is closed ❌', isOpen: false },
+    { id: 'yes', get label() { return t('reportModal.yesOpen'); }, isOpen: true },
+    { id: 'no', get label() { return t('reportModal.noClosed'); }, isOpen: false },
 ];
 
 const SITUATIONS = [
-    { id: '1', label: 'Calm 🙂', level: 1, color: '#10B981' },
-    { id: '2', label: 'Little pressure ⚡', level: 2, color: '#FCD34D' },
-    { id: '3', label: 'Slow service ⏳', level: 3, color: '#F97316' },
-    { id: '4', label: 'Very busy 🔥', level: 4, color: '#EF4444' },
+    { id: '1', get label() { return t('reportModal.calm'); }, level: 1, color: '#10B981' },
+    { id: '2', get label() { return t('reportModal.pressure'); }, level: 2, color: '#FCD34D' },
+    { id: '3', get label() { return t('reportModal.slow'); }, level: 3, color: '#F97316' },
+    { id: '4', get label() { return t('reportModal.busy'); }, level: 4, color: '#EF4444' },
 ];
 
 export default function ReportModal({ isVisible, onClose, place }: ReportModalProps) {
@@ -55,12 +56,12 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
                     location?.latitude || 0,
                     location?.longitude || 0
                 ),
-                description: `Report: ${selectedOpenStatus ? 'Open' : 'Closed'}, ${situation.label}`,
+                description: `${t('places.communityReported')}: ${selectedOpenStatus ? t('reportModal.yesOpen') : t('reportModal.noClosed')}, ${situation.label}`,
                 notes: '',
                 irrelevant: '',
                 businessRef: place.id,
                 reportNumberCount: 1,
-                reportBy: user?.email || 'Guest',
+                reportBy: user?.email || t('places.user'),
                 Hplacename: place.name,
                 crowdLevel: situation.level,
                 liveSituation: situation.label,
@@ -70,7 +71,7 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
             startSuccessFlow();
         } catch (error: any) {
             console.error("Report submission failed:", error);
-            alert(error.message || "Failed to submit report. Please try again.");
+            alert(error.message || t('common.failedToSubmit'));
             handleReset();
         } finally {
             setIsSubmitting(false);
@@ -172,22 +173,22 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
                             <View style={styles.successIconCircle}>
                                 <Ionicons name="sparkles" size={50} color="#6366F1" />
                             </View>
-                            <Text style={styles.successTitle}>Thank You!</Text>
+                            <Text style={styles.successTitle}>{t('reportModal.thankYou')}</Text>
                             <Text style={styles.successSubtitle}>
-                                Your report helps the community!
+                                {t('reportModal.successDesc')}
                             </Text>
 
                             <TouchableOpacity
                                 style={styles.incorrectBtn}
                                 onPress={handleReportIncorrectly}
                             >
-                                <Text style={styles.incorrectBtnText}>Reported incorrectly?</Text>
+                                <Text style={styles.incorrectBtnText}>{t('reportModal.incorrect')}</Text>
                             </TouchableOpacity>
 
                             <View style={styles.countdownContainer}>
                                 <View style={[styles.countdownBar, { width: `${(countdown / 5) * 100}%` }]} />
                             </View>
-                            <Text style={styles.closingText}>Closing in {countdown}s...</Text>
+                            <Text style={styles.closingText}>{t('reportModal.closingIn', { count: countdown })}</Text>
                         </View>
                     ) : (
                         <>
@@ -221,7 +222,7 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
                                                     setCurrentStep(2);
                                                 } else {
                                                     // If closed, we can auto-submit with "Closed" status
-                                                    handleSubmit({ id: 'closed', label: 'Place is closed', level: 0, color: '#EF4444' });
+                                                    handleSubmit({ id: 'closed', label: t('reportModal.placeClosed'), level: 0, color: '#EF4444' });
                                                 }
                                             }}
                                         >
@@ -252,7 +253,7 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
                                     onPress={() => setCurrentStep(1)}
                                 >
                                     <Ionicons name="arrow-back" size={16} color="#64748B" />
-                                    <Text style={styles.backLinkText}>Back to first question</Text>
+                                    <Text style={styles.backLinkText}>{t('reportModal.backToFirst')}</Text>
                                 </TouchableOpacity>
                             )}
                         </>

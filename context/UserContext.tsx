@@ -4,11 +4,12 @@ import { doc, getDoc, increment, serverTimestamp, setDoc } from 'firebase/firest
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 export const ALL_MEDALS = [
-    require('@/assets/medals/lv1.png'),
-    require('@/assets/medals/lv2.png'),
-    require('@/assets/medals/lv3.png'),
-    require('@/assets/medals/lv4.png'),
-    require('@/assets/medals/lv5.png'),
+    require('@/assets/medals/m1.png'),
+    require('@/assets/medals/m2.png'),
+    require('@/assets/medals/m3.png'),
+    require('@/assets/medals/m4.png'),
+    require('@/assets/medals/m5.png'),
+    require('@/assets/medals/m6.png'),
 ];
 
 interface UserContextType {
@@ -57,8 +58,8 @@ const UserContext = createContext<UserContextType>({
     isTaskCompleted: async () => false,
     level: 1,
     medal: null,
-    medalName: 'Bronze',
-    nextMedalName: 'Silver',
+    medalName: 'M1',
+    nextMedalName: 'M2',
     xpToNextLevel: 50,
     progressToNextLevel: 0,
     xpInLevel: 0,
@@ -278,9 +279,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, []);
 
-    // 5-Level System Constants
-    const LEVEL_THRESHOLDS = [0, 50, 150, 300, 500]; // Total XP needed at start of Lev 1, 2, 3, 4, 5
-    const MEDAL_NAMES = ['Rookie', 'Scout', 'Voyager', 'Elite', 'Legend'];
+    // 6-Level System Constants
+    const LEVEL_THRESHOLDS = [0, 50, 150, 300, 500, 800]; // Total XP needed at start of Lev 1-6
+    const MEDAL_NAMES = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'];
+    const MAX_LEVEL = LEVEL_THRESHOLDS.length;
 
     const getLevelData = (totalPoints: number) => {
         let currentLevel = 1;
@@ -291,15 +293,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             }
         }
 
-        if (currentLevel >= 5) {
+        if (currentLevel >= MAX_LEVEL) {
             return {
-                level: 5,
-                xpInLevel: totalPoints - LEVEL_THRESHOLDS[4],
+                level: MAX_LEVEL,
+                xpInLevel: totalPoints - LEVEL_THRESHOLDS[MAX_LEVEL - 1],
                 targetXp: 0,
                 progress: 100,
                 xpToNext: 0,
                 isMax: true,
-                medalName: MEDAL_NAMES[4],
+                medalName: MEDAL_NAMES[MAX_LEVEL - 1],
                 nextMedalName: 'MAX'
             };
         }

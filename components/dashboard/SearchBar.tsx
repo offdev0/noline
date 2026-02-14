@@ -111,7 +111,7 @@ export default function SearchBar() {
             {/* Recent Searches - Only show when focused */}
             {isFocused && searchHistory.length > 0 && (
                 <View style={styles.historyContainer}>
-                    <Text style={styles.historyTitle}>Recent Searches</Text>
+                    <Text style={styles.historyTitle}>{t('search.recentSearches')}</Text>
                     <View style={styles.historyChips}>
                         {searchHistory.map((item, idx) => (
                             <TouchableOpacity
