@@ -4,7 +4,7 @@ import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
@@ -32,6 +32,7 @@ export default function MapWidget() {
     const router = useRouter();
     const { location, address: userAddress, refreshLocation, loading, error } = useLocation();
     const { allPlaces, currentSearchCenter, currentSearchName, resetSearch } = usePlaces();
+    const [trackViewChanges, setTrackViewChanges] = useState(true);
 
     // Default location (Tel Aviv, Israel)
     const defaultLocation = {
@@ -69,6 +70,18 @@ export default function MapWidget() {
         });
     };
 
+    useEffect(() => {
+        setTrackViewChanges(true);
+        const timer = setTimeout(() => setTrackViewChanges(false), 500);
+        return () => clearTimeout(timer);
+    }, [
+        allPlaces.length,
+        location?.latitude,
+        location?.longitude,
+        currentSearchCenter?.latitude,
+        currentSearchCenter?.longitude,
+    ]);
+
     return (
         <View style={styles.mapWidgetContainer}>
             <View style={styles.mapPreview}>
@@ -101,6 +114,7 @@ export default function MapWidget() {
                                     title={t('map.youAreHere')}
                                     description={userAddress || t('map.yourCurrentLocation')}
                                     zIndex={10}
+                                    tracksViewChanges={trackViewChanges}
                                 >
                                     <View style={styles.userMarkerWrapper}>
                                         <LinearGradient
@@ -129,6 +143,7 @@ export default function MapWidget() {
                                         }}
                                         title={place.name}
                                         onPress={() => router.push(`/place/${place.id}`)}
+                                        tracksViewChanges={trackViewChanges}
                                     >
                                         <View style={styles.venueMarkerWrapper}>
                                             <LinearGradient

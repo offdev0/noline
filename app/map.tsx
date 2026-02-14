@@ -36,6 +36,7 @@ export default function FullMapScreen() {
         longitude: number;
         query: string;
     } | null>(null);
+    const [trackViewChanges, setTrackViewChanges] = useState(true);
 
     // Animation for bottom sheet
     const slideAnim = useRef(new Animated.Value(0)).current;
@@ -70,6 +71,17 @@ export default function FullMapScreen() {
             }
         }
     }, [params.latitude, params.longitude, params.searchQuery]);
+
+    useEffect(() => {
+        setTrackViewChanges(true);
+        const timer = setTimeout(() => setTrackViewChanges(false), 500);
+        return () => clearTimeout(timer);
+    }, [
+        location?.latitude,
+        location?.longitude,
+        searchedLocation?.latitude,
+        searchedLocation?.longitude,
+    ]);
 
     const initialRegion: Region = {
         latitude: params.latitude ? parseFloat(params.latitude) : (location?.latitude || defaultLocation.latitude),
@@ -168,6 +180,7 @@ export default function FullMapScreen() {
                         title={t('map.youAreHere')}
                         description={address || t('map.yourCurrentLocation')}
                         zIndex={10}
+                        tracksViewChanges={trackViewChanges}
                     >
                         <View style={styles.userMarker}>
                             <LinearGradient
@@ -204,6 +217,7 @@ export default function FullMapScreen() {
                         }}
                         title={searchedLocation.query}
                         description={t('map.searchedLocation')}
+                        tracksViewChanges={trackViewChanges}
                     >
                         <View style={styles.searchMarker}>
                             <View style={styles.searchMarkerInner}>
