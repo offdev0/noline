@@ -23,7 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function PlacesScreen() {
     const router = useRouter();
     const { reports, loading: reportsLoading, toggleLike } = useReports();
-    const { trendingPlaces: allPlaces, getPlaceById } = usePlaces();
+    const { trendingPlaces: allPlaces, getPlaceById, currentSearchCenter } = usePlaces();
     const { user } = useUser();
     const { location: userLocation } = useLocation();
 
@@ -100,10 +100,11 @@ export default function PlacesScreen() {
             }
 
             // 3. Filter by Distance
-            if (selectedDistance !== 'Any' && userLocation && report.location) {
+            const referenceLocation = currentSearchCenter || userLocation;
+            if (selectedDistance !== 'Any' && referenceLocation && report.location) {
                 const dist = calculateDistance(
-                    userLocation.latitude,
-                    userLocation.longitude,
+                    referenceLocation.latitude,
+                    referenceLocation.longitude,
                     report.location.latitude,
                     report.location.longitude
                 );

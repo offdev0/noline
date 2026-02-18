@@ -40,7 +40,7 @@ export default function DashboardScreen() {
             <Text style={styles.titleBlue}>{t('dashboard.titleLine2')}</Text>
           </View>
 
-          {permissionStatus !== 'granted' && (
+          {permissionStatus && permissionStatus !== 'granted' && (
             <TouchableOpacity
               style={styles.locationBanner}
               onPress={requestLocation}

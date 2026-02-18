@@ -52,7 +52,7 @@ export const usePlaces = () => useContext(PlacesContext);
 export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
     const { language } = useLanguage();
     const { user, completeTask } = useUser();
-    const { address, location } = useLocation();
+    const { address, location, permissionStatus } = useLocation();
     const [allPlaces, setAllPlaces] = useState<PlaceData[]>([]);
     const [searchResults, setSearchResults] = useState<PlaceData[]>([]);
     const [loading, setLoading] = useState(false);
@@ -192,17 +192,19 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const isFallbackActive = currentSearchName === 'Israel';
 
+        // Auto-fetch logic: only use GPS if permission is explicitly granted
         if (!isManualSearch && (!currentSearchName || isFallbackActive)) {
-            if (location) {
+            if (location && permissionStatus === 'granted') {
                 console.log(`[PlacesContext] Auto-fetching with GPS: ${location.latitude}, ${location.longitude}`);
                 fetchByCoordinates(location.latitude, location.longitude);
-            } else if (allPlaces.length === 0 && !loading) {
+            } else if (!loading && (permissionStatus === 'denied' || (permissionStatus && permissionStatus !== 'granted') || (!location && permissionStatus))) {
+                // If permission is denied or we have no location yet but status is known
                 const TEL_AVIV_COORDS = { latitude: 32.0853, longitude: 34.7818 };
-                console.log('[PlacesContext] Location unavailable, fetching general Israel places (Tel Aviv)');
+                console.log(`[PlacesContext] Location unavailable (status: ${permissionStatus}), fetching general Israel places (Tel Aviv)`);
                 fetchByCoordinates(TEL_AVIV_COORDS.latitude, TEL_AVIV_COORDS.longitude, 'Israel');
             }
         }
-    }, [location, isManualSearch, currentSearchName, language]);
+    }, [location, permissionStatus, isManualSearch, currentSearchName, language]);
 
     const memoizedHotPlaces = useMemo(() => allPlaces.filter(p => p.category === 'hot'), [allPlaces]);
     const memoizedRestaurants = useMemo(() => allPlaces.filter(p => p.category === 'restaurant'), [allPlaces]);

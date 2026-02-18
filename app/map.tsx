@@ -27,7 +27,7 @@ export default function FullMapScreen() {
         longitude?: string;
     }>();
     const insets = useSafeAreaInsets();
-    const { location, address, refreshLocation, loading: locationLoading } = useLocation();
+    const { location, address, refreshLocation, loading: locationLoading, permissionStatus } = useLocation();
     const { allPlaces, recordPlaceClick, loading: placesLoading } = usePlaces();
     const mapRef = useRef<MapView>(null);
     const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
@@ -42,8 +42,8 @@ export default function FullMapScreen() {
     const slideAnim = useRef(new Animated.Value(0)).current;
 
     const defaultLocation = {
-        latitude: 22.5726,
-        longitude: 88.3639,
+        latitude: 32.0853, // Tel Aviv
+        longitude: 34.7818,
     };
 
     // Handle search params
@@ -84,8 +84,8 @@ export default function FullMapScreen() {
     ]);
 
     const initialRegion: Region = {
-        latitude: params.latitude ? parseFloat(params.latitude) : (location?.latitude || defaultLocation.latitude),
-        longitude: params.longitude ? parseFloat(params.longitude) : (location?.longitude || defaultLocation.longitude),
+        latitude: params.latitude ? parseFloat(params.latitude) : (permissionStatus === 'granted' ? location?.latitude : null) || defaultLocation.latitude,
+        longitude: params.longitude ? parseFloat(params.longitude) : (permissionStatus === 'granted' ? location?.longitude : null) || defaultLocation.longitude,
         latitudeDelta: 0.05,
         longitudeDelta: 0.05,
     };
@@ -128,12 +128,19 @@ export default function FullMapScreen() {
     };
 
     const centerOnUser = () => {
-        if (location) {
+        if (location && permissionStatus === 'granted') {
             mapRef.current?.animateToRegion({
                 latitude: location.latitude,
                 longitude: location.longitude,
                 latitudeDelta: 0.01,
                 longitudeDelta: 0.01,
+            }, 500);
+        } else {
+            // Fallback to Israel center if no permission
+            mapRef.current?.animateToRegion({
+                ...defaultLocation,
+                latitudeDelta: 0.1,
+                longitudeDelta: 0.1,
             }, 500);
         }
     };
@@ -171,7 +178,7 @@ export default function FullMapScreen() {
                 showsCompass={false}
             >
                 {/* User Location Marker */}
-                {location && (
+                {location && permissionStatus === 'granted' && (
                     <Marker
                         coordinate={{
                             latitude: location.latitude,
