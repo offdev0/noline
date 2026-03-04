@@ -1,5 +1,5 @@
 import { auth, db } from '@/configs/firebaseConfig';
-import { signOut as firebaseSignOut, onAuthStateChanged, User } from 'firebase/auth';
+import { signOut as firebaseSignOut, onAuthStateChanged, sendPasswordResetEmail, User } from 'firebase/auth';
 import { doc, getDoc, increment, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
@@ -20,6 +20,7 @@ interface UserContextType {
     completedTasksToday: string[];
     userData: any;
     logout: () => Promise<void>;
+    sendPasswordReset: (email: string) => Promise<void>;
     addPoints: (amount: number) => Promise<void>;
     completeTask: (taskId: string, points: number) => Promise<void>;
     isTaskCompleted: (taskId: string) => Promise<boolean>;
@@ -53,6 +54,7 @@ const UserContext = createContext<UserContextType>({
     completedTasksToday: [],
     userData: null,
     logout: async () => { },
+    sendPasswordReset: async () => { },
     addPoints: async () => { },
     completeTask: async () => { },
     isTaskCompleted: async () => false,
@@ -279,6 +281,16 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, []);
 
+    const sendPasswordReset = useCallback(async (email: string) => {
+        try {
+            await sendPasswordResetEmail(auth, email);
+            console.log('Password reset email sent to:', email);
+        } catch (error) {
+            console.error('Error sending password reset email:', error);
+            throw error;
+        }
+    }, []);
+
     // 6-Level System Constants
     const LEVEL_THRESHOLDS = [0, 50, 150, 300, 500, 800]; // Total XP needed at start of Lev 1-6
     const MEDAL_NAMES = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'];
@@ -360,6 +372,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             user,
             loading,
             logout,
+            sendPasswordReset,
             streak,
             points,
             completedTasksToday,

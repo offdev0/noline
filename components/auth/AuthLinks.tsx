@@ -6,12 +6,14 @@ interface AuthLinksProps {
     isLoginMode: boolean;
     isLoading: boolean;
     onToggleMode: () => void;
+    onForgotPassword: () => void;
 }
 
 export default function AuthLinks({
     isLoginMode,
     isLoading,
-    onToggleMode
+    onToggleMode,
+    onForgotPassword
 }: AuthLinksProps) {
     return (
         <>
@@ -36,7 +38,7 @@ export default function AuthLinks({
             )}
 
             <View style={{ alignItems: 'center', marginTop: 12 }}>
-                <TouchableOpacity disabled={isLoading}>
+                <TouchableOpacity disabled={isLoading} onPress={onForgotPassword}>
                     <Text style={[styles.forgotPassword, isLoading && styles.disabledText]}>
                         {t('auth.forgotPassword')}
                     </Text>

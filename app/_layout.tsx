@@ -8,7 +8,7 @@ import 'react-native-reanimated';
 
 import MedalUpgradeModal from '@/components/rewards/MedalUpgradeModal';
 import { FavoritesProvider } from '@/context/FavoritesContext';
-import { LanguageProvider } from '@/context/LanguageContext';
+import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { LocationProvider } from '@/context/LocationContext';
 import { PlacesProvider } from '@/context/PlacesContext';
 import { ReportsProvider } from '@/context/ReportsContext';
@@ -16,27 +16,21 @@ import { UserProvider, useUser } from '@/context/UserContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 function MainLayout() {
-  const { user, loading } = useUser();
+  const { user, loading: authLoading } = useUser();
+  const { language, loading: langLoading } = useLanguage();
   const segments = useSegments();
   const router = useRouter();
   const colorScheme = useColorScheme();
 
   useEffect(() => {
+    if (authLoading || langLoading) return;
+
     console.log('Current Auth State:', {
       isLoggedIn: !!user,
       segments,
       inAuthenticatedRoute: !!(segments[0] === '(tabs)' || segments[0] === 'place' || segments[0] === 'map' || segments[0] === 'favorites' || segments[0] === 'rewards' || segments[0] === 'help' || segments[0] === 'about')
     });
 
-    if (loading) return;
-
-    const inTabsGroup = segments[0] === '(tabs)';
-    const inPlaceRoute = segments[0] === 'place';
-    const inMapRoute = segments[0] === 'map';
-    const inFavoritesRoute = segments[0] === 'favorites';
-    const inRewardsRoute = segments[0] === 'rewards';
-    const inHelpRoute = segments[0] === 'help';
-    const inAboutRoute = segments[0] === 'about';
     const inAuthenticatedRoute = segments.some(s => ['(tabs)', 'place', 'map', 'favorites', 'rewards', 'help', 'about', 'trends', 'search-results', 'settings', 'account', 'top-reporters'].includes(s));
 
     if (user && !inAuthenticatedRoute && segments[0] !== 'modal') {
@@ -48,9 +42,9 @@ function MainLayout() {
         router.replace('/');
       }, 0);
     }
-  }, [user, loading, segments]);
+  }, [user, authLoading, langLoading, segments]);
 
-  if (loading) {
+  if (authLoading || langLoading) {
     return (
       <LinearGradient
         colors={['#5356FF', '#3787FF']}
@@ -65,34 +59,38 @@ function MainLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false, statusBarStyle: 'dark' }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false, statusBarHidden: false, statusBarStyle: 'dark', statusBarTranslucent: true }} />
-        <Stack.Screen name="place" options={{ headerShown: false }} />
-        <Stack.Screen name="favorites" options={{ headerShown: false }} />
-        <Stack.Screen name="rewards" options={{ headerShown: false }} />
-        <Stack.Screen name="top-reporters" options={{ headerShown: false }} />
-        <Stack.Screen name="trends" options={{ headerShown: false }} />
-        <Stack.Screen name="trends/[mood]" options={{ headerShown: false }} />
-        <Stack.Screen name="help" options={{ headerShown: false }} />
-        <Stack.Screen name="about" options={{ headerShown: false }} />
-        <Stack.Screen name="search-results" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="map"
-          options={{
-            headerShown: false,
-            presentation: 'fullScreenModal',
-            animation: 'slide_from_bottom',
-          }}
-        />
-        <Stack.Screen name="settings/general" options={{ headerShown: false }} />
-        <Stack.Screen name="account/details" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <MedalUpgradeModal />
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <View style={{ flex: 1, direction: language === 'he' ? 'rtl' : 'ltr' }}>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack key={language}>
+          <Stack.Screen name="index" options={{ headerShown: false, statusBarStyle: 'dark' }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, statusBarHidden: false, statusBarStyle: 'dark', statusBarTranslucent: true }} />
+          <Stack.Screen name="place" options={{ headerShown: false }} />
+          <Stack.Screen name="favorites" options={{ headerShown: false }} />
+          <Stack.Screen name="rewards" options={{ headerShown: false }} />
+          <Stack.Screen name="top-reporters" options={{ headerShown: false }} />
+          <Stack.Screen name="trends" options={{ headerShown: false }} />
+          <Stack.Screen name="trends/[mood]" options={{ headerShown: false }} />
+          <Stack.Screen name="help" options={{ headerShown: false }} />
+          <Stack.Screen name="about" options={{ headerShown: false }} />
+          <Stack.Screen name="search-results" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="map"
+            options={{
+              headerShown: false,
+              presentation: 'fullScreenModal',
+              animation: 'slide_from_bottom',
+            }}
+          />
+          <Stack.Screen name="settings/general" options={{ headerShown: false }} />
+          <Stack.Screen name="settings/notifications" options={{ headerShown: false }} />
+          <Stack.Screen name="account/details" options={{ headerShown: false }} />
+          <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        </Stack>
+        <MedalUpgradeModal />
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </View>
   );
 }
 

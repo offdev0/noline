@@ -28,12 +28,14 @@ import AuthLinks from '@/components/auth/AuthLinks';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import TermsCheckbox from '@/components/auth/TermsCheckbox';
 import { AUTH_GRADIENT_COLORS, authStyles } from '@/components/auth/authStyles';
+import { useUser } from '@/context/UserContext';
 import { t } from '@/i18n';
 
 const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
 
 export default function LoginScreen() {
     const router = useRouter();
+    const { sendPasswordReset } = useUser();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -188,6 +190,36 @@ export default function LoginScreen() {
         }
     };
 
+    const handleForgotPassword = async () => {
+        if (!email) {
+            Alert.alert(t('auth.forgotPassword'), t('auth.enterEmailForReset'));
+            return;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            Alert.alert(t('auth.errorTitle'), t('auth.invalidEmail'));
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            await sendPasswordReset(email);
+            Alert.alert(t('auth.success'), t('auth.passwordResetSent'));
+        } catch (error: any) {
+            let errorMessage = error.message;
+            if (error.code === 'auth/user-not-found') {
+                errorMessage = t('auth.noAccountFound');
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = t('auth.invalidEmailFormat');
+            }
+            Alert.alert(t('auth.errorTitle'), errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleGoogleAuth = async () => {
         animateButtonPress();
         setIsLoading(true);
@@ -201,6 +233,13 @@ export default function LoginScreen() {
                     [{ text: t('auth.ok'), onPress: () => setIsLoading(false) }]
                 );
                 return;
+            }
+
+            try {
+                // Ensure the account chooser is shown instead of reusing a cached account.
+                await GoogleSignin.signOut();
+            } catch (signOutError) {
+                console.warn('Google signOut skipped:', signOutError);
             }
 
             await GoogleSignin.hasPlayServices();
@@ -335,6 +374,7 @@ export default function LoginScreen() {
                             isLoginMode={isLoginMode}
                             isLoading={isLoading}
                             onToggleMode={toggleMode}
+                            onForgotPassword={handleForgotPassword}
                         />
                     </ScrollView>
                 </View>

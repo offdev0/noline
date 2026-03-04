@@ -1,57 +1,39 @@
 import { db } from '@/configs/firebaseConfig';
 import { usePlaces } from '@/context/PlacesContext';
 import { useUser } from '@/context/UserContext';
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { collection, doc, getDocs, limit, query, where } from 'firebase/firestore';
 import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
-    Dimensions,
-    Image,
-    ImageBackground,
+    Linking,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const { width } = Dimensions.get('window');
-
-// Sample itinerary data
-const itineraryData = {
-    title: 'Morning in the park',
-    locations: [
-        { icon: 'leaf', name: 'Sacher Garden' },
-        { icon: 'cafe', name: 'cafe' },
-        { icon: 'storefront', name: 'market' },
-    ],
-    duration: 'Between 60 minutes– to a whole day',
-    image: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800',
-};
-
-// Sample hot tips
-const hotTips = [
-    {
-        id: '1',
-        icon: '🔥',
-        title: 'Coffee without a queue',
-        description: 'There is a vacancy at Café Nordoy now.',
-        action: 'Check now',
-    },
-    {
-        id: '2',
-        icon: '⚡',
-        title: 'Skip the lunch rush',
-        description: 'Quick service at Bistro Central right now.',
-        action: 'Check now',
-    },
+const ROUTE_TYPES = [
+    { id: 'leisure', icon: 'sunny', label: 'leisure', categories: ['mustVisit', 'fun', 'vibe'] },
+    { id: 'food', icon: 'restaurant', label: 'food', categories: ['restaurant', 'cafe'] },
+    { id: 'culture', icon: 'camera', label: 'culture', categories: ['mustVisit'] },
+    { id: 'adventure', icon: 'flash', label: 'adventure', categories: ['casino', 'fun', 'mustVisit'] },
 ];
 
-// Interface for search history items
+const DURATIONS = [
+    { id: '30min', labelKey: 'mins30', stopCount: 1 },
+    { id: '1h', labelKey: 'hour1', stopCount: 2 },
+    { id: '2h', labelKey: 'hours2', stopCount: 3 },
+    { id: 'half', labelKey: 'halfDay', stopCount: 4 },
+    { id: 'full', labelKey: 'fullDay', stopCount: 6 },
+];
+
 interface RecentPlace {
     id: string;
     name: string;
@@ -68,13 +50,13 @@ export default function CustomizedScreen() {
     const [recentlyVisited, setRecentlyVisited] = useState<RecentPlace[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(true);
 
-    // Fetch search history from Firebase
-    const fetchSearchHistory = async () => {
-        if (!user) {
-            setLoadingHistory(false);
-            return;
-        }
+    const [selectedRouteType, setSelectedRouteType] = useState<string | null>(null);
+    const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
+    const [routeStops, setRouteStops] = useState<any[]>([]);
+    const [isGenerating, setIsGenerating] = useState(false);
 
+    const fetchSearchHistory = async () => {
+        if (!user) { setLoadingHistory(false); return; }
         try {
             const userRef = doc(db, 'users', user.uid);
             const historyQuery = query(
@@ -82,32 +64,23 @@ export default function CustomizedScreen() {
                 where('searchedBy', '==', userRef),
                 limit(50)
             );
-
             const snapshot = await getDocs(historyQuery);
-
-            // Process everything in memory
             const places: RecentPlace[] = [];
             const seenPlaceIds = new Set<string>();
-
             const processedData = snapshot.docs
                 .map(d => ({ id: d.id, ...d.data() } as any))
-                // Filter by user UID
                 .filter(d => {
                     const uid = d.searchedBy?.id || d.searchedBy?.path?.split('/').pop();
                     return uid === user.uid && d.businessRef;
                 })
-                // Sort by time
                 .sort((a, b) => (b.searchedOn?.seconds || 0) - (a.searchedOn?.seconds || 0));
 
             for (const data of processedData) {
                 const businessRef = data.businessRef;
                 const placeId = businessRef.id || businessRef.path?.split('/').pop();
-
                 if (!placeId || seenPlaceIds.has(placeId)) continue;
                 seenPlaceIds.add(placeId);
-
                 const placeFromContext = getPlaceById(placeId);
-
                 places.push({
                     id: placeId,
                     name: data.searchedString || 'Unknown Place',
@@ -116,10 +89,8 @@ export default function CustomizedScreen() {
                     image: placeFromContext?.image || data.imageUrl || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400',
                     searchedOn: data.searchedOn?.toDate() || new Date(),
                 });
-
                 if (places.length >= 10) break;
             }
-
             setRecentlyVisited(places);
         } catch (error) {
             console.error('Error fetching search history:', error);
@@ -127,454 +98,474 @@ export default function CustomizedScreen() {
             setLoadingHistory(false);
         }
     };
-    useFocusEffect(
-        useCallback(() => {
-            fetchSearchHistory();
-        }, [user])
-    );
 
-    const handleOpenRoute = () => {
-        router.push('/map');
+    useFocusEffect(useCallback(() => { fetchSearchHistory(); }, [user]));
+
+    const generateRoute = () => {
+        if (!selectedRouteType || !selectedDuration) return;
+        setIsGenerating(true);
+
+        const typeConfig = ROUTE_TYPES.find(r => r.id === selectedRouteType);
+        const durConfig = DURATIONS.find(d => d.id === selectedDuration);
+        if (!typeConfig || !durConfig) { setIsGenerating(false); return; }
+
+        const eligible = allPlaces.filter(p => typeConfig.categories.includes(p.category));
+        const pool = eligible.length >= durConfig.stopCount ? eligible : allPlaces;
+        const shuffled = [...pool].sort(() => Math.random() - 0.5);
+
+        setTimeout(() => {
+            setRouteStops(shuffled.slice(0, durConfig.stopCount));
+            setIsGenerating(false);
+        }, 1200);
+    };
+
+    const handleOpenInMaps = () => {
+        if (routeStops.length === 0) return;
+        const waypoints = routeStops
+            .filter(p => p.location?.latitude && p.location?.longitude)
+            .map(p => `${p.location.latitude},${p.location.longitude}`)
+            .join('/');
+        const url = `https://www.google.com/maps/dir/${waypoints}`;
+        Linking.openURL(url);
+    };
+
+    const handleNewRoute = () => {
+        setRouteStops([]);
+        setSelectedRouteType(null);
+        setSelectedDuration(null);
     };
 
     const handleNavigate = (placeId: string) => {
-        router.push({
-            pathname: '/place/[id]',
-            params: { id: placeId }
-        });
-    };
-
-    const handleTipPress = (tip: any) => {
-        const description = tip.description.toLowerCase();
-        const foundPlace = allPlaces.find(p => description.includes(p.name.toLowerCase()));
-
-        if (foundPlace) {
-            handleNavigate(foundPlace.id);
-        } else {
-            // Fallback: extract place name or search
-            const match = tip.description.match(/at (.*?) (now|right now)/i);
-            const searchName = match ? match[1] : tip.title;
-            router.push({
-                pathname: '/map',
-                params: { search: searchName }
-            });
-        }
+        router.push({ pathname: '/place/[id]', params: { id: placeId } });
     };
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView
-                style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
                 {/* Header */}
-                <View style={styles.header}>
-                    {router.canGoBack() ? (
-                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                            <Ionicons name="arrow-back" size={24} color="#333" />
-                        </TouchableOpacity>
-                    ) : (
-                        <View style={{ width: 24 }} />
-                    )}
-                </View>
+                <Text style={styles.pageTitle}>{t('route.planTitle')}</Text>
+                <Text style={styles.pageSubtitle}>{t('route.planSubtitle')}</Text>
 
-                {/* Title */}
-                <Text style={styles.pageTitle}>Your customized itinerary</Text>
+                {/* Route Planner Card */}
+                <View style={styles.plannerCard}>
+                    {/* Route Type Section */}
+                    <Text style={styles.sectionLabel}>{t('route.routeType')}</Text>
+                    <View style={styles.typeRow}>
+                        {ROUTE_TYPES.map(type => {
+                            const isSelected = selectedRouteType === type.id;
+                            return (
+                                <TouchableOpacity
+                                    key={type.id}
+                                    style={[styles.typeChip, isSelected && styles.typeChipSelected]}
+                                    onPress={() => setSelectedRouteType(type.id)}
+                                    activeOpacity={0.8}
+                                >
+                                    <View style={[styles.typeIconCircle, isSelected && styles.typeIconCircleSelected]}>
+                                        <Ionicons
+                                            name={type.icon as any}
+                                            size={18}
+                                            color={isSelected ? '#fff' : '#6366F1'}
+                                        />
+                                    </View>
+                                    <Text style={[styles.typeChipText, isSelected && styles.typeChipTextSelected]}>
+                                        {t(`route.${type.label}`)}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
 
-                {/* Itinerary Card */}
-                <View style={styles.itineraryCard}>
-                    <ImageBackground
-                        source={{ uri: itineraryData.image }}
-                        style={styles.itineraryImage}
-                        imageStyle={styles.itineraryImageStyle}
+                    {/* Duration Section */}
+                    <Text style={styles.sectionLabel}>{t('route.duration')}</Text>
+                    <View style={styles.durationRow}>
+                        {DURATIONS.map(dur => {
+                            const isSelected = selectedDuration === dur.id;
+                            return (
+                                <TouchableOpacity
+                                    key={dur.id}
+                                    style={[styles.durationChip, isSelected && styles.durationChipSelected]}
+                                    onPress={() => setSelectedDuration(dur.id)}
+                                    activeOpacity={0.8}
+                                >
+                                    <Text style={[styles.durationChipText, isSelected && styles.durationChipTextSelected]}>
+                                        {t(`route.${dur.labelKey}`)}
+                                    </Text>
+                                    <Text style={[styles.durationStopText, isSelected && { color: 'rgba(255,255,255,0.7)' }]}>
+                                        {dur.stopCount} {t('route.stop')}
+                                        {dur.stopCount > 1 ? 's' : ''}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+
+                    {/* Generate Button */}
+                    <TouchableOpacity
+                        style={[
+                            styles.generateBtn,
+                            (!selectedRouteType || !selectedDuration) && styles.generateBtnDisabled,
+                        ]}
+                        onPress={generateRoute}
+                        disabled={!selectedRouteType || !selectedDuration || isGenerating}
+                        activeOpacity={0.85}
                     >
                         <LinearGradient
-                            colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)']}
-                            style={styles.itineraryGradient}
+                            colors={
+                                selectedRouteType && selectedDuration
+                                    ? ['#6366F1', '#4F46E5']
+                                    : ['#CBD5E1', '#94A3B8']
+                            }
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.generateGradient}
                         >
-                            {/* Itinerary Title */}
-                            <Text style={styles.itineraryTitle}>{itineraryData.title}</Text>
-
-                            {/* Locations Row */}
-                            <View style={styles.locationsRow}>
-                                {itineraryData.locations.map((loc, index) => (
-                                    <View key={index} style={styles.locationItem}>
-                                        <Ionicons
-                                            name={loc.icon as any}
-                                            size={14}
-                                            color="#fff"
-                                        />
-                                        <Text style={styles.locationText}>{loc.name}</Text>
-                                    </View>
-                                ))}
-                            </View>
-
-                            {/* Duration */}
-                            <Text style={styles.durationText}>{itineraryData.duration}</Text>
-
-                            {/* Open Route Button */}
-                            <TouchableOpacity
-                                style={styles.openRouteButton}
-                                onPress={handleOpenRoute}
-                            >
-                                <Text style={styles.openRouteText}>Open a route</Text>
-                            </TouchableOpacity>
+                            {isGenerating ? (
+                                <>
+                                    <ActivityIndicator size="small" color="#fff" />
+                                    <Text style={styles.generateBtnText}>{t('route.generating')}</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Ionicons name="sparkles" size={18} color="#fff" />
+                                    <Text style={styles.generateBtnText}>{t('route.generateRoute')}</Text>
+                                </>
+                            )}
                         </LinearGradient>
-                    </ImageBackground>
+                    </TouchableOpacity>
                 </View>
 
-                {/* Hot Tips Section */}
-                <Text style={styles.sectionTitle}>Hot Tips</Text>
+                {/* Route Results */}
+                {routeStops.length > 0 && (
+                    <View style={styles.routeResultSection}>
+                        <LinearGradient colors={['#4F46E5', '#6366F1']} style={styles.routeResultBanner}>
+                            <Ionicons name="checkmark-circle" size={28} color="#fff" />
+                            <View style={{ flex: 1, marginLeft: 12 }}>
+                                <Text style={styles.routeResultTitle}>
+                                    {t('route.stopCount', { count: routeStops.length })}
+                                </Text>
+                                <Text style={styles.routeResultSub}>
+                                    {ROUTE_TYPES.find(r => r.id === selectedRouteType)
+                                        ? t(`route.${ROUTE_TYPES.find(r => r.id === selectedRouteType)!.label}`)
+                                        : ''}{' '}
+                                    · {DURATIONS.find(d => d.id === selectedDuration)
+                                        ? t(`route.${DURATIONS.find(d => d.id === selectedDuration)!.labelKey}`)
+                                        : ''}
+                                </Text>
+                            </View>
+                        </LinearGradient>
 
-                {hotTips.map((tip) => (
-                    <View key={tip.id} style={styles.hotTipCard}>
-                        <View style={styles.hotTipIcon}>
-                            <Text style={styles.hotTipEmoji}>{tip.icon}</Text>
-                        </View>
-                        <View style={styles.hotTipContent}>
-                            <Text style={styles.hotTipTitle}>{tip.title}</Text>
-                            <Text style={styles.hotTipDescription}>{tip.description}</Text>
+                        {routeStops.map((place, index) => (
                             <TouchableOpacity
-                                style={styles.checkNowButton}
-                                onPress={() => handleTipPress(tip)}
+                                key={place.id}
+                                style={styles.stopCard}
+                                onPress={() => handleNavigate(place.id)}
+                                activeOpacity={0.9}
                             >
-                                <Text style={styles.checkNowText}>{tip.action}</Text>
+                                <View style={styles.stopNumberBadge}>
+                                    <Text style={styles.stopNumber}>{index + 1}</Text>
+                                </View>
+                                {index < routeStops.length - 1 && <View style={styles.stopConnector} />}
+                                <Image
+                                    source={{ uri: place.image }}
+                                    style={styles.stopImage}
+                                    contentFit="cover"
+                                    cachePolicy="memory-disk"
+                                    transition={200}
+                                />
+                                <View style={styles.stopInfo}>
+                                    <Text style={styles.stopLabel}>
+                                        {t('route.stop')} {index + 1}
+                                    </Text>
+                                    <Text style={styles.stopName} numberOfLines={1}>{place.name}</Text>
+                                    <Text style={styles.stopAddress} numberOfLines={1}>{place.address}</Text>
+                                    <View style={styles.stopMeta}>
+                                        <Ionicons name="star" size={11} color="#FFD700" />
+                                        <Text style={styles.stopRating}>{place.rating}</Text>
+                                        <View style={[styles.statusDot, {
+                                            backgroundColor: place.status === 'vacant' ? '#22C55E'
+                                                : place.status === 'medium' ? '#F59E0B' : '#EF4444'
+                                        }]} />
+                                    </View>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
                             </TouchableOpacity>
-                        </View>
-                    </View>
-                ))}
+                        ))}
 
-
-
-                {/* Recently Visited Section */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Recently visited</Text>
-                    {recentlyVisited.length > 0 && (
-                        <TouchableOpacity>
-                            <Text style={styles.showAllText}>Show all</Text>
+                        {/* Action buttons */}
+                        <TouchableOpacity style={styles.openMapsBtn} onPress={handleOpenInMaps} activeOpacity={0.85}>
+                            <LinearGradient
+                                colors={['#10B981', '#059669']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.openMapsGradient}
+                            >
+                                <Ionicons name="navigate" size={20} color="#fff" />
+                                <Text style={styles.openMapsBtnText}>{t('route.openInMaps')}</Text>
+                            </LinearGradient>
                         </TouchableOpacity>
-                    )}
+
+                        <TouchableOpacity style={styles.finishBtn} onPress={handleNewRoute} activeOpacity={0.8}>
+                            <Ionicons name="refresh" size={18} color="#6366F1" />
+                            <Text style={styles.finishBtnText}>{t('route.finishRoute')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                {/* Recently Visited */}
+                <View style={styles.recentHeader}>
+                    <Text style={styles.recentTitle}>{t('route.recentlyVisited')}</Text>
                 </View>
 
                 {loadingHistory ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="small" color="#5356FF" />
-                        <Text style={styles.loadingText}>Loading history...</Text>
+                    <View style={styles.loadingBox}>
+                        <ActivityIndicator size="small" color="#6366F1" />
                     </View>
                 ) : recentlyVisited.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                        <Ionicons name="location-outline" size={48} color="#ccc" />
-                        <Text style={styles.emptyText}>No places visited yet</Text>
-                        <Text style={styles.emptySubtext}>Explore places and they'll appear here</Text>
+                    <View style={styles.emptyBox}>
+                        <Ionicons name="location-outline" size={40} color="#CBD5E1" />
+                        <Text style={styles.emptyText}>{t('route.noHistory')}</Text>
                     </View>
                 ) : (
                     recentlyVisited.map((place) => (
-                        <View key={place.id} style={styles.recentCard}>
+                        <TouchableOpacity
+                            key={place.id}
+                            style={styles.recentCard}
+                            onPress={() => handleNavigate(place.id)}
+                            activeOpacity={0.9}
+                        >
                             <Image
                                 source={{ uri: place.image }}
                                 style={styles.recentImage}
+                                contentFit="cover"
+                                cachePolicy="memory-disk"
+                                transition={200}
                             />
                             <View style={styles.recentContent}>
                                 <Text style={styles.recentName} numberOfLines={1}>{place.name}</Text>
-                                <View style={styles.ratingRow}>
-                                    <Ionicons name="star" size={14} color="#FFD700" />
-                                    <Text style={styles.ratingText}>{place.rating.toFixed(1)}</Text>
-                                </View>
-                                <View style={styles.availabilityRow}>
-                                    <Ionicons name="location-outline" size={14} color="#666" />
-                                    <Text style={styles.addressText} numberOfLines={1}>{place.address}</Text>
+                                <Text style={styles.recentAddress} numberOfLines={1}>{place.address}</Text>
+                                <View style={styles.recentMeta}>
+                                    <Ionicons name="star" size={12} color="#FFD700" />
+                                    <Text style={styles.recentRating}>{place.rating.toFixed(1)}</Text>
                                 </View>
                             </View>
-                            <TouchableOpacity
-                                style={styles.navigateButton}
-                                onPress={() => handleNavigate(place.id)}
-                            >
-                                <Text style={styles.navigateText}>View</Text>
-                            </TouchableOpacity>
-                        </View>
+                            <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
+                        </TouchableOpacity>
                     ))
                 )}
 
-                {/* Bottom Spacing */}
-                <View style={styles.bottomSpacing} />
+                <View style={{ height: 100 }} />
             </ScrollView>
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#FAFAFA',
-    },
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingHorizontal: 20,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingTop: 8,
-        paddingBottom: 16,
-    },
-    backButton: {
-        padding: 4,
-    },
-    pageTitle: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
+    container: { flex: 1, backgroundColor: '#F8FAFC' },
+    scrollContent: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 },
+
+    // Header
+    pageTitle: { fontSize: 26, fontWeight: '800', color: '#0F172A', marginBottom: 6 },
+    pageSubtitle: { fontSize: 14, color: '#64748B', marginBottom: 20, lineHeight: 20 },
+
+    // Planner Card
+    plannerCard: {
+        backgroundColor: '#fff',
+        borderRadius: 24,
+        padding: 20,
         marginBottom: 24,
-    },
-    // Itinerary Card
-    itineraryCard: {
-        borderRadius: 20,
-        overflow: 'hidden',
-        marginBottom: 32,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 6,
+        shadowOpacity: 0.08,
+        shadowRadius: 14,
+        elevation: 5,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
     },
-    itineraryImage: {
-        width: '100%',
-        height: 280,
-    },
-    itineraryImageStyle: {
-        borderRadius: 20,
-    },
-    itineraryGradient: {
-        flex: 1,
-        padding: 20,
-        justifyContent: 'flex-end',
-    },
-    itineraryTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#fff',
+    sectionLabel: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#64748B',
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
         marginBottom: 12,
     },
-    locationsRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginBottom: 8,
-    },
-    locationItem: {
+
+    // Route Type
+    typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 22 },
+    typeChip: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginRight: 16,
-        marginBottom: 4,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 20,
+        borderWidth: 1.5,
+        borderColor: '#E2E8F0',
+        backgroundColor: '#F8FAFC',
+        gap: 7,
     },
-    locationText: {
-        color: '#fff',
-        fontSize: 14,
-        marginLeft: 4,
-    },
-    durationText: {
-        color: 'rgba(255,255,255,0.9)',
-        fontSize: 13,
-        marginBottom: 16,
-    },
-    openRouteButton: {
-        alignSelf: 'flex-start',
-        backgroundColor: '#fff',
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        borderRadius: 25,
-    },
-    openRouteText: {
-        color: '#333',
-        fontWeight: '600',
-        fontSize: 15,
-    },
-    // Section styles
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
-        marginBottom: 16,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    typeChipSelected: { backgroundColor: '#EEF2FF', borderColor: '#6366F1' },
+    typeIconCircle: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#EEF2FF',
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 16,
-        marginTop: 26
     },
-    showAllText: {
-        color: '#5356FF',
-        fontSize: 14,
-        fontWeight: '500',
-    },
-    // Hot Tips
-    hotTipCard: {
-        flexDirection: 'row',
-        backgroundColor: '#fff',
+    typeIconCircleSelected: { backgroundColor: '#6366F1' },
+    typeChipText: { fontSize: 13, fontWeight: '700', color: '#475569' },
+    typeChipTextSelected: { color: '#4338CA' },
+
+    // Duration
+    durationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 22 },
+    durationChip: {
+        paddingHorizontal: 14,
+        paddingVertical: 10,
         borderRadius: 16,
+        borderWidth: 1.5,
+        borderColor: '#E2E8F0',
+        backgroundColor: '#F8FAFC',
+        alignItems: 'center',
+    },
+    durationChipSelected: { backgroundColor: '#6366F1', borderColor: '#6366F1' },
+    durationChipText: { fontSize: 13, fontWeight: '800', color: '#475569' },
+    durationChipTextSelected: { color: '#fff' },
+    durationStopText: { fontSize: 10, color: '#94A3B8', fontWeight: '600', marginTop: 2 },
+
+    // Generate Button
+    generateBtn: { borderRadius: 16, overflow: 'hidden' },
+    generateBtnDisabled: { opacity: 0.5 },
+    generateGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 16,
+        gap: 8,
+    },
+    generateBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+
+    // Route Result
+    routeResultSection: {
+        marginBottom: 24,
+    },
+    routeResultBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 18,
         padding: 16,
         marginBottom: 12,
+    },
+    routeResultTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
+    routeResultSub: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+
+    stopCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 18,
+        padding: 12,
+        marginBottom: 8,
         borderWidth: 1,
-        borderColor: '#E8E8FF',
-        shadowColor: '#5356FF',
+        borderColor: '#F1F5F9',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
         elevation: 2,
+        position: 'relative',
     },
-    hotTipIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: '#FFF3E0',
+    stopNumberBadge: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: '#6366F1',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 14,
+        marginRight: 10,
+        zIndex: 2,
     },
-    hotTipEmoji: {
-        fontSize: 20,
+    stopNumber: { color: '#fff', fontSize: 13, fontWeight: '800' },
+    stopConnector: {
+        position: 'absolute',
+        left: 26,
+        bottom: -8,
+        width: 2,
+        height: 8,
+        backgroundColor: '#E2E8F0',
+        zIndex: 1,
     },
-    hotTipContent: {
-        flex: 1,
+    stopImage: { width: 64, height: 64, borderRadius: 14, marginRight: 12 },
+    stopInfo: { flex: 1 },
+    stopLabel: { fontSize: 10, color: '#6366F1', fontWeight: '700', textTransform: 'uppercase', marginBottom: 2 },
+    stopName: { fontSize: 14, fontWeight: '800', color: '#0F172A', marginBottom: 2 },
+    stopAddress: { fontSize: 11, color: '#64748B', marginBottom: 4 },
+    stopMeta: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    stopRating: { fontSize: 11, fontWeight: '700', color: '#92400E' },
+    statusDot: { width: 6, height: 6, borderRadius: 3 },
+
+    openMapsBtn: { borderRadius: 16, overflow: 'hidden', marginTop: 8 },
+    openMapsGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 15,
+        gap: 8,
     },
-    hotTipTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: 4,
-    },
-    hotTipDescription: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 10,
-    },
-    checkNowButton: {
-        alignSelf: 'flex-start',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
+    openMapsBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+
+    finishBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        borderRadius: 16,
         borderWidth: 1.5,
-        borderColor: '#5356FF',
+        borderColor: '#E2E8F0',
+        marginTop: 10,
+        gap: 8,
     },
-    checkNowText: {
-        color: '#5356FF',
-        fontWeight: '600',
-        fontSize: 13,
-    },
-    // Accent Line
-    accentLine: {
-        marginVertical: 24,
-        height: 4,
-        borderRadius: 2,
-        overflow: 'hidden',
-    },
-    accentGradient: {
-        flex: 1,
-    },
+    finishBtnText: { color: '#6366F1', fontSize: 15, fontWeight: '700' },
+
     // Recently Visited
+    recentHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 14,
+    },
+    recentTitle: { fontSize: 20, fontWeight: '800', color: '#0F172A' },
+    loadingBox: { paddingVertical: 30, alignItems: 'center' },
+    emptyBox: {
+        paddingVertical: 30,
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+    },
+    emptyText: { marginTop: 10, fontSize: 14, color: '#94A3B8', fontWeight: '500' },
     recentCard: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#fff',
-        borderRadius: 16,
+        borderRadius: 18,
         padding: 12,
-        marginBottom: 12,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 6,
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
         elevation: 2,
     },
-    recentImage: {
-        width: 60,
-        height: 60,
-        borderRadius: 12,
-    },
-    recentContent: {
-        flex: 1,
-        marginLeft: 14,
-    },
-    recentName: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: 4,
-    },
-    ratingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 4,
-    },
-    ratingText: {
-        marginLeft: 4,
-        fontSize: 13,
-        color: '#666',
-    },
-    availabilityRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    availableText: {
-        marginLeft: 4,
-        fontSize: 13,
-        color: '#22C55E',
-        fontWeight: '500',
-    },
-    unavailableText: {
-        marginLeft: 4,
-        fontSize: 13,
-        color: '#F59E0B',
-        fontWeight: '500',
-    },
-    navigateButton: {
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#ddd',
-    },
-    navigateText: {
-        fontSize: 13,
-        color: '#333',
-        fontWeight: '500',
-    },
-    bottomSpacing: {
-        height: 100,
-    },
-    // New styles for search history
-    loadingContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 40,
-    },
-    loadingText: {
-        marginTop: 10,
-        fontSize: 14,
-        color: '#666',
-    },
-    emptyContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 40,
-    },
-    emptyText: {
-        marginTop: 12,
-        fontSize: 16,
-        color: '#666',
-        fontWeight: '500',
-    },
-    emptySubtext: {
-        marginTop: 4,
-        fontSize: 13,
-        color: '#999',
-    },
-    addressText: {
-        marginLeft: 4,
-        fontSize: 12,
-        color: '#666',
-        flex: 1,
-    },
+    recentImage: { width: 60, height: 60, borderRadius: 14 },
+    recentContent: { flex: 1, marginLeft: 14 },
+    recentName: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
+    recentAddress: { fontSize: 12, color: '#64748B', marginBottom: 4 },
+    recentMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    recentRating: { fontSize: 12, fontWeight: '700', color: '#92400E' },
 });

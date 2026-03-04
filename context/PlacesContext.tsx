@@ -100,12 +100,25 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         await saveSearchHistory(place.name, place.address, place.id, place.image, place.rating);
     };
 
-    const fetchByCoordinates = async (lat: number, lng: number, searchName?: string) => {
+    const fetchByCoordinates = async (lat: number, lng: number, searchName?: string, isIsraelFallback?: boolean) => {
         console.log(`[PlacesContext] Fetching places at: ${lat}, ${lng} (${searchName || 'GPS Location'})`);
         setLoading(true);
 
         try {
-            const data = await MapsService.fetchPlacesByCoordinates(lat, lng, language);
+            let data: PlaceData[];
+
+            if (isIsraelFallback) {
+                // For Israel fallback (no GPS): restrict strictly to Israel bounding box
+                data = await MapsService.fetchPlacesByCoordinates(lat, lng, language, 15000, true);
+            } else {
+                // For GPS location: start with 10km, expand to 20km if not enough results
+                data = await MapsService.fetchPlacesByCoordinates(lat, lng, language, 10000, false);
+                if (data.length < 10) {
+                    console.log(`[PlacesContext] Only ${data.length} results within 10km, expanding to 20km`);
+                    data = await MapsService.fetchPlacesByCoordinates(lat, lng, language, 20000, false);
+                }
+            }
+
             console.log(`[PlacesContext] Received ${data.length} places`);
             setAllPlaces(data);
             setCurrentSearchCenter({ latitude: lat, longitude: lng });
@@ -196,12 +209,12 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         if (!isManualSearch && (!currentSearchName || isFallbackActive)) {
             if (location && permissionStatus === 'granted') {
                 console.log(`[PlacesContext] Auto-fetching with GPS: ${location.latitude}, ${location.longitude}`);
-                fetchByCoordinates(location.latitude, location.longitude);
+                fetchByCoordinates(location.latitude, location.longitude, undefined, false);
             } else if (!loading && (permissionStatus === 'denied' || (permissionStatus && permissionStatus !== 'granted') || (!location && permissionStatus))) {
-                // If permission is denied or we have no location yet but status is known
+                // When GPS is OFF or denied → strictly Israel only (Tel Aviv)
                 const TEL_AVIV_COORDS = { latitude: 32.0853, longitude: 34.7818 };
-                console.log(`[PlacesContext] Location unavailable (status: ${permissionStatus}), fetching general Israel places (Tel Aviv)`);
-                fetchByCoordinates(TEL_AVIV_COORDS.latitude, TEL_AVIV_COORDS.longitude, 'Israel');
+                console.log(`[PlacesContext] Location unavailable (status: ${permissionStatus}), fetching Israel-only places`);
+                fetchByCoordinates(TEL_AVIV_COORDS.latitude, TEL_AVIV_COORDS.longitude, 'Israel', true);
             }
         }
     }, [location, permissionStatus, isManualSearch, currentSearchName, language]);

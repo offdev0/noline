@@ -1,21 +1,19 @@
 import type { LanguageCode } from '@/context/LanguageContext';
 import { I18n } from 'i18n-js';
-import { DevSettings, I18nManager } from 'react-native';
+import { I18nManager } from 'react-native';
 import { translations } from './translations';
 
 const i18n = new I18n(translations);
+i18n.enableFallback = true;
 
 export const configureI18n = (language: LanguageCode) => {
-    i18n.enableFallback = true;
     i18n.locale = language;
 
+    // Apply RTL settings without reloading — takes effect on next cold start
     const shouldBeRTL = language === 'he';
     if (I18nManager.isRTL !== shouldBeRTL) {
         I18nManager.allowRTL(shouldBeRTL);
         I18nManager.forceRTL(shouldBeRTL);
-        if (DevSettings?.reload) {
-            DevSettings.reload();
-        }
     }
 };
 

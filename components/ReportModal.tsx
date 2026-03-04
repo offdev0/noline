@@ -45,6 +45,7 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
     const [countdown, setCountdown] = useState(5);
     const [xpAnim] = useState(new Animated.Value(0));
     const [modalFade] = useState(new Animated.Value(1));
+    const countdownIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
     const handleSubmit = async (situation: typeof SITUATIONS[0]) => {
         setIsSubmitting(true);
@@ -89,10 +90,10 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
         ]).start();
 
         // Countdown for auto-close
-        const interval = setInterval(() => {
+        countdownIntervalRef.current = setInterval(() => {
             setCountdown(prev => {
                 if (prev <= 1) {
-                    clearInterval(interval);
+                    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
                     fadeOutAndClose();
                     return 0;
                 }
@@ -112,6 +113,10 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
     };
 
     const handleReset = () => {
+        if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+        }
         setCurrentStep(1);
         setSelectedOpenStatus(null);
         setShowSuccess(false);
@@ -152,8 +157,9 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
                     style={styles.dismissArea}
                     activeOpacity={1}
                     onPress={handleClose}
-                    disabled={isSubmitting || showSuccess}
+                    disabled={isSubmitting && !showSuccess}
                 />
+
 
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -162,7 +168,11 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
                     <View style={styles.sheetHandle} />
 
                     {showSuccess ? (
-                        <View style={styles.successContainer}>
+                        <TouchableOpacity
+                            activeOpacity={1}
+                            onPress={handleClose}
+                            style={styles.successContainer}
+                        >
                             <Animated.View style={[
                                 styles.xpBubble,
                                 { transform: [{ translateY: xpTranslateY }], opacity: xpOpacity }
@@ -188,8 +198,8 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
                             <View style={styles.countdownContainer}>
                                 <View style={[styles.countdownBar, { width: `${(countdown / 5) * 100}%` }]} />
                             </View>
-                            <Text style={styles.closingText}>{t('reportModal.closingIn', { count: countdown })}</Text>
-                        </View>
+                            <Text style={styles.closingText}>{t('reportModal.tapToClose')}</Text>
+                        </TouchableOpacity>
                     ) : (
                         <>
                             <View style={styles.header}>

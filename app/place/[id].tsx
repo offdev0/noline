@@ -265,10 +265,20 @@ export default function PlaceDetailScreen() {
                     </MapView>
                 </View>
 
-                {/* Reports Feed */}
-                {placeReports.length > 0 && (
-                    <>
+                {/* Reviews Section - inside scroll, below map */}
+                <View style={styles.reviewsSection}>
+                    <View style={styles.reviewsSectionHeader}>
                         <Text style={styles.sectionTitle}>{t('placeDetail.recentActivity')}</Text>
+                        <TouchableOpacity
+                            style={styles.addReviewInline}
+                            onPress={() => setIsReviewVisible(true)}
+                        >
+                            <Ionicons name="star-outline" size={16} color="#6366F1" />
+                            <Text style={styles.addReviewInlineText}>{t('placeDetail.addReview')}</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {placeReports.length > 0 ? (
                         <View style={styles.reportsFeed}>
                             {placeReports.map((report, index) => (
                                 <View key={index} style={styles.reportItem}>
@@ -279,10 +289,13 @@ export default function PlaceDetailScreen() {
                                     />
                                     <View style={styles.reportContent}>
                                         <View style={styles.reportHeader}>
-                                            <Text style={styles.reporterName}>{report.reportBy.split('@')[0]}</Text>
+                                            <View style={styles.reportNameStatusRow}>
+                                                <Text style={styles.reporterName}>{report.reportBy.split('@')[0]}</Text>
+                                                <Text style={styles.reportNameDot}> · </Text>
+                                                <Text style={styles.reportStatus} numberOfLines={1}>{report.liveSituation}</Text>
+                                            </View>
                                             <Text style={styles.reportTime}>{formatTimestamp(report.Timestamp)}</Text>
                                         </View>
-                                        <Text style={styles.reportStatus}>{report.liveSituation}</Text>
 
                                         {report.rating && report.rating > 0 ? (
                                             <View style={styles.reportRatingRow}>
@@ -304,8 +317,10 @@ export default function PlaceDetailScreen() {
                                 </View>
                             ))}
                         </View>
-                    </>
-                )}
+                    ) : (
+                        <Text style={styles.noReviewsText}>{t('placeDetail.noReports')}</Text>
+                    )}
+                </View>
 
                 {/* Similar Places */}
                 {similarPlaces.length > 0 && (
@@ -350,10 +365,10 @@ export default function PlaceDetailScreen() {
                 <View style={{ height: 120 }} />
             </ScrollView>
 
-            {/* Floating Action Buttons */}
+            {/* Single Primary FAB: Report Queue only */}
             <View style={styles.actionsBar}>
                 <TouchableOpacity
-                    style={[styles.fabContainer, { flex: 1, marginRight: 10 }]}
+                    style={[styles.fabContainer, { flex: 1 }]}
                     onPress={() => setIsReportVisible(true)}
                 >
                     <LinearGradient
@@ -365,16 +380,6 @@ export default function PlaceDetailScreen() {
                         <Ionicons name="flash" size={20} color="#FFD700" />
                         <Text style={styles.fabText}>{t('placeDetail.reportQueue')}</Text>
                     </LinearGradient>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.fabContainer, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#6366F1' }]}
-                    onPress={() => setIsReviewVisible(true)}
-                >
-                    <View style={[styles.fabGradient, { backgroundColor: '#fff' }]}>
-                        <Ionicons name="star-outline" size={20} color="#6366F1" />
-                        <Text style={[styles.fabText, { color: '#6366F1' }]}>{t('placeDetail.addReview')}</Text>
-                    </View>
                 </TouchableOpacity>
             </View>
 
@@ -462,13 +467,20 @@ const styles = StyleSheet.create({
     fabText: { color: '#fff', fontSize: 14, fontWeight: '800', marginLeft: 10 },
     actionsBar: { position: 'absolute', bottom: 35, left: 20, right: 20, flexDirection: 'row' },
     reportsFeed: { marginBottom: 30 },
+    reviewsSection: { marginBottom: 30 },
+    reviewsSectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+    addReviewInline: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EEF2FF', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, gap: 5 },
+    addReviewInlineText: { fontSize: 13, fontWeight: '700', color: '#6366F1' },
+    noReviewsText: { fontSize: 14, color: '#94A3B8', fontStyle: 'italic', marginBottom: 20 },
     reportItem: { flexDirection: 'row', marginBottom: 20, backgroundColor: '#F8FAFC', padding: 12, borderRadius: 16 },
     reporterAvatar: { width: 40, height: 40, borderRadius: 20 },
     reportContent: { flex: 1, marginLeft: 12 },
-    reportHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+    reportHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+    reportNameStatusRow: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 },
     reporterName: { fontSize: 14, fontWeight: '700', color: '#1E293B' },
+    reportNameDot: { fontSize: 14, color: '#94A3B8' },
     reportTime: { fontSize: 12, color: '#94A3B8' },
-    reportStatus: { fontSize: 13, color: '#6366F1', fontWeight: '700', marginBottom: 2 },
+    reportStatus: { fontSize: 13, color: '#6366F1', fontWeight: '700', flex: 1 },
     reportText: { fontSize: 14, color: '#475569', fontWeight: '500', marginTop: 4 },
     reportRatingRow: { flexDirection: 'row', gap: 2, marginBottom: 4 },
 });

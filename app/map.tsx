@@ -16,11 +16,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
+import { useLanguage } from '@/context/LanguageContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { t } from '@/i18n';
 
 export default function FullMapScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
     const params = useLocalSearchParams<{
         searchQuery?: string;
         latitude?: string;
@@ -176,6 +178,7 @@ export default function FullMapScreen() {
                 showsUserLocation={true}
                 showsMyLocationButton={false}
                 showsCompass={false}
+                {...{ language } as any}
             >
                 {/* User Location Marker */}
                 {location && permissionStatus === 'granted' && (

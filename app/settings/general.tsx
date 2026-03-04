@@ -54,13 +54,21 @@ export default function GeneralSettings() {
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
                 <View style={styles.section}>
-                    <SettingItem
-                        icon="notifications"
-                        label={t('settings.pushNotifications')}
-                        description={t('settings.pushNotificationsDesc')}
-                        value={pushNotifications}
-                        onToggle={setPushNotifications}
-                    />
+                    <TouchableOpacity
+                        style={styles.listItem}
+                        onPress={() => router.push('/settings/notifications')}
+                    >
+                        <View style={styles.settingInfo}>
+                            <View style={[styles.iconContainer, { backgroundColor: '#F3F4F6' }]}>
+                                <Ionicons name="notifications" size={20} color="#5356FF" />
+                            </View>
+                            <View style={styles.textContainer}>
+                                <Text style={styles.settingLabel}>{t('settings.pushNotifications')}</Text>
+                                <Text style={styles.settingDescription}>{t('settings.pushNotificationsDesc')}</Text>
+                            </View>
+                        </View>
+                        <Ionicons name="chevron-forward" size={18} color="#CCC" />
+                    </TouchableOpacity>
                     <View style={styles.divider} />
                     <SettingItem
                         icon="mail"
@@ -123,7 +131,7 @@ export default function GeneralSettings() {
 
                 <Text style={styles.sectionTitle}>{t('settings.about')}</Text>
                 <View style={styles.section}>
-                    <TouchableOpacity style={styles.listItem}>
+                    <TouchableOpacity style={styles.listItem} onPress={() => router.push('/privacy-policy')}>
                         <Text style={styles.listItemText}>{t('settings.privacyPolicy')}</Text>
                         <Ionicons name="chevron-forward" size={18} color="#CCC" />
                     </TouchableOpacity>

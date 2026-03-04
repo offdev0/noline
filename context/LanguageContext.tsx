@@ -46,13 +46,24 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
     }, []);
 
     const setLanguage = useCallback(async (next: LanguageCode) => {
-        setLanguageState(next);
-        configureI18n(next);
-        try {
-            await AsyncStorage.setItem(STORAGE_KEY, next);
-        } catch {
-            // Ignore storage errors
-        }
+        setLoading(true);
+
+        // Give the UI a moment to show the loading screen before the heavy re-render
+        setTimeout(async () => {
+            configureI18n(next);
+            setLanguageState(next);
+
+            try {
+                await AsyncStorage.setItem(STORAGE_KEY, next);
+            } catch {
+                // Ignore storage errors
+            }
+
+            // Keep loading for a brief moment to ensure all components have re-rendered
+            setTimeout(() => {
+                setLoading(false);
+            }, 600);
+        }, 100);
     }, []);
 
     const value = useMemo(() => ({ language, loading, setLanguage }), [language, loading, setLanguage]);

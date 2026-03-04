@@ -79,20 +79,54 @@ export default function RewardsScreen() {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 <Text style={styles.pageTitle}>{t('rewards.yourProgress')}</Text>
 
-                {/* Profile Card */}
+                {/* Profile Card: Current + Next Medal */}
                 <View style={styles.profileCard}>
-                     <View style={styles.medalIconWrapper}>
-                            {medal ? (
-                                <Image source={medal} style={styles.progressMedal} resizeMode="cover" />
-                            ) : (
-                                <Ionicons name="medal" size={32} color="#94A3B8" />
-                            )}
+                    <View style={styles.medalProgressRow}>
+                        {/* Current Medal */}
+                        <View style={styles.medalColumn}>
+                            <View style={styles.medalIconWrapper}>
+                                {medal ? (
+                                    <Image source={medal} style={styles.progressMedal} resizeMode="cover" />
+                                ) : (
+                                    <Ionicons name="medal" size={48} color="#94A3B8" />
+                                )}
+                            </View>
+                            <View style={[styles.levelBadge, isMaxLevel && { backgroundColor: '#FCD34D' }]}>
+                                <Text style={[styles.levelBadgeText, isMaxLevel && { color: '#92400E' }]}>
+                                    {isMaxLevel ? t('rewards.maxLevel') : t('rewards.level', { level })}
+                                </Text>
+                            </View>
+                            <Text style={styles.medalLabel}>{medalName || 'Starter'}</Text>
                         </View>
-                    {/* <Text style={styles.userName}>{userName}</Text> */}
-                    <View style={[styles.levelBadge, isMaxLevel && { backgroundColor: '#FCD34D' }]}>
-                        <Text style={[styles.levelBadgeText, isMaxLevel && { color: '#92400E' }]}>
-                            {isMaxLevel ? t('rewards.maxLevel') : t('rewards.level', { level })}
-                        </Text>
+
+                        {/* Arrow */}
+                        {!isMaxLevel && (
+                            <View style={styles.arrowColumn}>
+                                <Ionicons name="arrow-forward" size={28} color="#6366F1" />
+                            </View>
+                        )}
+
+                        {/* Next Medal */}
+                        {!isMaxLevel && ALL_MEDALS[level] && (
+                            <View style={styles.medalColumn}>
+                                <View style={[styles.medalIconWrapper, styles.nextMedalWrapper]}>
+                                    <ColorMatrix
+                                        //@ts-ignore
+                                        matrix={GRAYSCALE_MATRIX}>
+                                        <Image source={ALL_MEDALS[level]} style={styles.progressMedal} resizeMode="cover" />
+                                    </ColorMatrix>
+                                    <View style={styles.nextMedalLockBadge}>
+                                        <Ionicons name="lock-closed" size={14} color="#fff" />
+                                    </View>
+                                </View>
+                                <View style={[styles.levelBadge, { backgroundColor: '#F1F5F9' }]}>
+                                    <Text style={[styles.levelBadgeText, { color: '#64748B' }]}>
+                                        {t('rewards.level', { level: level + 1 })}
+                                    </Text>
+                                </View>
+                                <Text style={styles.medalLabel}>{nextMedalName || 'Next'}</Text>
+                            </View>
+                        )}
                     </View>
                 </View>
 
@@ -271,6 +305,42 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 10,
         elevation: 2,
+    },
+    medalProgressRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+    },
+    medalColumn: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    arrowColumn: {
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        paddingBottom: 20,
+    },
+    nextMedalWrapper: {
+        position: 'relative',
+    },
+    nextMedalLockBadge: {
+        position: 'absolute',
+        bottom: 2,
+        right: 2,
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: 'rgba(15, 23, 42, 0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    medalLabel: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#64748B',
+        marginTop: 4,
+        textAlign: 'center',
     },
     avatar: {
         width: 80,

@@ -1,3 +1,4 @@
+import { useLanguage } from '@/context/LanguageContext';
 import { useLocation } from '@/context/LocationContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { t } from '@/i18n';
@@ -30,6 +31,7 @@ const CATEGORY_COLORS: Record<string, string[]> = {
 
 export default function MapWidget() {
     const router = useRouter();
+    const { language } = useLanguage();
     const { location, address: userAddress, refreshLocation, loading, error } = useLocation();
     const { allPlaces, currentSearchCenter, currentSearchName, resetSearch } = usePlaces();
     const [trackViewChanges, setTrackViewChanges] = useState(true);
@@ -103,6 +105,7 @@ export default function MapWidget() {
                             zoomEnabled={false}
                             pitchEnabled={false}
                             rotateEnabled={false}
+                            {...{ language } as any}
                         >
                             {/* User Location Marker */}
                             {location && (

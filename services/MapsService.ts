@@ -74,6 +74,12 @@ export class MapsService {
         return R * c;
     }
 
+    // Israel bounding box for strict region restriction
+    private static readonly ISRAEL_BOUNDS = {
+        low: { latitude: 29.5, longitude: 34.2 },
+        high: { latitude: 33.3, longitude: 35.9 },
+    };
+
     /**
      * Fetches places using coordinates (lat/lng) with multiple category searches
      */
@@ -81,15 +87,32 @@ export class MapsService {
         latitude: number,
         longitude: number,
         languageCode: string = 'en',
-        radiusMeters: number = 10000
+        radiusMeters: number = 10000,
+        restrictToIsrael: boolean = false
     ): Promise<PlaceData[]> {
-        console.log(`[MapsService] Fetching places near: ${latitude}, ${longitude} (Language: ${languageCode})`);
+        console.log(`[MapsService] Fetching places near: ${latitude}, ${longitude} (Language: ${languageCode}, restrictToIsrael: ${restrictToIsrael})`);
 
         const allPlaces: PlaceData[] = [];
         const seenIds = new Set<string>();
 
         const promises = SEARCH_CATEGORIES.map(async ({ query, category }) => {
             try {
+                // Build location constraint: use restriction (strict) for Israel fallback, bias for GPS
+                const locationConstraint = restrictToIsrael
+                    ? {
+                        locationRestriction: {
+                            rectangle: this.ISRAEL_BOUNDS
+                        }
+                    }
+                    : {
+                        locationBias: {
+                            circle: {
+                                center: { latitude, longitude },
+                                radius: radiusMeters
+                            }
+                        }
+                    };
+
                 const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
                     method: 'POST',
                     headers: {
@@ -99,14 +122,10 @@ export class MapsService {
                         'X-Goog-Language-Code': languageCode
                     },
                     body: JSON.stringify({
-                        textQuery: query,
-                        locationBias: {
-                            circle: {
-                                center: { latitude, longitude },
-                                radius: radiusMeters
-                            }
-                        },
-                        maxResultCount: 20
+                        textQuery: restrictToIsrael ? `${query} in Israel` : query,
+                        ...locationConstraint,
+                        maxResultCount: 20,
+                        languageCode: languageCode
                     })
                 });
 
@@ -129,9 +148,28 @@ export class MapsService {
         const results = await Promise.all(promises);
         const flatResults = results.flat();
 
+        const radiusKm = radiusMeters / 1000;
+
         flatResults.forEach((p: any, index: number) => {
             if (!p.location?.latitude || !p.location?.longitude) return;
             if (seenIds.has(p.id)) return;
+
+            // For GPS results: hard-filter anything beyond the radius to prevent distant foreign places
+            if (!restrictToIsrael) {
+                const dist = this.getRawDistance(latitude, longitude, p.location.latitude, p.location.longitude);
+                if (dist > radiusKm * 1.5) return; // allow 50% slack for radius bias behavior
+            }
+
+            // For Israel fallback: hard-filter to Israel bounding box
+            if (restrictToIsrael) {
+                const lat = p.location.latitude;
+                const lng = p.location.longitude;
+                if (lat < this.ISRAEL_BOUNDS.low.latitude || lat > this.ISRAEL_BOUNDS.high.latitude ||
+                    lng < this.ISRAEL_BOUNDS.low.longitude || lng > this.ISRAEL_BOUNDS.high.longitude) {
+                    return;
+                }
+            }
+
             seenIds.add(p.id);
 
             let category: PlaceData['category'] = p._forcedCategory || 'mustVisit';
@@ -186,7 +224,8 @@ export class MapsService {
                 },
                 body: JSON.stringify({
                     textQuery: `best bars, cafes, restaurants, and nightlife in ${locationName}`,
-                    maxResultCount: 20
+                    maxResultCount: 20,
+                    languageCode: languageCode
                 })
             });
 

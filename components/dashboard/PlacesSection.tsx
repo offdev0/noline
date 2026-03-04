@@ -148,6 +148,15 @@ export default function PlacesSection() {
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>{section.title}</Text>
                         <Text style={styles.emoji}>{section.emoji}</Text>
+                        {idx === 0 && (
+                            <TouchableOpacity
+                                style={styles.seeAllButton}
+                                onPress={() => router.push('/(tabs)/places')}
+                            >
+                                <Text style={styles.seeAllText}>{t('placesSection.seeAll')}</Text>
+                                <Ionicons name="chevron-forward" size={14} color="#6366F1" />
+                            </TouchableOpacity>
+                        )}
                     </View>
                     <ScrollView
                         horizontal
@@ -180,6 +189,8 @@ const styles = StyleSheet.create({
     sectionHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 16 },
     sectionTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
     emoji: { fontSize: 18, marginLeft: 6 },
+    seeAllButton: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', backgroundColor: '#EEF2FF', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+    seeAllText: { fontSize: 12, fontWeight: '700', color: '#6366F1', marginRight: 2 },
     cardsContainer: { paddingHorizontal: 20, paddingBottom: 8 },
     loadingContainer: { padding: 40, alignItems: 'center' },
     loadingText: { color: '#64748B', fontSize: 15, fontWeight: '500' },

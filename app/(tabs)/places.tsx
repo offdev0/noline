@@ -155,7 +155,7 @@ export default function PlacesScreen() {
                     </View>
                 </View>
 
-                {/* Reporter Info */}
+                {/* Reporter Info + Status in one row */}
                 <View style={styles.reporterRow}>
                     <Image
                         source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.reportBy?.split('@')[0] || t('places.user'))}&background=6366F1&color=fff` }}
@@ -163,16 +163,12 @@ export default function PlacesScreen() {
                         transition={200}
                     />
                     <View style={{ flex: 1, marginLeft: 10 }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
                             <Text style={styles.boldText}>{item.reportBy?.split('@')[0] || t('places.user')}</Text>
-                            <Text style={styles.reportTime}>{formatTimeAgo(item.Timestamp)}</Text>
+                            <Text style={styles.reportTextInline}> · {item.liveSituation}</Text>
                         </View>
+                        <Text style={styles.reportTime}>{formatTimeAgo(item.Timestamp)}</Text>
                     </View>
-                </View>
-
-                {/* Mood/Status Banner */}
-                <View style={[styles.statusBanner, { backgroundColor: bannerStyle.bg, borderColor: bannerStyle.border }]}>
-                    <Text style={[styles.statusBannerText, { color: bannerStyle.text }]}>{item.liveSituation}</Text>
                 </View>
 
                 {/* Footer: Stats and Type Badge */}
@@ -519,6 +515,12 @@ const styles = StyleSheet.create({
     boldText: {
         fontWeight: '700',
         color: '#0F172A',
+    },
+    reportTextInline: {
+        fontSize: 13,
+        color: '#6366F1',
+        fontWeight: '600',
+        flexShrink: 1,
     },
     reportTime: {
         fontSize: 12,

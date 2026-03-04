@@ -1,6 +1,7 @@
 import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -9,6 +10,7 @@ import { usePlaces } from '@/context/PlacesContext';
 import { PlaceData } from '@/services/MapsService';
 
 const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - 52) / 2; // 2 columns with 20px padding each side + 12px gap
 
 export default function SearchResultsScreen() {
     const router = useRouter();
@@ -33,63 +35,76 @@ export default function SearchResultsScreen() {
         router.push({ pathname: '/place/[id]', params: { id: place.id } });
     };
 
-    const renderPlaceItem = ({ item }: { item: PlaceData }) => {
-        const getQueueColor = (status: string) => {
-            if (status.includes('vacant')) return '#22C55E';
-            if (status.includes('medium')) return '#F59E0B';
-            return '#EF4444';
-        };
+    const getQueueColor = (status: string) => {
+        if (status === 'vacant') return '#22C55E';
+        if (status === 'medium') return '#F59E0B';
+        return '#EF4444';
+    };
 
-        const getCategoryIcon = (cat: string) => {
-            const c = cat.toLowerCase();
-            if (c.includes('restaurant')) return 'restaurant';
-            if (c.includes('cafe') || c.includes('coffee')) return 'cafe';
-            if (c.includes('shop') || c.includes('shopping') || c.includes('mall') || c.includes('store')) return 'cart';
-            if (c.includes('casino') || c.includes('game') || c.includes('play')) return 'game-controller';
-            if (c.includes('fun') || c.includes('entertainment') || c.includes('park')) return 'happy';
-            if (c.includes('bar') || c.includes('club') || c.includes('night')) return 'wine';
-            if (c.includes('must') || c.includes('attraction') || c.includes('landmark')) return 'camera';
-            if (c.includes('vibe') || c.includes('special')) return 'sparkles';
-            return 'location';
-        };
+    const getQueueLabel = (status: string) => {
+        if (status === 'vacant') return t('placesSection.shortQueue');
+        if (status === 'medium') return t('placesSection.mediumQueue');
+        return t('placesSection.longQueue');
+    };
 
-        return (
-            <TouchableOpacity
-                style={styles.resultCard}
-                onPress={() => handlePlacePress(item)}
-                activeOpacity={0.9}
-            >
+    const getCategoryIcon = (cat: string) => {
+        const c = cat.toLowerCase();
+        if (c.includes('restaurant')) return 'restaurant';
+        if (c.includes('cafe') || c.includes('coffee')) return 'cafe';
+        if (c.includes('shop') || c.includes('shopping') || c.includes('mall') || c.includes('store')) return 'cart';
+        if (c.includes('casino') || c.includes('game') || c.includes('play')) return 'game-controller';
+        if (c.includes('fun') || c.includes('entertainment') || c.includes('park')) return 'happy';
+        if (c.includes('bar') || c.includes('club') || c.includes('night')) return 'wine';
+        if (c.includes('must') || c.includes('attraction') || c.includes('landmark')) return 'camera';
+        return 'location';
+    };
+
+    const renderGridItem = ({ item }: { item: PlaceData }) => (
+        <TouchableOpacity
+            style={styles.gridCard}
+            onPress={() => handlePlacePress(item)}
+            activeOpacity={0.9}
+        >
+            <View style={styles.cardImageContainer}>
                 <Image
                     source={{ uri: item.image }}
-                    style={styles.resultImage}
+                    style={styles.cardImage}
                     contentFit="cover"
                     transition={200}
                     cachePolicy="memory-disk"
                 />
-                <View style={styles.resultInfo}>
-                    <View style={styles.nameRow}>
-                        <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
-                        <Ionicons name={getCategoryIcon(item.category) as any} size={14} color="#6366F1" />
-                    </View>
-                    <Text style={styles.resultAddress} numberOfLines={1}>{item.address}</Text>
-
-                    <View style={styles.badgeRow}>
-                        <View style={styles.ratingBadge}>
-                            <Ionicons name="star" size={12} color="#FFD700" />
-                            <Text style={styles.ratingText}>{item.rating}</Text>
-                        </View>
-                        <View style={[styles.statusBadge, { backgroundColor: getQueueColor(item.status) + '20' }]}>
-                            <View style={[styles.statusDot, { backgroundColor: getQueueColor(item.status) }]} />
-                            <Text style={[styles.statusText, { color: getQueueColor(item.status) }]}>
-                                {t(`places.${item.status}`)}
-                            </Text>
-                        </View>
-                    </View>
+                <View style={styles.categoryBadge}>
+                    <Ionicons name={getCategoryIcon(item.category) as any} size={10} color="#fff" />
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
-            </TouchableOpacity>
-        );
-    };
+                <View style={styles.ratingBadge}>
+                    <Ionicons name="star" size={10} color="#FFD700" />
+                    <Text style={styles.ratingBadgeText}>{item.rating}</Text>
+                </View>
+            </View>
+
+            <View style={styles.cardContent}>
+                <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.cardAddress} numberOfLines={1}>{item.address}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: getQueueColor(item.status) + '20' }]}>
+                    <View style={[styles.statusDot, { backgroundColor: getQueueColor(item.status) }]} />
+                    <Text style={[styles.statusText, { color: getQueueColor(item.status) }]}>
+                        {getQueueLabel(item.status)}
+                    </Text>
+                </View>
+                <TouchableOpacity style={styles.ctaButton} onPress={() => handlePlacePress(item)} activeOpacity={0.8}>
+                    <LinearGradient
+                        colors={['#6366F1', '#4F46E5']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.ctaGradient}
+                    >
+                        <Text style={styles.ctaText}>{t('placesSection.viewDetails')}</Text>
+                        <Ionicons name="arrow-forward" size={12} color="#fff" style={{ marginLeft: 4 }} />
+                    </LinearGradient>
+                </TouchableOpacity>
+            </View>
+        </TouchableOpacity>
+    );
 
     return (
         <SafeAreaView style={styles.container}>
@@ -116,7 +131,6 @@ export default function SearchResultsScreen() {
                 </View>
             </View>
 
-            {/* Recent Searches Overlay/Section */}
             {isInputFocused && searchHistory.length > 0 && (
                 <View style={styles.historyContainer}>
                     <Text style={styles.historyTitle}>{t('search.recentSearches').toUpperCase()}</Text>
@@ -144,13 +158,20 @@ export default function SearchResultsScreen() {
                     <Text style={styles.loadingText}>{t('placesSection.fetching')}</Text>
                 </View>
             ) : searchResults.length > 0 ? (
-                <FlatList
-                    data={searchResults}
-                    renderItem={renderPlaceItem}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                />
+                <>
+                    <Text style={styles.resultsCount}>
+                        {searchResults.length} {t('search.placesFound')}
+                    </Text>
+                    <FlatList
+                        data={searchResults}
+                        renderItem={renderGridItem}
+                        keyExtractor={(item) => item.id}
+                        numColumns={2}
+                        columnWrapperStyle={styles.row}
+                        contentContainerStyle={styles.gridContent}
+                        showsVerticalScrollIndicator={false}
+                    />
+                </>
             ) : (
                 <View style={styles.centerContainer}>
                     <Ionicons name="search-outline" size={64} color="#CBD5E1" />
@@ -206,84 +227,122 @@ const styles = StyleSheet.create({
     clearButton: {
         padding: 4,
     },
-    listContent: {
-        padding: 20,
-    },
-    resultCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        padding: 12,
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    resultImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 16,
-        backgroundColor: '#F1F5F9',
-    },
-    resultInfo: {
-        flex: 1,
-        marginLeft: 15,
-        justifyContent: 'center',
-    },
-    resultName: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1E293B',
-    },
-    nameRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 4,
-    },
-    resultAddress: {
+    resultsCount: {
         fontSize: 13,
         color: '#64748B',
-        marginBottom: 8,
+        fontWeight: '600',
+        paddingHorizontal: 20,
+        paddingTop: 16,
+        paddingBottom: 4,
     },
-    badgeRow: {
-        flexDirection: 'row',
+    gridContent: {
+        padding: 20,
+        paddingTop: 12,
+    },
+    row: {
+        justifyContent: 'space-between',
+    },
+    gridCard: {
+        width: CARD_WIDTH,
+        backgroundColor: '#fff',
+        borderRadius: 18,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+        elevation: 3,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+    },
+    cardImageContainer: {
+        position: 'relative',
+    },
+    cardImage: {
+        width: '100%',
+        height: 120,
+    },
+    categoryBadge: {
+        position: 'absolute',
+        top: 8,
+        left: 8,
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: 'rgba(15, 23, 42, 0.7)',
+        justifyContent: 'center',
         alignItems: 'center',
     },
     ratingBadge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFBEB',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
-        marginRight: 10,
+        backgroundColor: '#fff',
+        paddingHorizontal: 7,
+        paddingVertical: 3,
+        borderRadius: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
-    ratingText: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: '#92400E',
-        marginLeft: 4,
+    ratingBadgeText: {
+        color: '#1a1a1a',
+        fontSize: 10,
+        fontWeight: '800',
+        marginLeft: 3,
+    },
+    cardContent: {
+        padding: 10,
+    },
+    cardName: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: '#0F172A',
+        marginBottom: 4,
+    },
+    cardAddress: {
+        fontSize: 11,
+        color: '#64748B',
+        marginBottom: 8,
     },
     statusBadge: {
         flexDirection: 'row',
         alignItems: 'center',
+        alignSelf: 'flex-start',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 8,
+        marginBottom: 8,
     },
     statusDot: {
-        width: 6,
-        height: 6,
+        width: 5,
+        height: 5,
         borderRadius: 3,
-        marginRight: 6,
+        marginRight: 5,
     },
     statusText: {
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: '700',
+    },
+    ctaButton: {
+        borderRadius: 10,
+        overflow: 'hidden',
+    },
+    ctaGradient: {
+        flexDirection: 'row',
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    ctaText: {
+        color: '#fff',
+        fontSize: 11,
+        fontWeight: '800',
     },
     centerContainer: {
         flex: 1,
