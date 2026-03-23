@@ -80,11 +80,11 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Trends Tab - Zigzag Arrow */}
+      {/* Trends Tab - Zigzag Arrow (renamed to Explore) */}
       <Tabs.Screen
         name="trends"
         options={{
-          title: t('tabs.trends'),
+          title: t('tabs.explore'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "trending-up" : "trending-up-outline"}

@@ -1,6 +1,7 @@
 import ReportModal from '@/components/ReportModal';
 import ReviewModal from '@/components/ReviewModal';
 import { useFavorites } from '@/context/FavoritesContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { useReports } from '@/context/ReportsContext';
 import { useUser } from '@/context/UserContext';
@@ -29,6 +30,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
+const isLatinText = (value: string) => /[A-Za-z]/.test(value) && /^[\x00-\x7F]*$/.test(value);
+
 export default function PlaceDetailScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -36,6 +39,7 @@ export default function PlaceDetailScreen() {
     const { toggleFavorite, isFavorite } = useFavorites();
     const { reports } = useReports();
     const { user } = useUser();
+    const { language } = useLanguage();
     const [isReportVisible, setIsReportVisible] = useState(false);
     const [isReviewVisible, setIsReviewVisible] = useState(false);
     const [isImageModalVisible, setIsImageModalVisible] = useState(false);
@@ -162,9 +166,6 @@ export default function PlaceDetailScreen() {
                             </TouchableOpacity>
 
                             <View style={styles.headerRightActions}>
-                                <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
-                                    <Ionicons name="share-outline" size={24} color="#fff" />
-                                </TouchableOpacity>
                                 <TouchableOpacity
                                     style={[styles.headerButton, isPlaceFavorite && { backgroundColor: 'rgba(239, 68, 68, 0.2)' }]}
                                     onPress={() => place && toggleFavorite(place)}
@@ -174,6 +175,9 @@ export default function PlaceDetailScreen() {
                                         size={24}
                                         color={isPlaceFavorite ? '#EF4444' : '#fff'}
                                     />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
+                                    <Ionicons name="share-outline" size={24} color="#fff" />
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -201,7 +205,7 @@ export default function PlaceDetailScreen() {
                 contentContainerStyle={styles.contentWrapper}
             >
                 <View style={styles.titleRow}>
-                    <Text style={styles.placeName}>{place.name}</Text>
+                    <Text style={[styles.placeName, language === 'he' && isLatinText(place.name) && styles.ltrText]}>{place.name}</Text>
                     <View style={styles.ratingRow}>
                         <Ionicons name="star" size={16} color="#FFD700" />
                         <Text style={styles.ratingText}>{place.rating}</Text>
@@ -347,7 +351,7 @@ export default function PlaceDetailScreen() {
                                         />
                                     </View>
                                     <View style={styles.similarInfo}>
-                                        <Text style={styles.similarName} numberOfLines={1}>{sibling.name}</Text>
+                                        <Text style={[styles.similarName, language === 'he' && isLatinText(sibling.name) && styles.ltrText]} numberOfLines={1}>{sibling.name}</Text>
                                         <View style={styles.similarMeta}>
                                             <Ionicons name="star" size={12} color="#FFD700" />
                                             <Text style={styles.similarRatingText}>{sibling.rating}</Text>
@@ -362,7 +366,7 @@ export default function PlaceDetailScreen() {
                     </>
                 )}
 
-                <View style={{ height: 120 }} />
+                <View style={{ height: 60 }} />
             </ScrollView>
 
             {/* Single Primary FAB: Report Queue only */}
@@ -462,6 +466,7 @@ const styles = StyleSheet.create({
     similarMeta: { flexDirection: 'row', alignItems: 'center' },
     similarRatingText: { fontSize: 12, fontWeight: '800', marginLeft: 4, color: '#475569' },
     similarStatus: { fontSize: 12, fontWeight: '700', marginLeft: 4, textTransform: 'capitalize' },
+    ltrText: { writingDirection: 'ltr', textAlign: 'left' },
     fabContainer: { borderRadius: 30, overflow: 'hidden', shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 8 },
     fabGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 18, justifyContent: 'center' },
     fabText: { color: '#fff', fontSize: 14, fontWeight: '800', marginLeft: 10 },
@@ -472,15 +477,15 @@ const styles = StyleSheet.create({
     addReviewInline: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EEF2FF', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, gap: 5 },
     addReviewInlineText: { fontSize: 13, fontWeight: '700', color: '#6366F1' },
     noReviewsText: { fontSize: 14, color: '#94A3B8', fontStyle: 'italic', marginBottom: 20 },
-    reportItem: { flexDirection: 'row', marginBottom: 20, backgroundColor: '#F8FAFC', padding: 12, borderRadius: 16 },
-    reporterAvatar: { width: 40, height: 40, borderRadius: 20 },
-    reportContent: { flex: 1, marginLeft: 12 },
-    reportHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+    reportItem: { flexDirection: 'row', marginBottom: 14, backgroundColor: '#F9FAFB', padding: 10, borderRadius: 14 },
+    reporterAvatar: { width: 36, height: 36, borderRadius: 18 },
+    reportContent: { flex: 1, marginLeft: 10 },
+    reportHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
     reportNameStatusRow: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 },
-    reporterName: { fontSize: 14, fontWeight: '700', color: '#1E293B' },
-    reportNameDot: { fontSize: 14, color: '#94A3B8' },
-    reportTime: { fontSize: 12, color: '#94A3B8' },
-    reportStatus: { fontSize: 13, color: '#6366F1', fontWeight: '700', flex: 1 },
-    reportText: { fontSize: 14, color: '#475569', fontWeight: '500', marginTop: 4 },
-    reportRatingRow: { flexDirection: 'row', gap: 2, marginBottom: 4 },
+    reporterName: { fontSize: 13, fontWeight: '700', color: '#1E293B' },
+    reportNameDot: { fontSize: 13, color: '#94A3B8' },
+    reportTime: { fontSize: 11, color: '#94A3B8' },
+    reportStatus: { fontSize: 12, color: '#6366F1', fontWeight: '700', flex: 1 },
+    reportText: { fontSize: 13, color: '#475569', fontWeight: '500', marginTop: 4 },
+    reportRatingRow: { flexDirection: 'row', gap: 2, marginBottom: 2 },
 });

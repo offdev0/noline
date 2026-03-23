@@ -7,9 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
 
-import { BlurView } from 'expo-blur';
 
 const CATEGORY_ICONS: Record<string, any> = {
     restaurant: 'restaurant',
@@ -96,75 +94,7 @@ export default function MapWidget() {
                 ) : (
                     // Show map if we have location OR places (fallback)
                     <>
-                        <MapView
-                            style={styles.map}
-                            region={mapRegion}
-                            showsUserLocation={true}
-                            showsMyLocationButton={false}
-                            scrollEnabled={false}
-                            zoomEnabled={false}
-                            pitchEnabled={false}
-                            rotateEnabled={false}
-                            {...{ language } as any}
-                        >
-                            {/* User Location Marker */}
-                            {location && (
-                                <Marker
-                                    coordinate={{
-                                        latitude: location.latitude,
-                                        longitude: location.longitude,
-                                    }}
-                                    title={t('map.youAreHere')}
-                                    description={userAddress || t('map.yourCurrentLocation')}
-                                    zIndex={10}
-                                    tracksViewChanges={trackViewChanges}
-                                >
-                                    <View style={styles.userMarkerWrapper}>
-                                        <LinearGradient
-                                            colors={['#6366F1', '#4F46E5']}
-                                            style={styles.userMarkerGradient}
-                                        >
-                                            <Ionicons name="person" size={14} color="#fff" />
-                                        </LinearGradient>
-                                        <View style={styles.userMarkerPulse} />
-                                    </View>
-                                </Marker>
-                            )}
-
-                            {/* Venue Markers */}
-                            {allPlaces.map((place) => {
-                                const category = place.category?.toLowerCase() || 'default';
-                                const iconName = CATEGORY_ICONS[category] || CATEGORY_ICONS.default;
-                                const colors = (CATEGORY_COLORS[category] || CATEGORY_COLORS.default) as [string, string];
-
-                                return (
-                                    <Marker
-                                        key={place.id}
-                                        coordinate={{
-                                            latitude: place.location.latitude,
-                                            longitude: place.location.longitude,
-                                        }}
-                                        title={place.name}
-                                        onPress={() => router.push(`/place/${place.id}`)}
-                                        tracksViewChanges={trackViewChanges}
-                                    >
-                                        <View style={styles.venueMarkerWrapper}>
-                                            <LinearGradient
-                                                colors={colors}
-                                                style={styles.venueMarkerGradient}
-                                            >
-                                                <Ionicons name={iconName} size={12} color="#fff" />
-                                            </LinearGradient>
-                                        </View>
-                                    </Marker>
-                                );
-                            })}
-                        </MapView>
-
-                        {/* Location Info Overlay with Glassmorphism */}
-                        <BlurView
-                            intensity={120}
-                            tint="light"
+                        <View
                             style={styles.mapOverlayBox}
                         >
                             <View style={styles.overlayContent}>
@@ -192,26 +122,29 @@ export default function MapWidget() {
                                         </LinearGradient>
                                     </TouchableOpacity>
                                 )}
+                                <TouchableOpacity
+                                    style={styles.openMapButton}
+                                    onPress={handleOpenFullMap}
+                                    activeOpacity={0.8}
+                                >
+                                    <LinearGradient
+                                        colors={['#6366F1', '#4F46E5']}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 0 }}
+                                        style={styles.openMapGradient}
+                                    >
+                                        <Ionicons name="map-outline" size={20} color="white" />
+                                    </LinearGradient>
+                                </TouchableOpacity>
                             </View>
-                        </BlurView>
+                        </View>
+
+
+                        {/* Location Info Overlay with Glassmorphism */}
 
                         {/* Open Full Map Button */}
                         <View style={styles.floatingMapButtonContainer}>
-                            <TouchableOpacity
-                                style={styles.openMapButton}
-                                onPress={handleOpenFullMap}
-                                activeOpacity={0.8}
-                            >
-                                <LinearGradient
-                                    colors={['#6366F1', '#4F46E5']}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 0 }}
-                                    style={styles.openMapGradient}
-                                >
-                                    <Ionicons name="map-outline" size={20} color="white" style={{ marginRight: 8 }} />
-                                    <Text style={styles.openMapText}>{t('map.openFullMap')}</Text>
-                                </LinearGradient>
-                            </TouchableOpacity>
+
                         </View>
                     </>
                 )}
@@ -222,23 +155,10 @@ export default function MapWidget() {
 
 const styles = StyleSheet.create({
     mapWidgetContainer: {
-        marginHorizontal: 20,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#eee',
-        backgroundColor: '#fff',
-        padding: 8,
-        marginBottom: 30,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
-        elevation: 2,
+
     },
     mapPreview: {
-        borderRadius: 16,
-        height: 220,
-        backgroundColor: '#f0f0f0',
+        height: 80,
         position: 'relative',
         overflow: 'hidden',
         paddingTop: 30
@@ -282,7 +202,6 @@ const styles = StyleSheet.create({
     },
     mapOverlayBox: {
         position: 'absolute',
-        top: 12,
         left: 12,
         right: 12,
         borderRadius: 16,
@@ -296,6 +215,7 @@ const styles = StyleSheet.create({
         padding: 14,
         alignItems: 'center',
         justifyContent: 'space-between',
+        backgroundColor: 'white',
     },
     overlayLeft: {
         flex: 1,
@@ -375,13 +295,14 @@ const styles = StyleSheet.create({
     },
     floatingMapButtonContainer: {
         position: 'absolute',
-        bottom: 12,
-        left: 12,
-        right: 12,
+        bottom: 14,
+        right: 14,
         zIndex: 10,
     },
     openMapButton: {
-        borderRadius: 12,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         overflow: 'hidden',
         shadowColor: '#5356FF',
         shadowOffset: { width: 0, height: 4 },
@@ -390,14 +311,8 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     openMapGradient: {
-        flexDirection: 'row',
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 14,
-    },
-    openMapText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 15,
     },
 });

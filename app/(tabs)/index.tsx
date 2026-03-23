@@ -6,7 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import SideDrawer from '@/components/SideDrawer';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import MapWidget from '@/components/dashboard/MapWidget';
 import PlacesSection from '@/components/dashboard/PlacesSection';
 import SearchBar from '@/components/dashboard/SearchBar';
 import XPGainAnimation from '@/components/rewards/XPGainAnimation';
@@ -37,7 +36,7 @@ export default function DashboardScreen() {
 
           <View style={styles.titleContainer}>
             <Text style={styles.titleBlue}>{t('dashboard.titleLine1')}</Text>
-            <Text style={styles.titleBlue}>{t('dashboard.titleLine2')}</Text>
+            <Text style={[styles.titleBlue, { color: "black" }]}>{t('dashboard.titleLine2')}</Text>
           </View>
 
           {permissionStatus && permissionStatus !== 'granted' && (
@@ -58,7 +57,7 @@ export default function DashboardScreen() {
 
           <SearchBar />
 
-          <MapWidget />
+          {/* <MapWidget /> */}
 
           <PlacesSection />
 
@@ -85,9 +84,10 @@ const styles = StyleSheet.create({
   titleContainer: {
     paddingHorizontal: 20,
     marginBottom: 20,
+    flexDirection: "row"
   },
   titleBlue: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#4E46E5', // Matches the purple/blue theme
   },

@@ -31,5 +31,17 @@ export const authStyles = StyleSheet.create({
     },
 });
 
-// Gradient colors for auth screens
-export const AUTH_GRADIENT_COLORS: readonly [string, string] = ['#5356FF', '#3787FF'];
+// Gradient colors for auth screens (purple + blue)
+export const AUTH_GRADIENT_COLORS: readonly [string, string] = ['#7C3AED', '#1D4ED8'];
+
+// Onboarding image style
+export const authImageStyles = StyleSheet.create({
+    topImage: {
+        width: 120,
+        height: 120,
+        alignSelf: 'center',
+        marginTop: 20,
+        marginBottom: 12,
+        resizeMode: 'contain',
+    },
+});

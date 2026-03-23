@@ -1,384 +1,375 @@
-import { auth, db } from '@/configs/firebaseConfig';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
-    Alert,
-    Animated,
-    Easing,
-    SafeAreaView,
-    ScrollView,
-    Text,
-    View
+  SafeAreaView,
+  ScrollView,
+  View,
+  Text,
+  TextInput,
+  Image,
+  ImageBackground,
+  StyleSheet
 } from 'react-native';
-// Safe import for GoogleSignin to prevent crashes in Expo Go
-let GoogleSignin: any;
-try {
-    GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
-} catch (e) {
-    console.log('GoogleSignin not available in this environment');
-}
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
-import AuthButton from '@/components/auth/AuthButton';
-import AuthHeader from '@/components/auth/AuthHeader';
-import AuthInput from '@/components/auth/AuthInput';
-import AuthLinks from '@/components/auth/AuthLinks';
-import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
-import TermsCheckbox from '@/components/auth/TermsCheckbox';
-import { AUTH_GRADIENT_COLORS, authStyles } from '@/components/auth/authStyles';
-import { useUser } from '@/context/UserContext';
-import { t } from '@/i18n';
+const HERO_IMAGE =
+  'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1200&auto=format&fit=crop';
+const AVATAR_IMAGE =
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=200&auto=format&fit=crop';
 
-const DEFAULT_PROFILE_PIC = 'https://imgs.search.brave.com/Fu2vzE7rwzQnr00qao9hegfrI2z1fW5tQy1qs01eMe4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5na2V5LmNvbS9w/bmcvZGV0YWlsLzEy/MS0xMjE5MjMxX3Vz/ZXItZGVmYXVsdC1w/cm9maWxlLnBuZw';
+export default function ClientHomeScreen() {
+  return (
+    <LinearGradient colors={['#F6F7FB', '#FFFFFF']} style={styles.screen}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.wrapper}>
+          <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+            <Text style={styles.title}>Check the queue!</Text>
 
-export default function LoginScreen() {
-    const router = useRouter();
-    const { sendPasswordReset } = useUser();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [isChecked, setChecked] = useState(false);
-    const [isLoginMode, setIsLoginMode] = useState(false); // Default to Signup
-    const [isLoading, setIsLoading] = useState(false);
-    useEffect(() => {
-        if (GoogleSignin) {
-            try {
-                GoogleSignin.configure({
-                    webClientId: '83234148402-llr9kih19oh0hmmadf1pl916rrkn90go.apps.googleusercontent.com',
-                });
-            } catch (e) {
-                console.error('GoogleSignin configuration failed:', e);
-            }
-        }
-    }, []);
+            <View style={styles.searchBar}>
+              <View style={styles.avatarWrap}>
+                <Image source={{ uri: AVATAR_IMAGE }} style={styles.avatar} />
+              </View>
+              <TextInput
+                placeholder="Search for a place or address"
+                placeholderTextColor="#9AA0AD"
+                style={styles.searchInput}
+              />
+              <View style={styles.searchButton}>
+                <Ionicons name="search" size={20} color="#5A5BFF" />
+              </View>
+            </View>
 
-    // Animation for button
-    const buttonScale = React.useRef(new Animated.Value(1)).current;
-    const spinValue = React.useRef(new Animated.Value(0)).current;
-
-    const animateButtonPress = () => {
-        Animated.sequence([
-            Animated.timing(buttonScale, {
-                toValue: 0.95,
-                useNativeDriver: true,
-            }),
-            Animated.timing(buttonScale, {
-                toValue: 1,
-                useNativeDriver: true,
-            }),
-        ]).start();
-    };
-
-    const startLoadingAnimation = () => {
-        spinValue.setValue(0);
-        Animated.loop(
-            Animated.timing(spinValue, {
-                toValue: 1,
-                duration: 1000,
-                easing: Easing.linear,
-                useNativeDriver: true,
-            })
-        ).start();
-    };
-
-    const handleAuth = async () => {
-        if (!email || !password) {
-            Alert.alert(t('auth.errorTitle'), t('auth.enterEmailPassword'));
-            return;
-        }
-
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            Alert.alert(t('auth.errorTitle'), t('auth.invalidEmail'));
-            return;
-        }
-
-        // Validate password length
-        if (password.length < 6) {
-            Alert.alert(t('auth.errorTitle'), t('auth.passwordMin'));
-            return;
-        }
-
-        animateButtonPress();
-        setIsLoading(true);
-        startLoadingAnimation();
-
-        try {
-            if (isLoginMode) {
-                // Login Logic
-                await signInWithEmailAndPassword(auth, email, password);
-            } else {
-                // Signup Logic
-                if (password !== confirmPassword) {
-                    setIsLoading(false);
-                    Alert.alert(t('auth.errorTitle'), t('auth.passwordsDontMatch'));
-                    return;
-                }
-                if (!isChecked) {
-                    setIsLoading(false);
-                    Alert.alert(t('auth.errorTitle'), t('auth.agreeTerms'));
-                    return;
-                }
-
-                // 1. Create User in Auth
-                console.log('Creating user in Firebase Auth...');
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                console.log('User created in Auth:', user.uid);
-
-                // 2. Create User Document in Firestore
-                try {
-                    console.log('Creating user document in Firestore...');
-                    await setDoc(doc(db, "users", user.uid), {
-                        uid: user.uid,
-                        email: user.email || '',
-                        display_name: "", // Initial empty, user can update later
-                        photo_url: DEFAULT_PROFILE_PIC,
-                        phone_number: "",
-                        username: email.split('@')[0], // Default username from email
-
-                        created_time: Timestamp.now(),
-                        joinedAt: Timestamp.now(),
-
-                        isGuest: false,
-                        darkMode: false,
-                        enableNotification: false, // Default false until requested
-                        enableLocation: false, // Default false until requested
-                        Language: true, // Matching the Boolean type in screenshot
-                        xp: 0,
-
-                        favourite: [], // Empty list of references
-                        currentLocaton: null // Typo 'currentLocaton' matches screenshot schema
-                    });
-                    console.log('User document created in Firestore successfully!');
-                } catch (firestoreError: any) {
-                    console.error('Firestore error:', firestoreError);
-                    // User was created in Auth, but Firestore failed - still allow them to proceed
-                    // The document can be created later when they update their profile
-                }
-            }
-            // Navigation will happen automatically via UserContext/MainLayout
-        } catch (error: any) {
-            setIsLoading(false);
-            let errorMessage = error.message;
-
-            // User-friendly error messages
-            if (error.code === 'auth/user-not-found') {
-                errorMessage = t('auth.noAccountFound');
-            } else if (error.code === 'auth/wrong-password') {
-                errorMessage = t('auth.incorrectPassword');
-            } else if (error.code === 'auth/email-already-in-use') {
-                errorMessage = t('auth.emailInUse');
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = t('auth.invalidEmailFormat');
-            } else if (error.code === 'auth/weak-password') {
-                errorMessage = t('auth.weakPassword');
-            } else if (error.code === 'auth/network-request-failed') {
-                errorMessage = t('auth.networkError');
-            } else if (error.code === 'auth/too-many-requests') {
-                errorMessage = t('auth.tooManyRequests');
-            } else if (error.code === 'auth/invalid-credential') {
-                errorMessage = t('auth.invalidCredentials');
-            }
-
-            Alert.alert(t('auth.authErrorTitle'), errorMessage);
-        }
-    };
-
-    const handleForgotPassword = async () => {
-        if (!email) {
-            Alert.alert(t('auth.forgotPassword'), t('auth.enterEmailForReset'));
-            return;
-        }
-
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            Alert.alert(t('auth.errorTitle'), t('auth.invalidEmail'));
-            return;
-        }
-
-        try {
-            setIsLoading(true);
-            await sendPasswordReset(email);
-            Alert.alert(t('auth.success'), t('auth.passwordResetSent'));
-        } catch (error: any) {
-            let errorMessage = error.message;
-            if (error.code === 'auth/user-not-found') {
-                errorMessage = t('auth.noAccountFound');
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = t('auth.invalidEmailFormat');
-            }
-            Alert.alert(t('auth.errorTitle'), errorMessage);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleGoogleAuth = async () => {
-        animateButtonPress();
-        setIsLoading(true);
-        startLoadingAnimation();
-
-        try {
-            if (!GoogleSignin) {
-                Alert.alert(
-                    t('auth.googleBuildRequiredTitle'),
-                    t('auth.googleBuildRequiredMessage'),
-                    [{ text: t('auth.ok'), onPress: () => setIsLoading(false) }]
-                );
-                return;
-            }
-
-            try {
-                // Ensure the account chooser is shown instead of reusing a cached account.
-                await GoogleSignin.signOut();
-            } catch (signOutError) {
-                console.warn('Google signOut skipped:', signOutError);
-            }
-
-            await GoogleSignin.hasPlayServices();
-            const response = await GoogleSignin.signIn();
-            const idToken = response.data?.idToken;
-
-            if (!idToken) throw new Error("No ID Token found");
-
-            const credential = GoogleAuthProvider.credential(idToken);
-
-            // Sign in to Firebase with the Google credential
-            const userCredential = await signInWithCredential(auth, credential);
-            const user = userCredential.user;
-
-            // Check if user document exists in Firestore
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-
-            if (!userDoc.exists()) {
-                // Create user document if it doesn't exist (First time Google Login)
-                console.log('Creating new user document for Google user...');
-                await setDoc(doc(db, "users", user.uid), {
-                    uid: user.uid,
-                    email: user.email || '',
-                    display_name: user.displayName || "",
-                    photo_url: user.photoURL || DEFAULT_PROFILE_PIC,
-                    phone_number: user.phoneNumber || "",
-                    username: user.email?.split('@')[0] || "",
-                    created_time: Timestamp.now(),
-                    joinedAt: Timestamp.now(),
-                    isGuest: false,
-                    darkMode: false,
-                    enableNotification: false,
-                    enableLocation: false,
-                    Language: true,
-                    xp: 0,
-                    favourite: [],
-                    currentLocaton: null
-                });
-            }
-
-            // Navigation happens automatically via auth state observer
-        } catch (error: any) {
-            setIsLoading(false);
-            console.error("Google Auth error:", error);
-
-            if (error.code === 'DEVELOPER_ERROR') {
-                Alert.alert(
-                    t('auth.configErrorTitle'),
-                    t('auth.configErrorMessage')
-                );
-            } else if (error.code !== 'SIGN_IN_CANCELLED') {
-                Alert.alert(t('auth.googleLoginErrorTitle'), error.message);
-            }
-        }
-    };
-
-    const toggleMode = () => {
-        // Animate mode switch
-        setIsLoginMode(!isLoginMode);
-        setPassword('');
-        setConfirmPassword('');
-    };
-
-    return (
-        <LinearGradient
-            colors={AUTH_GRADIENT_COLORS}
-            style={authStyles.container}
-        >
-            <SafeAreaView style={authStyles.safeArea}>
-                <AuthHeader />
-
-                <View style={authStyles.contentContainer}>
-                    <ScrollView contentContainerStyle={authStyles.scrollContent}>
-                        <Text style={authStyles.subtitle}>{t('auth.subtitle')}</Text>
-                        <AuthInput
-                            label={t('auth.email')}
-                            value={email}
-                            onChangeText={setEmail}
-                            placeholder=""
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                        />
-
-                        {/* Password Input */}
-                        <AuthInput
-                            label={t('auth.password')}
-                            isPassword
-                            showPassword={showPassword}
-                            onTogglePassword={() => setShowPassword(!showPassword)}
-                            value={password}
-                            onChangeText={setPassword}
-                            placeholder=""
-                        />
-
-                        {/* Confirm Password Input - Only for Signup */}
-                        {!isLoginMode && (
-                            <AuthInput
-                                label={t('auth.confirmPassword')}
-                                isPassword
-                                showPassword={showConfirmPassword}
-                                onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
-                                value={confirmPassword}
-                                onChangeText={setConfirmPassword}
-                                placeholder=""
-                            />
-                        )}
-
-                        {/* Action Button with Loading State */}
-                        <AuthButton
-                            isLoading={isLoading}
-                            isLoginMode={isLoginMode}
-                            buttonScale={buttonScale}
-                            onPress={handleAuth}
-                        />
-
-                        <SocialAuthButtons
-                            onGooglePress={handleGoogleAuth}
-                            isLoading={isLoading}
-                            mode={isLoginMode ? 'login' : 'signup'}
-                        />
-
-                        {/* Terms Checkbox - Only for Signup */}
-                        {!isLoginMode && (
-                            <TermsCheckbox
-                                isChecked={isChecked}
-                                onValueChange={setChecked}
-                            />
-                        )}
-
-                        {/* Auth Links - Toggle Mode, Privacy, Forgot Password */}
-                        <AuthLinks
-                            isLoginMode={isLoginMode}
-                            isLoading={isLoading}
-                            onToggleMode={toggleMode}
-                            onForgotPassword={handleForgotPassword}
-                        />
-                    </ScrollView>
+            <View style={styles.locationCard}>
+              <View style={styles.locationRow}>
+                <View style={styles.locationIconWrap}>
+                  <Ionicons name="location" size={18} color="#5A5BFF" />
                 </View>
-            </SafeAreaView>
-        </LinearGradient>
-    );
+                <View style={styles.locationTextWrap}>
+                  <Text style={styles.locationTitle}>Target Location</Text>
+                  <Text style={styles.locationSubtitle}>Israel</Text>
+                </View>
+              </View>
+              <View style={styles.mapButton}>
+                <Ionicons name="map" size={20} color="#FFFFFF" />
+              </View>
+            </View>
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Real-time reports</Text>
+              <View style={styles.seeAllPill}>
+                <Text style={styles.seeAllText}>See All</Text>
+                <Ionicons name="chevron-forward" size={14} color="#5A5BFF" />
+              </View>
+            </View>
+
+            <View style={styles.reportCard}>
+              <ImageBackground source={{ uri: HERO_IMAGE }} style={styles.reportImage} imageStyle={styles.reportImageRadius}>
+                <View style={styles.reportTopRow}>
+                  <View style={styles.categoryPill}>
+                    <Ionicons name="restaurant" size={14} color="#FFFFFF" />
+                    <Text style={styles.categoryText}>RESTAURANT</Text>
+                  </View>
+                  <View style={styles.ratingBadge}>
+                    <Ionicons name="star" size={14} color="#F5B73D" />
+                    <Text style={styles.ratingText}>4.6</Text>
+                  </View>
+                </View>
+              </ImageBackground>
+
+              <View style={styles.reportBody}>
+                <Text style={styles.reportTitle}>ROODI</Text>
+                <View style={styles.statusPill}>
+                  <Text style={styles.statusText}>Short queue</Text>
+                </View>
+                <Text style={styles.distanceText}>1.0 km</Text>
+
+                <LinearGradient colors={['#5A5BFF', '#4B3FEF']} style={styles.detailsButton}>
+                  <Text style={styles.detailsText}>View details</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                </LinearGradient>
+              </View>
+            </View>
+          </ScrollView>
+
+          <View style={styles.bottomNav}>
+            <View style={styles.navItemActive}>
+              <Ionicons name="home" size={20} color="#5A5BFF" />
+              <Text style={styles.navTextActive}>Home</Text>
+            </View>
+            <View style={styles.navItem}>
+              <Ionicons name="location-outline" size={20} color="#A1A6B3" />
+              <Text style={styles.navText}>Places</Text>
+            </View>
+            <View style={styles.navItem}>
+              <Ionicons name="analytics-outline" size={20} color="#A1A6B3" />
+              <Text style={styles.navText}>Explore</Text>
+            </View>
+            <View style={styles.navItem}>
+              <Ionicons name="gift-outline" size={20} color="#A1A6B3" />
+              <Text style={styles.navText}>Route</Text>
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
+  );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1
+  },
+  safeArea: {
+    flex: 1
+  },
+  wrapper: {
+    flex: 1
+  },
+  container: {
+    paddingHorizontal: 20,
+    paddingBottom: 30
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#3B3CF6',
+    marginBottom: 18
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    shadowColor: '#2A2D3D',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+    marginBottom: 18
+  },
+  avatarWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    overflow: 'hidden',
+    marginRight: 10
+  },
+  avatar: {
+    width: '100%',
+    height: '100%'
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#343A46'
+  },
+  searchButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#EEF0FF',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  locationCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#2A2D3D',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+    marginBottom: 22
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  locationIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EEF0FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10
+  },
+  locationTextWrap: {
+    justifyContent: 'center'
+  },
+  locationTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#303443'
+  },
+  locationSubtitle: {
+    fontSize: 14,
+    color: '#8A90A0',
+    marginTop: 2
+  },
+  mapButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#5A5BFF',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2C3140'
+  },
+  seeAllPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF0FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16
+  },
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#5A5BFF',
+    marginRight: 4
+  },
+  reportCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    shadowColor: '#2A2D3D',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+    overflow: 'hidden',
+    marginBottom: 40
+  },
+  reportImage: {
+    height: 180,
+    width: '100%',
+    justifyContent: 'space-between',
+    padding: 14
+  },
+  reportImageRadius: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20
+  },
+  reportTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  categoryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14
+  },
+  categoryText: {
+    marginLeft: 6,
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600'
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14
+  },
+  ratingText: {
+    marginLeft: 6,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2C3140'
+  },
+  reportBody: {
+    padding: 16
+  },
+  reportTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#2C3140',
+    marginBottom: 10
+  },
+  statusPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#DDF7E6',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
+    marginBottom: 10
+  },
+  statusText: {
+    color: '#1B9A66',
+    fontSize: 12,
+    fontWeight: '600'
+  },
+  distanceText: {
+    fontSize: 14,
+    color: '#5E667A',
+    marginBottom: 16
+  },
+  detailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 18
+  },
+  detailsText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    marginRight: 8
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: '#2A2D3D',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 6
+  },
+  navItem: {
+    alignItems: 'center'
+  },
+  navItemActive: {
+    alignItems: 'center'
+  },
+  navText: {
+    fontSize: 11,
+    color: '#A1A6B3',
+    marginTop: 4
+  },
+  navTextActive: {
+    fontSize: 11,
+    color: '#5A5BFF',
+    marginTop: 4,
+    fontWeight: '600'
+  }
+});

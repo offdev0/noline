@@ -26,6 +26,13 @@
 				"$gradle"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Build Android Release (android cwd)",
+			"type": "shell",
+			"command": "cd android && ./gradlew assembleRelease",
+			"isBackground": false,
+			"group": "build"
 		}
 	]
 }

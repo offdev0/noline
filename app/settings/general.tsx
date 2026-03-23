@@ -129,6 +129,25 @@ export default function GeneralSettings() {
                     </View>
                 </View>
 
+                <Text style={styles.sectionTitle}>{t('settings.history')}</Text>
+                <View style={styles.section}>
+                    <TouchableOpacity
+                        style={styles.listItem}
+                        onPress={() => router.push('/settings/history')}
+                    >
+                        <View style={styles.settingInfo}>
+                            <View style={[styles.iconContainer, { backgroundColor: '#F3F4F6' }]}>
+                                <Ionicons name="time-outline" size={20} color="#5356FF" />
+                            </View>
+                            <View style={styles.textContainer}>
+                                <Text style={styles.settingLabel}>{t('settings.history')}</Text>
+                                <Text style={styles.settingDescription}>{t('settings.historyDesc')}</Text>
+                            </View>
+                        </View>
+                        <Ionicons name="chevron-forward" size={18} color="#CCC" />
+                    </TouchableOpacity>
+                </View>
+
                 <Text style={styles.sectionTitle}>{t('settings.about')}</Text>
                 <View style={styles.section}>
                     <TouchableOpacity style={styles.listItem} onPress={() => router.push('/privacy-policy')}>

@@ -1,13 +1,12 @@
-import { db } from '@/configs/firebaseConfig';
+import { useFavorites } from '@/context/FavoritesContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { usePlaces } from '@/context/PlacesContext';
-import { useUser } from '@/context/UserContext';
 import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { collection, doc, getDocs, limit, query, where } from 'firebase/firestore';
-import React, { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import {
     ActivityIndicator,
     Linking,
@@ -34,72 +33,19 @@ const DURATIONS = [
     { id: 'full', labelKey: 'fullDay', stopCount: 6 },
 ];
 
-interface RecentPlace {
-    id: string;
-    name: string;
-    address: string;
-    rating: number;
-    image: string;
-    searchedOn: Date;
-}
+const isLatinText = (value: string) => /[A-Za-z]/.test(value) && /^[\x00-\x7F]*$/.test(value);
 
 export default function CustomizedScreen() {
     const router = useRouter();
-    const { user } = useUser();
-    const { getPlaceById, allPlaces } = usePlaces();
-    const [recentlyVisited, setRecentlyVisited] = useState<RecentPlace[]>([]);
-    const [loadingHistory, setLoadingHistory] = useState(true);
+    const { favorites } = useFavorites();
+    const { language } = useLanguage();
+    const { allPlaces } = usePlaces();
 
     const [selectedRouteType, setSelectedRouteType] = useState<string | null>(null);
     const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
     const [routeStops, setRouteStops] = useState<any[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
 
-    const fetchSearchHistory = async () => {
-        if (!user) { setLoadingHistory(false); return; }
-        try {
-            const userRef = doc(db, 'users', user.uid);
-            const historyQuery = query(
-                collection(db, 'SearchHistory'),
-                where('searchedBy', '==', userRef),
-                limit(50)
-            );
-            const snapshot = await getDocs(historyQuery);
-            const places: RecentPlace[] = [];
-            const seenPlaceIds = new Set<string>();
-            const processedData = snapshot.docs
-                .map(d => ({ id: d.id, ...d.data() } as any))
-                .filter(d => {
-                    const uid = d.searchedBy?.id || d.searchedBy?.path?.split('/').pop();
-                    return uid === user.uid && d.businessRef;
-                })
-                .sort((a, b) => (b.searchedOn?.seconds || 0) - (a.searchedOn?.seconds || 0));
-
-            for (const data of processedData) {
-                const businessRef = data.businessRef;
-                const placeId = businessRef.id || businessRef.path?.split('/').pop();
-                if (!placeId || seenPlaceIds.has(placeId)) continue;
-                seenPlaceIds.add(placeId);
-                const placeFromContext = getPlaceById(placeId);
-                places.push({
-                    id: placeId,
-                    name: data.searchedString || 'Unknown Place',
-                    address: data.searchedAddress || 'Address not available',
-                    rating: placeFromContext?.rating || data.rating || 4.2,
-                    image: placeFromContext?.image || data.imageUrl || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400',
-                    searchedOn: data.searchedOn?.toDate() || new Date(),
-                });
-                if (places.length >= 10) break;
-            }
-            setRecentlyVisited(places);
-        } catch (error) {
-            console.error('Error fetching search history:', error);
-        } finally {
-            setLoadingHistory(false);
-        }
-    };
-
-    useFocusEffect(useCallback(() => { fetchSearchHistory(); }, [user]));
 
     const generateRoute = () => {
         if (!selectedRouteType || !selectedDuration) return;
@@ -138,6 +84,8 @@ export default function CustomizedScreen() {
     const handleNavigate = (placeId: string) => {
         router.push({ pathname: '/place/[id]', params: { id: placeId } });
     };
+
+    const favoritePreview = favorites.slice(0, 6);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -314,46 +262,47 @@ export default function CustomizedScreen() {
                     </View>
                 )}
 
-                {/* Recently Visited */}
-                <View style={styles.recentHeader}>
-                    <Text style={styles.recentTitle}>{t('route.recentlyVisited')}</Text>
+                {/* Favorites */}
+                <View style={styles.favoritesHeader}>
+                    <Text style={styles.favoritesTitle}>{t('trends.yourFavorites')}</Text>
+                    {favorites.length > 0 && (
+                        <TouchableOpacity onPress={() => router.push('/favorites')}>
+                            <Text style={styles.favoritesSeeMore}>{t('trends.seeAll')}</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
-                {loadingHistory ? (
-                    <View style={styles.loadingBox}>
-                        <ActivityIndicator size="small" color="#6366F1" />
-                    </View>
-                ) : recentlyVisited.length === 0 ? (
-                    <View style={styles.emptyBox}>
-                        <Ionicons name="location-outline" size={40} color="#CBD5E1" />
-                        <Text style={styles.emptyText}>{t('route.noHistory')}</Text>
+                {favorites.length === 0 ? (
+                    <View style={styles.emptyFavBox}>
+                        <Ionicons name="heart-outline" size={40} color="#CBD5E1" />
+                        <Text style={styles.emptyFavText}>{t('trends.favoritesEmpty')}</Text>
                     </View>
                 ) : (
-                    recentlyVisited.map((place) => (
-                        <TouchableOpacity
-                            key={place.id}
-                            style={styles.recentCard}
-                            onPress={() => handleNavigate(place.id)}
-                            activeOpacity={0.9}
-                        >
-                            <Image
-                                source={{ uri: place.image }}
-                                style={styles.recentImage}
-                                contentFit="cover"
-                                cachePolicy="memory-disk"
-                                transition={200}
-                            />
-                            <View style={styles.recentContent}>
-                                <Text style={styles.recentName} numberOfLines={1}>{place.name}</Text>
-                                <Text style={styles.recentAddress} numberOfLines={1}>{place.address}</Text>
-                                <View style={styles.recentMeta}>
-                                    <Ionicons name="star" size={12} color="#FFD700" />
-                                    <Text style={styles.recentRating}>{place.rating.toFixed(1)}</Text>
+                    <View style={styles.favoritesGrid}>
+                        {favoritePreview.map((place) => (
+                            <TouchableOpacity
+                                key={place.id}
+                                style={styles.favoriteCard}
+                                onPress={() => handleNavigate(place.id)}
+                                activeOpacity={0.9}
+                            >
+                                <Image
+                                    source={{ uri: place.image }}
+                                    style={styles.favoriteImage}
+                                    contentFit="cover"
+                                    cachePolicy="memory-disk"
+                                    transition={200}
+                                />
+                                <View style={styles.favoriteContent}>
+                                    <Text style={[styles.favoriteName, language === 'he' && isLatinText(place.name) && styles.ltrText]} numberOfLines={1}>{place.name}</Text>
+                                    <View style={styles.favoriteMeta}>
+                                        <Ionicons name="star" size={12} color="#FFD700" />
+                                        <Text style={styles.favoriteRating}>{place.rating?.toFixed(1) || '4.5'}</Text>
+                                    </View>
                                 </View>
-                            </View>
-                            <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
-                        </TouchableOpacity>
-                    ))
+                            </TouchableOpacity>
+                        ))}
+                    </View>
                 )}
 
                 <View style={{ height: 100 }} />
@@ -529,43 +478,47 @@ const styles = StyleSheet.create({
     },
     finishBtnText: { color: '#6366F1', fontSize: 15, fontWeight: '700' },
 
-    // Recently Visited
-    recentHeader: {
+    // Favorites
+    favoritesHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        marginTop: 10,
         marginBottom: 14,
     },
-    recentTitle: { fontSize: 20, fontWeight: '800', color: '#0F172A' },
-    loadingBox: { paddingVertical: 30, alignItems: 'center' },
-    emptyBox: {
-        paddingVertical: 30,
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        borderRadius: 18,
-        borderWidth: 1,
-        borderColor: '#F1F5F9',
-    },
-    emptyText: { marginTop: 10, fontSize: 14, color: '#94A3B8', fontWeight: '500' },
-    recentCard: {
+    favoritesTitle: { fontSize: 20, fontWeight: '800', color: '#0F172A' },
+    favoritesSeeMore: { fontSize: 13, fontWeight: '800', color: '#6366F1' },
+    favoritesGrid: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    favoriteCard: {
+        width: '48%',
+        backgroundColor: '#fff',
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 3,
+    },
+    favoriteImage: { width: '100%', height: 110 },
+    favoriteContent: { padding: 12 },
+    favoriteName: { fontSize: 14, fontWeight: '800', color: '#0F172A', marginBottom: 6 },
+    ltrText: { writingDirection: 'ltr', textAlign: 'left' },
+    favoriteMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    favoriteRating: { fontSize: 12, fontWeight: '700', color: '#92400E' },
+    emptyFavBox: {
+        paddingVertical: 24,
         alignItems: 'center',
         backgroundColor: '#fff',
         borderRadius: 18,
-        padding: 12,
-        marginBottom: 10,
         borderWidth: 1,
         borderColor: '#F1F5F9',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-        elevation: 2,
     },
-    recentImage: { width: 60, height: 60, borderRadius: 14 },
-    recentContent: { flex: 1, marginLeft: 14 },
-    recentName: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
-    recentAddress: { fontSize: 12, color: '#64748B', marginBottom: 4 },
-    recentMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    recentRating: { fontSize: 12, fontWeight: '700', color: '#92400E' },
+    emptyFavText: { marginTop: 10, fontSize: 14, color: '#94A3B8', fontWeight: '500' },
 });

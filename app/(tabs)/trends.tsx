@@ -18,22 +18,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const { width } = Dimensions.get('window');
 
 const moods = [
-    { id: '1', label: 'calm', icon: 'leaf-outline', colors: ['#FFF9C4', '#FFF59D'], iconColor: '#F59E0B' },
-    { id: '2', label: 'social', icon: 'people-outline', colors: ['#E0F2FE', '#BAE6FD'], iconColor: '#0284C7' },
-    { id: '3', label: 'adventure', icon: 'rocket-outline', colors: ['#FEF2F2', '#FECACA'], iconColor: '#DC2626' },
-    { id: '4', label: 'freedom', icon: 'aperture-outline', colors: ['#F0FDF4', '#DCFCE7'], iconColor: '#16A34A' },
+    { id: '1', label: 'calm', icon: 'leaf-outline', colors: ['#FFF9C4', '#FFF59D'], iconColor: '#F59E0B', description: 'Relaxed places with a quiet and comfortable atmosphere.' },
+    { id: '2', label: 'social', icon: 'people-outline', colors: ['#E0F2FE', '#BAE6FD'], iconColor: '#0284C7', description: 'Lively places that are great for going out with friends.' },
+    { id: '3', label: 'adventure', icon: 'rocket-outline', colors: ['#FEF2F2', '#FECACA'], iconColor: '#DC2626', description: 'Active and exciting spots for something different.' },
+    { id: '4', label: 'spontaneous', icon: 'aperture-outline', colors: ['#F0FDF4', '#DCFCE7'], iconColor: '#16A34A', description: 'Quick ideas for when you just want to go out now.' },
 ];
 
 
 
-import { useFavorites } from '@/context/FavoritesContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { PlaceData } from '@/services/MapsService';
 
+const isLatinText = (value: string) => /[A-Za-z]/.test(value) && /^[\x00-\x7F]*$/.test(value);
+
 export default function TrendsScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
     const { trendingPlaces, loading } = usePlaces();
-    const { favorites } = useFavorites();
     const [showAllTrending, setShowAllTrending] = useState(false);
     const [selectedMood, setSelectedMood] = useState<string | null>(null);
 
@@ -55,7 +57,7 @@ export default function TrendsScreen() {
             if (moodStr === 'adventure') {
                 return category === 'fun' || category === 'casino' || category === 'park' || description.includes('exciting');
             }
-            if (moodStr === 'freedom') {
+            if (moodStr === 'spontaneous') {
                 return category === 'shopping' || category === 'mustvisit' || category === 'outdoor';
             }
 
@@ -84,6 +86,12 @@ export default function TrendsScreen() {
         if (c.includes('must') || c.includes('attraction') || c.includes('landmark')) return 'camera';
         if (c.includes('vibe') || c.includes('special')) return 'sparkles';
         return 'location';
+    };
+
+    const getQueueChipColors = (status: string) => {
+        if (status === 'vacant') return { bg: '#DCFCE7', text: '#15803D', icon: '#15803D' };
+        if (status === 'medium') return { bg: '#FFEDD5', text: '#C2410C', icon: '#C2410C' };
+        return { bg: '#FEE2E2', text: '#B91C1C', icon: '#B91C1C' };
     };
 
     // Use the available image source from PlaceData
@@ -122,6 +130,7 @@ export default function TrendsScreen() {
                                     <Ionicons name={mood.icon as any} size={22} color={mood.iconColor} />
                                 </LinearGradient>
                                 <Text style={[styles.moodLabel, { color: mood.iconColor }]}>{t(`moods.${mood.label}`)}</Text>
+                                <Text style={styles.moodDescription} numberOfLines={1}>{mood.description}</Text>
                             </TouchableOpacity>
                         </View>
                     ))}
@@ -154,16 +163,16 @@ export default function TrendsScreen() {
                             >
                                 <Image source={{ uri: getImageForPlace(item) }} style={styles.cardCover} priority="low" cachePolicy="disk" contentFit="cover" />
                                 <View style={styles.cardOverlay}>
-                                    <View style={styles.statusChip}>
-                                        <Ionicons name="flash" size={14} color="#16A34A" />
-                                        <Text style={styles.statusChipText}>{t(`places.${item.status}`)}</Text>
+                                    <View style={[styles.statusChip, { backgroundColor: getQueueChipColors(item.status).bg }]}>
+                                        <Ionicons name="flash" size={14} color={getQueueChipColors(item.status).icon} />
+                                        <Text style={[styles.statusChipText, { color: getQueueChipColors(item.status).text }]}>{t(`places.${item.status}`)}</Text>
                                     </View>
                                 </View>
 
                                 <View style={styles.cardBody}>
                                     <View style={styles.cardHeader}>
                                         <View style={styles.nameContent}>
-                                            <Text style={styles.placeName}>{item.name}</Text>
+                                            <Text style={[styles.placeName, language === 'he' && isLatinText(item.name) && styles.ltrText]}>{item.name}</Text>
                                             <Text style={styles.placeDescription}>{item.description}</Text>
                                         </View>
                                         <TouchableOpacity
@@ -185,53 +194,6 @@ export default function TrendsScreen() {
                             </TouchableOpacity>
                         ))
                     )}
-                </View>
-
-                {/* Favorites Section - Redesigned */}
-                <View style={styles.favoritesSection}>
-                    <View style={styles.sectionHeader}>
-                        <View style={styles.favTitleRow}>
-                            <Ionicons name="heart" size={20} color="#EF4444" />
-                            <Text style={styles.sectionTitle}> {t('trends.yourFavorites')}</Text>
-                        </View>
-                        {favorites.length > 0 && (
-                            <TouchableOpacity onPress={() => router.push('/favorites')}>
-                                <Text style={styles.seeAllText}>{t('trends.seeAll')}</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.favoritesScroll}
-                        contentContainerStyle={styles.favScrollContent}
-                    >
-                        {favorites.length === 0 ? (
-                            <View style={styles.emptyFavBox}>
-                                <Ionicons name="heart-outline" size={32} color="#CBD5E1" />
-                                <Text style={styles.emptyFavText}>{t('trends.favoritesEmpty')}</Text>
-                            </View>
-                        ) : (
-                            favorites.map((fav) => (
-                                <TouchableOpacity
-                                    key={fav.id}
-                                    style={styles.favCompactCard}
-                                    onPress={() => handlePlacePress(fav.id)}
-                                    activeOpacity={0.85}
-                                >
-                                    <Image source={{ uri: fav.image }} style={styles.favThumb} />
-                                    <View style={styles.favInfo}>
-                                        <Text style={styles.favName} numberOfLines={1}>{fav.name}</Text>
-                                        <View style={styles.goBackBadge}>
-                                            <Text style={styles.goBackText}>{t('trends.goBack')}</Text>
-                                            <Ionicons name="chevron-forward" size={10} color="#fff" />
-                                        </View>
-                                    </View>
-                                </TouchableOpacity>
-                            ))
-                        )}
-                    </ScrollView>
                 </View>
 
                 <View style={styles.bottomSpace} />
@@ -277,13 +239,15 @@ const styles = StyleSheet.create({
     },
     moodContainer: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'space-between',
         paddingHorizontal: 20,
-        marginBottom: 35,
+        marginBottom: 30,
+        rowGap: 18,
     },
     moodItem: {
         alignItems: 'center',
-        width: (width - 60) / 4,
+        width: '48%',
     },
     moodWrapper: {
         alignItems: 'center',
@@ -304,9 +268,17 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.8)',
     },
     moodLabel: {
-        fontSize: 12,
-        fontWeight: '700',
+        fontSize: 13,
+        fontWeight: '800',
         textTransform: 'capitalize',
+    },
+    moodDescription: {
+        fontSize: 11,
+        color: '#64748B',
+        textAlign: 'center',
+        marginTop: 6,
+        lineHeight: 14,
+        paddingHorizontal: 6,
     },
     selectedMoodWrapper: {
         transform: [{ scale: 1.05 }],
@@ -374,7 +346,6 @@ const styles = StyleSheet.create({
     statusChipText: {
         fontSize: 12,
         fontWeight: '800',
-        color: '#16A34A',
         textTransform: 'uppercase',
     },
     cardBody: {
@@ -396,6 +367,7 @@ const styles = StyleSheet.create({
         color: '#0F172A',
         marginBottom: 4,
     },
+    ltrText: { writingDirection: 'ltr', textAlign: 'left' },
     placeDescription: {
         fontSize: 13,
         color: '#64748B',
@@ -427,75 +399,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#94A3B8',
         fontWeight: '600',
-    },
-    favoritesSection: {
-        marginTop: 40,
-        marginBottom: 20,
-    },
-    favoritesScroll: {
-        paddingLeft: 20,
-    },
-    favScrollContent: {
-        paddingRight: 40,
-        paddingBottom: 10,
-    },
-    favCompactCard: {
-        width: 150,
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        marginRight: 16,
-        borderWidth: 1,
-        borderColor: '#F1F5F9',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.05,
-        shadowRadius: 15,
-        elevation: 3,
-        overflow: 'hidden',
-    },
-    favThumb: {
-        width: '100%',
-        height: 90,
-    },
-    favInfo: {
-        padding: 12,
-    },
-    favName: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: '#1E293B',
-        marginBottom: 8,
-    },
-    goBackBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#F97316',
-        paddingVertical: 6,
-        borderRadius: 10,
-        gap: 4,
-    },
-    goBackText: {
-        color: '#fff',
-        fontSize: 11,
-        fontWeight: '800',
-    },
-    emptyFavBox: {
-        width: 300,
-        height: 100,
-        backgroundColor: '#F8FAFC',
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderStyle: 'dashed',
-        borderWidth: 2,
-        borderColor: '#E2E8F0',
-    },
-    emptyFavText: {
-        fontSize: 13,
-        color: '#94A3B8',
-        fontWeight: '600',
-        marginTop: 8,
     },
     bottomSpace: {
         height: 120,

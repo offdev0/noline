@@ -12,7 +12,8 @@ export const translations = {
         tabs: {
             home: 'Home',
             places: 'Places',
-            trends: 'Trends',
+            explore: 'Explore',
+            trends: 'Trends', // legacy key for internal routes
             route: 'Route',
         },
         dashboard: {
@@ -25,6 +26,7 @@ export const translations = {
             social: 'Social',
             adventure: 'Adventurous',
             freedom: 'Spontaneous',
+            spontaneous: 'Spontaneous',
         },
         trends: {
             heroTitle: 'What do you\nwant now?',
@@ -94,6 +96,8 @@ export const translations = {
             fun: 'Entertainment',
             cafe: 'Cafe',
             vibe: 'Special Vibe',
+            bars: 'Bars',
+            desserts: 'Desserts',
         },
         placeDetail: {
             loading: 'Loading venue details...',
@@ -127,6 +131,8 @@ export const translations = {
             languageDesc: 'Choose Hebrew or English',
             english: 'English',
             hebrew: 'Hebrew',
+            history: 'History',
+            historyDesc: 'Recently viewed places',
             about: 'About',
             privacyPolicy: 'Privacy Policy',
             termsOfService: 'Terms of Service',
@@ -241,6 +247,7 @@ export const translations = {
             shortQueue: 'Short queue',
             mediumQueue: 'Medium queue',
             longQueue: 'Long queue',
+            busyHoursEstimate: 'Based on typical busy hours',
             viewDetails: 'View details',
             seeAll: 'See All',
         },
@@ -380,7 +387,8 @@ export const translations = {
         tabs: {
             home: 'בית',
             places: 'מקומות',
-            trends: 'טרנדים',
+            explore: 'עיין',
+            trends: 'טרנדים', // legacy key
             route: 'מסלול',
         },
         dashboard: {
@@ -393,6 +401,7 @@ export const translations = {
             social: 'חברתי',
             adventure: 'הרפתקני',
             freedom: 'ספונטני',
+            spontaneous: 'ספונטני',
         },
         trends: {
             heroTitle: 'מה בא לך\nעכשיו?',
@@ -462,6 +471,8 @@ export const translations = {
             fun: 'בילוי ופנאי',
             cafe: 'בית קפה',
             vibe: 'וייב מיוחד',
+            bars: 'ברים',
+            desserts: 'קינוחים',
         },
         search: {
             placeholder: 'חפש מקום או כתובת',
@@ -527,6 +538,8 @@ export const translations = {
             languageDesc: 'בחר עברית או אנגלית',
             english: 'אנגלית',
             hebrew: 'עברית',
+            history: 'היסטוריה',
+            historyDesc: 'מקומות שנצפו לאחרונה',
             about: 'אודות',
             privacyPolicy: 'מדיניות פרטייות',
             termsOfService: 'תנאי שימוש',
@@ -609,6 +622,7 @@ export const translations = {
             shortQueue: 'תור קצר',
             mediumQueue: 'תור בינוני',
             longQueue: 'תור ארוך',
+            busyHoursEstimate: 'בהתבסס על שעות עומס טיפוסיות',
             viewDetails: 'צפה בפרטים',
             seeAll: 'ראה הכל',
         },

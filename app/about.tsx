@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
+    Image,
     ScrollView,
     StyleSheet,
     Text,
@@ -27,7 +28,10 @@ export default function AboutScreen() {
                 <View style={styles.logoSection}>
                     <View style={styles.logoBorder}>
                         <View style={styles.logoCircle}>
-                            <Ionicons name="flash-outline" size={40} color="#4F46E5" />
+                            <Image
+                                source={require('@/assets/logo.png')}
+                                style={styles.logoCircleImage}
+                            />
                         </View>
                     </View>
                     <Text style={styles.appName}>NoLine</Text>
@@ -144,6 +148,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#EEF2FF',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    logoCircleImage: {
+        width: 58,
+        height: 58,
+        resizeMode: 'contain',
+        borderRadius: 14,
     },
     appName: {
         fontSize: 32,

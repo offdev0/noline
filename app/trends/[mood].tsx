@@ -1,3 +1,4 @@
+import { useLanguage } from '@/context/LanguageContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { t } from '@/i18n';
 import { formatDistance } from '@/utils/formatters';
@@ -10,16 +11,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
+const isLatinText = (value: string) => /[A-Za-z]/.test(value) && /^[\x00-\x7F]*$/.test(value);
+
 const moods = [
     { id: '1', label: 'calm', icon: 'leaf-outline', colors: ['#FFF9C4', '#FFF59D'], iconColor: '#F59E0B' },
     { id: '2', label: 'social', icon: 'people-outline', colors: ['#E0F2FE', '#BAE6FD'], iconColor: '#0284C7' },
     { id: '3', label: 'adventure', icon: 'rocket-outline', colors: ['#FEF2F2', '#FECACA'], iconColor: '#DC2626' },
-    { id: '4', label: 'freedom', icon: 'aperture-outline', colors: ['#F0FDF4', '#DCFCE7'], iconColor: '#16A34A' },
+    { id: '4', label: 'spontaneous', icon: 'aperture-outline', colors: ['#F0FDF4', '#DCFCE7'], iconColor: '#16A34A' },
 ];
 
 export default function TrendsCategoryScreen() {
     const { mood } = useLocalSearchParams() as { mood?: string };
     const router = useRouter();
+    const { language } = useLanguage();
     const { trendingPlaces, loading } = usePlaces();
     const [selectedMood, setSelectedMood] = useState<string | null>(mood || null);
 
@@ -41,7 +45,7 @@ export default function TrendsCategoryScreen() {
             if (moodStr === 'adventure') {
                 return category === 'fun' || category === 'casino' || category === 'park' || description.includes('exciting');
             }
-            if (moodStr === 'freedom') {
+            if (moodStr === 'spontaneous') {
                 return category === 'shopping' || category === 'mustvisit' || category === 'outdoor';
             }
 
@@ -66,6 +70,12 @@ export default function TrendsCategoryScreen() {
 
     const ITEM_HEIGHT = 160; // approximate fixed height for getItemLayout to optimize virtualization
 
+    const getQueueChipColors = (status: string) => {
+        if (status === 'vacant') return { bg: '#DCFCE7', text: '#15803D', icon: '#15803D' };
+        if (status === 'medium') return { bg: '#FFEDD5', text: '#C2410C', icon: '#C2410C' };
+        return { bg: '#FEE2E2', text: '#B91C1C', icon: '#B91C1C' };
+    };
+
     const renderCard = ({ item }: { item: any }) => (
         <TouchableOpacity style={styles.premiumCard} onPress={() => router.push({ pathname: '/place/[id]', params: { id: item.id } })} activeOpacity={0.9}>
             <Image
@@ -76,16 +86,16 @@ export default function TrendsCategoryScreen() {
                 contentFit="cover"
             />
             <View style={styles.cardOverlay}>
-                <View style={styles.statusChip}>
-                    <Ionicons name="flash" size={14} color="#16A34A" />
-                    <Text style={styles.statusChipText}>{t(`places.${item.status}`)}</Text>
+                <View style={[styles.statusChip, { backgroundColor: getQueueChipColors(item.status).bg }]}>
+                    <Ionicons name="flash" size={14} color={getQueueChipColors(item.status).icon} />
+                    <Text style={[styles.statusChipText, { color: getQueueChipColors(item.status).text }]}>{t(`places.${item.status}`)}</Text>
                 </View>
             </View>
 
             <View style={styles.cardBody}>
                 <View style={styles.cardHeader}>
                     <View style={styles.nameContent}>
-                        <Text style={styles.placeName}>{item.name}</Text>
+                        <Text style={[styles.placeName, language === 'he' && isLatinText(item.name) && styles.ltrText]}>{item.name}</Text>
                         <Text style={styles.placeDescription}>{item.description}</Text>
                     </View>
                     <TouchableOpacity
@@ -113,7 +123,7 @@ export default function TrendsCategoryScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#333" />
                 </TouchableOpacity>
-                <Text style={styles.title}>{(selectedMood ? t(`moods.${selectedMood}`) : t('tabs.trends')).toString().toUpperCase()}</Text>
+                <Text style={styles.title}>{(selectedMood ? t(`moods.${selectedMood}`) : t('tabs.explore')).toString().toUpperCase()}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -175,11 +185,12 @@ const styles = StyleSheet.create({
     cardCover: { width: '100%', height: 120 },
     cardOverlay: { position: 'absolute', top: 14, left: 14 },
     statusChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.95)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, gap: 6 },
-    statusChipText: { fontSize: 12, fontWeight: '800', color: '#16A34A', textTransform: 'uppercase' },
+    statusChipText: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
     cardBody: { padding: 16 },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
     nameContent: { flex: 1, marginRight: 12 },
     placeName: { fontSize: 19, fontWeight: '800', color: '#0F172A', marginBottom: 4 },
+    ltrText: { writingDirection: 'ltr', textAlign: 'left' },
     placeDescription: { fontSize: 13, color: '#64748B', fontWeight: '500' },
     quickVisitBtn: { borderRadius: 12, overflow: 'hidden' },
     visitGradient: { paddingHorizontal: 18, paddingVertical: 10, backgroundColor: '#6366F1', borderRadius: 12 },

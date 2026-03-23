@@ -1,4 +1,5 @@
 import CommentsModal from '@/components/CommentsModal';
+import { useLanguage } from '@/context/LanguageContext';
 import { useLocation } from '@/context/LocationContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { ReportData, useReports } from '@/context/ReportsContext';
@@ -20,11 +21,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const isLatinText = (value: string) => /[A-Za-z]/.test(value) && /^[\x00-\x7F]*$/.test(value);
+
 export default function PlacesScreen() {
     const router = useRouter();
     const { reports, loading: reportsLoading, toggleLike } = useReports();
     const { trendingPlaces: allPlaces, getPlaceById, currentSearchCenter } = usePlaces();
     const { user } = useUser();
+    const { language } = useLanguage();
     const { location: userLocation } = useLocation();
 
     const [filterVisible, setFilterVisible] = useState(false);
@@ -131,78 +135,81 @@ export default function PlacesScreen() {
         const avatarId = (item.reportBy?.length || 0) % 70;
 
         return (
-            <TouchableOpacity
-                style={styles.card}
-                activeOpacity={0.9}
-                onPress={() => router.push(`/place/${item.businessRef}`)}
-            >
-                {/* Header: Place Image, Name, Category, Status Dot */}
-                <View style={styles.cardHeader}>
-                    <View style={styles.placeIconBox}>
+            <View style={{ marginBottom: 12 }}>
+                <TouchableOpacity
+                    style={styles.card}
+                    activeOpacity={0.9}
+                    onPress={() => router.push(`/place/${item.businessRef}`)}
+                >
+                    {/* Header: Place Image, Name, Category, Status Dot */}
+                    <View style={styles.cardHeader}>
+                        <View style={styles.placeIconBox}>
+                            <Image
+                                source={{ uri: getPlaceById(item.businessRef)?.image || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=100' }}
+                                style={styles.placeImage}
+                                contentFit="cover"
+                                transition={200}
+                            />
+                        </View>
+                        <View style={styles.placeDetails}>
+                            <View style={styles.nameRow}>
+                                <Text style={[styles.placeName, language === 'he' && isLatinText(item.placeName) && styles.ltrText]} numberOfLines={1}>{item.placeName}</Text>
+                                <View style={[styles.inlineStatusDot, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]} />
+                            </View>
+                            <Text style={styles.placeCategory}>{t('places.communityReported')}</Text>
+                        </View>
+                    </View>
+
+                    {/* Reporter Info + Status in one row */}
+                    <View style={styles.reporterRow}>
                         <Image
-                            source={{ uri: getPlaceById(item.businessRef)?.image || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=100' }}
-                            style={styles.placeImage}
-                            contentFit="cover"
+                            source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.reportBy?.split('@')[0] || t('places.user'))}&background=6366F1&color=fff` }}
+                            style={styles.reporterAvatar}
                             transition={200}
                         />
-                    </View>
-                    <View style={styles.placeDetails}>
-                        <View style={styles.nameRow}>
-                            <Text style={styles.placeName} numberOfLines={1}>{item.placeName}</Text>
-                            <View style={[styles.inlineStatusDot, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]} />
+                        <View style={{ flex: 1, marginLeft: 10 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <Text style={styles.boldText}>{item.reportBy?.split('@')[0] || t('places.user')}</Text>
+                                <Text style={styles.reportTextInline}> · {item.liveSituation}</Text>
+                            </View>
                         </View>
-                        <Text style={styles.placeCategory}>{t('places.communityReported')}</Text>
                     </View>
-                </View>
 
-                {/* Reporter Info + Status in one row */}
-                <View style={styles.reporterRow}>
-                    <Image
-                        source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.reportBy?.split('@')[0] || t('places.user'))}&background=6366F1&color=fff` }}
-                        style={styles.reporterAvatar}
-                        transition={200}
-                    />
-                    <View style={{ flex: 1, marginLeft: 10 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
-                            <Text style={styles.boldText}>{item.reportBy?.split('@')[0] || t('places.user')}</Text>
-                            <Text style={styles.reportTextInline}> · {item.liveSituation}</Text>
+                    <Text style={styles.reportTimeBelow}>{t('time.reported', { time: formatTimeAgo(item.Timestamp) })}</Text>
+
+                    {/* Footer: Stats and Type Badge */}
+                    <View style={styles.cardFooter}>
+                        <View style={styles.statsContainer}>
+                            <TouchableOpacity
+                                style={styles.statItem}
+                                onPress={() => toggleLike(item.id)}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons
+                                    name={isLiked ? "heart" : "heart-outline"}
+                                    size={20}
+                                    color={isLiked ? "#EF4444" : "#64748B"}
+                                />
+                                <Text style={[styles.statLabel, isLiked && { color: "#EF4444" }]}>
+                                    {item.likes?.length || 0}
+                                </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.statItem}
+                                onPress={() => openComments(item)}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="chatbubble-outline" size={18} color="#64748B" />
+                                <Text style={styles.statLabel}>{item.commentsCount || 0}</Text>
+                            </TouchableOpacity>
                         </View>
-                        <Text style={styles.reportTime}>{formatTimeAgo(item.Timestamp)}</Text>
+                        <View style={[styles.typeBadge, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]}>
+                            <Text style={styles.typeBadgeText}>{type.toUpperCase()}</Text>
+                        </View>
                     </View>
-                </View>
-
-                {/* Footer: Stats and Type Badge */}
-                <View style={styles.cardFooter}>
-                    <View style={styles.statsContainer}>
-                        <TouchableOpacity
-                            style={styles.statItem}
-                            onPress={() => toggleLike(item.id)}
-                            activeOpacity={0.7}
-                        >
-                            <Ionicons
-                                name={isLiked ? "heart" : "heart-outline"}
-                                size={20}
-                                color={isLiked ? "#EF4444" : "#64748B"}
-                            />
-                            <Text style={[styles.statLabel, isLiked && { color: "#EF4444" }]}>
-                                {item.likes?.length || 0}
-                            </Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.statItem}
-                            onPress={() => openComments(item)}
-                            activeOpacity={0.7}
-                        >
-                            <Ionicons name="chatbubble-outline" size={18} color="#64748B" />
-                            <Text style={styles.statLabel}>{item.commentsCount || 0}</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <View style={[styles.typeBadge, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]}>
-                        <Text style={styles.typeBadgeText}>{type.toUpperCase()}</Text>
-                    </View>
-                </View>
-            </TouchableOpacity>
+                </TouchableOpacity>
+            </View>
         );
     };
 
@@ -481,6 +488,7 @@ const styles = StyleSheet.create({
         color: '#0F172A',
         flex: 1,
     },
+    ltrText: { writingDirection: 'ltr', textAlign: 'left' },
     inlineStatusDot: {
         width: 6,
         height: 6,
@@ -526,6 +534,12 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#94A3B8',
         fontStyle: 'italic',
+    },
+    reportTimeBelow: {
+        fontSize: 12,
+        color: '#64748B',
+        marginTop: 6,
+        marginLeft: 4,
     },
     statusBanner: {
         paddingVertical: 10,

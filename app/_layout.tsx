@@ -82,6 +82,7 @@ function MainLayout() {
             }}
           />
           <Stack.Screen name="settings/general" options={{ headerShown: false }} />
+          <Stack.Screen name="settings/history" options={{ headerShown: false }} />
           <Stack.Screen name="settings/notifications" options={{ headerShown: false }} />
           <Stack.Screen name="account/details" options={{ headerShown: false }} />
           <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />

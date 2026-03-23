@@ -47,6 +47,13 @@ export default function TopReportersScreen() {
         return () => unsub();
     }, []);
 
+    const getRankStyles = (rank: number) => {
+        if (rank === 1) return { bg: '#FEF3C7', text: '#92400E', border: '#F59E0B' };
+        if (rank === 2) return { bg: '#E2E8F0', text: '#475569', border: '#94A3B8' };
+        if (rank === 3) return { bg: '#FDE68A', text: '#92400E', border: '#F59E0B' };
+        return { bg: '#EEF2FF', text: '#6366F1', border: '#E2E8F0' };
+    };
+
     const renderItem = ({ item, index }: { item: any; index: number }) => {
         const rawName = item.displayName || item.display_name || (item.email ? item.email.split('@')[0] : t('places.user'));
         const isCurrentUser = !!user && item.id === user.uid;
@@ -54,11 +61,13 @@ export default function TopReportersScreen() {
         const avatar = item.photo_url || item.photoURL || DEFAULT_PROFILE_PIC;
         const level = getLevelFromPoints(item.points || 0);
         const medalAsset: any = ALL_MEDALS[level - 1] || ALL_MEDALS[0];
+        const rankStyles = getRankStyles(index + 1);
 
         return (
             <View style={[styles.row, isCurrentUser ? styles.currentUserRow : null]}>
-                <View style={styles.rankCircle}>
-                    <Text style={styles.rankText}>{index + 1}</Text>
+                <View style={[styles.rankCircle, { backgroundColor: rankStyles.bg, borderColor: rankStyles.border }]}
+                >
+                    <Text style={[styles.rankText, { color: rankStyles.text }]}>{index + 1}</Text>
                 </View>
 
                 <Image source={{ uri: avatar }} style={styles.avatar} />
@@ -115,10 +124,10 @@ const styles = StyleSheet.create({
     header: { height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12 },
     backButton: { padding: 8 },
     title: { fontSize: 18, fontWeight: '800', color: '#1E293B' },
-    row: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#F1F5F9' },
+    row: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#F1F5F9' },
     currentUserRow: { borderColor: '#FDE68A', backgroundColor: '#FFFBEB' },
-    rankCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-    rankText: { fontWeight: '800', color: '#6366F1' },
+    rankCircle: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: 12, borderWidth: 1 },
+    rankText: { fontWeight: '900' },
     avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: '#F1F5F9' },
     info: { flex: 1 },
     name: { fontSize: 16, fontWeight: '800', color: '#0F172A' },

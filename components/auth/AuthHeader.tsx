@@ -1,6 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 interface AuthHeaderProps {
     title?: string;
@@ -11,7 +10,7 @@ export default function AuthHeader({ title = 'NoLine' }: AuthHeaderProps) {
         <View style={styles.header}>
             <Text style={styles.appName}>{title}</Text>
             <View style={styles.logoContainer}>
-                <Ionicons name="hourglass-outline" size={60} color="#FFD700" />
+                <Image source={require('@/assets/logo.png')} style={styles.logoImage} />
             </View>
         </View>
     );
@@ -33,5 +32,10 @@ const styles = StyleSheet.create({
     },
     logoContainer: {
         // marginBottom: 20,
+    },
+    logoImage: {
+        width: 64,
+        height: 64,
+        resizeMode: 'contain',
     },
 });
