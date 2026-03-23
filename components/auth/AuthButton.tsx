@@ -1,78 +1,61 @@
-import { t } from '@/i18n';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import {
-    ActivityIndicator,
-    Animated,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 interface AuthButtonProps {
-    isLoading: boolean;
-    isLoginMode: boolean;
-    buttonScale: Animated.Value;
     onPress: () => void;
+    title: string;
+    loading?: boolean;
+    disabled?: boolean;
 }
 
-export default function AuthButton({
-    isLoading,
-    isLoginMode,
-    buttonScale,
-    onPress
-}: AuthButtonProps) {
+export default function AuthButton({ onPress, title, loading, disabled }: AuthButtonProps) {
     return (
-        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-            <TouchableOpacity
-                style={[styles.button, isLoading && styles.buttonDisabled]}
-                onPress={onPress}
-                disabled={isLoading}
-                activeOpacity={0.8}
+        <TouchableOpacity 
+            style={[styles.mainBtn, (disabled || loading) && styles.disabled]} 
+            onPress={onPress}
+            disabled={disabled || loading}
+        >
+            <LinearGradient 
+                colors={['#4F46E5', '#3730A3']} 
+                start={{ x: 0, y: 0 }} 
+                end={{ x: 1, y: 1 }}
+                style={styles.btnGradient}
             >
-                {isLoading ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="small" color="#fff" />
-                        <Text style={[styles.buttonText, { marginLeft: 10 }]}>
-                            {isLoginMode ? t('auth.loggingIn') : t('auth.creatingAccount')}
-                        </Text>
-                    </View>
+                {loading ? (
+                    <ActivityIndicator color="#fff" />
                 ) : (
-                    <Text style={styles.buttonText}>
-                        {isLoginMode ? t('auth.login') : t('auth.signup')}
-                    </Text>
+                    <Text style={styles.btnText}>{title}</Text>
                 )}
-            </TouchableOpacity>
-        </Animated.View>
+            </LinearGradient>
+        </TouchableOpacity>
     );
 }
 
 const styles = StyleSheet.create({
-    button: {
-        backgroundColor: '#5A46E5',
-        height: 56,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
+    mainBtn: {
         marginTop: 10,
-        marginBottom: 20,
-        shadowColor: '#4E46E5',
-        shadowOffset: { width: 0, height: 4 },
+        borderRadius: 20,
+        overflow: 'hidden',
+        shadowColor: '#4F46E5',
+        shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
+        shadowRadius: 15,
+        elevation: 8,
     },
-    buttonDisabled: {
-        opacity: 0.8,
-    },
-    buttonText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    loadingContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    btnGradient: {
+        height: 60,
         justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'row',
+    },
+    btnText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '800',
+        letterSpacing: 0.5,
+    },
+    disabled: {
+        opacity: 0.7,
     },
 });

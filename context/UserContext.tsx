@@ -1,5 +1,16 @@
 import { auth, db } from '@/configs/firebaseConfig';
-import { signOut as firebaseSignOut, onAuthStateChanged, sendPasswordResetEmail, User } from 'firebase/auth';
+import { 
+    signOut as firebaseSignOut, 
+    onAuthStateChanged, 
+    sendPasswordResetEmail, 
+    User,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    updateProfile,
+    GoogleAuthProvider,
+    signInWithCredential
+} from 'firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { doc, getDoc, increment, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
@@ -19,6 +30,9 @@ interface UserContextType {
     points: number;
     completedTasksToday: string[];
     userData: any;
+    login: (email: string, pass: string) => Promise<void>;
+    signUp: (email: string, pass: string, name: string) => Promise<void>;
+    signInWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
     sendPasswordReset: (email: string) => Promise<void>;
     addPoints: (amount: number) => Promise<void>;
@@ -53,6 +67,9 @@ const UserContext = createContext<UserContextType>({
     points: 0,
     completedTasksToday: [],
     userData: null,
+    login: async () => { },
+    signUp: async () => { },
+    signInWithGoogle: async () => { },
     logout: async () => { },
     sendPasswordReset: async () => { },
     addPoints: async () => { },
@@ -173,6 +190,11 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     useEffect(() => {
+        GoogleSignin.configure({
+            webClientId: '83234148402-llr9kih19oh0hmmadf1pl916rrkn90go.apps.googleusercontent.com',
+            offlineAccess: true,
+        });
+
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             console.log('Auth state changed:', currentUser ? 'User logged in' : 'User logged out');
             setUser(currentUser);
@@ -270,10 +292,68 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [user]);
 
+    const login = useCallback(async (email: string, pass: string) => {
+        try {
+            setLoading(true);
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (error) {
+            console.error('Error logging in:', error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const signUp = useCallback(async (email: string, pass: string, name: string) => {
+        try {
+            setLoading(true);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+            await updateProfile(userCredential.user, { displayName: name });
+            
+            // Initialize user doc manually for immediate use
+            const userRef = doc(db, 'users', userCredential.user.uid);
+            const initialData = {
+                streak: 0,
+                points: 0,
+                lastLogin: serverTimestamp(),
+                email: email,
+                displayName: name,
+                photo_url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=200&auto=format&fit=crop', // Default avatar
+                dailyProgress: {}
+            };
+            await setDoc(userRef, initialData);
+            setUserData(initialData);
+        } catch (error) {
+            console.error('Error signing up:', error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const signInWithGoogle = useCallback(async () => {
+        try {
+            setLoading(true);
+            await GoogleSignin.hasPlayServices();
+            const response = await GoogleSignin.signIn();
+            const idToken = response.data?.idToken;
+            if (!idToken) throw new Error('Could not get ID token from Google');
+            
+            const credential = GoogleAuthProvider.credential(idToken);
+            await signInWithCredential(auth, credential);
+        } catch (error: any) {
+            console.error('[UserContext] Google Sign-In Error:', error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     const logout = useCallback(async () => {
         try {
             console.log('Logging out...');
             await firebaseSignOut(auth);
+            await GoogleSignin.signOut().catch(() => {}); // Sign out from Google too
             console.log('Logged out successfully');
         } catch (error) {
             console.error('Error signing out:', error);
@@ -371,6 +451,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         <UserContext.Provider value={{
             user,
             loading,
+            login,
+            signUp,
+            signInWithGoogle,
             logout,
             sendPasswordReset,
             streak,

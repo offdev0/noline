@@ -1,91 +1,62 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, TextInput, TextInputProps, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
-interface AuthInputProps extends TextInputProps {
-    label: string;
-    isPassword?: boolean;
-    showPassword?: boolean;
-    onTogglePassword?: () => void;
+interface AuthInputProps {
+    icon: string;
+    placeholder: string;
+    value: string;
+    onChangeText: (text: string) => void;
+    secureTextEntry?: boolean;
+    keyboardType?: 'default' | 'email-address';
+    autoCapitalize?: 'none' | 'sentences';
 }
 
 export default function AuthInput({
-    label,
-    isPassword = false,
-    showPassword = false,
-    onTogglePassword,
-    ...props
+    icon,
+    placeholder,
+    value,
+    onChangeText,
+    secureTextEntry,
+    keyboardType = 'default',
+    autoCapitalize = 'none'
 }: AuthInputProps) {
     return (
-        <View style={styles.inputGroup}>
-            <View style={styles.inputLabelContainer}>
-                <Text style={styles.inputLabel}>{label}</Text>
-            </View>
-
-            {isPassword ? (
-                <View style={styles.passwordContainer}>
-                    <TextInput
-                        style={[styles.input, styles.passwordInput]}
-                        secureTextEntry={!showPassword}
-                        {...props}
-                    />
-                    <TouchableOpacity
-                        onPress={onTogglePassword}
-                        style={styles.eyeIcon}
-                    >
-                        <Ionicons
-                            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                            size={24}
-                            color="#666"
-                        />
-                    </TouchableOpacity>
-                </View>
-            ) : (
-                <TextInput
-                    style={styles.input}
-                    {...props}
-                />
-            )}
+        <View style={styles.inputContainer}>
+            <Ionicons name={icon as any} size={20} color="#64748B" style={styles.inputIcon} />
+            <TextInput
+                style={styles.input}
+                placeholder={placeholder}
+                placeholderTextColor="#94A3B8"
+                value={value}
+                onChangeText={onChangeText}
+                secureTextEntry={secureTextEntry}
+                keyboardType={keyboardType}
+                autoCapitalize={autoCapitalize}
+            />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    inputGroup: {
-        marginBottom: 20,
-        position: 'relative',
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F8FAFC',
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        height: 58,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        marginBottom: 16,
     },
-    inputLabelContainer: {
-        position: 'absolute',
-        top: -10,
-        left: 12,
-        zIndex: 1,
-        backgroundColor: 'white',
-        paddingHorizontal: 4,
-    },
-    inputLabel: {
-        fontSize: 12,
-        color: '#666',
+    inputIcon: {
+        marginRight: 12,
     },
     input: {
-        height: 56,
-        borderWidth: 1.5,
-        borderColor: '#787878',
-        borderRadius: 12,
-        paddingHorizontal: 16,
+        flex: 1,
         fontSize: 16,
-        color: '#000',
-        backgroundColor: 'transparent',
-    },
-    passwordContainer: {
-        position: 'relative',
-    },
-    passwordInput: {
-        paddingRight: 50,
-    },
-    eyeIcon: {
-        position: 'absolute',
-        right: 16,
-        top: 16,
+        color: '#1E293B',
+        fontWeight: '500',
     },
 });
