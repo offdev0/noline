@@ -31,7 +31,7 @@ function MainLayout() {
       inAuthenticatedRoute: !!(segments[0] === '(tabs)' || segments[0] === 'place' || segments[0] === 'map' || segments[0] === 'favorites' || segments[0] === 'rewards' || segments[0] === 'help' || segments[0] === 'about')
     });
 
-    const inAuthenticatedRoute = segments.some(s => ['(tabs)', 'place', 'map', 'favorites', 'rewards', 'help', 'about', 'trends', 'search-results', 'settings', 'account', 'top-reporters'].includes(s));
+    const inAuthenticatedRoute = segments.some(s => ['(tabs)', 'place', 'map', 'favorites', 'rewards', 'help', 'about', 'trends', 'search-results', 'settings', 'account', 'top-reporters', 'category', 'privacy-policy', 'terms-of-service'].includes(s));
 
     if (user && !inAuthenticatedRoute && segments[0] !== 'modal') {
       console.log('User logged in, redirecting to tabs... Segments:', segments);
@@ -72,6 +72,7 @@ function MainLayout() {
           <Stack.Screen name="trends/[mood]" options={{ headerShown: false }} />
           <Stack.Screen name="help" options={{ headerShown: false }} />
           <Stack.Screen name="about" options={{ headerShown: false }} />
+          <Stack.Screen name="category/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="search-results" options={{ headerShown: false }} />
           <Stack.Screen
             name="map"
@@ -86,6 +87,7 @@ function MainLayout() {
           <Stack.Screen name="settings/notifications" options={{ headerShown: false }} />
           <Stack.Screen name="account/details" options={{ headerShown: false }} />
           <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
+          <Stack.Screen name="terms-of-service" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         </Stack>
         <MedalUpgradeModal />

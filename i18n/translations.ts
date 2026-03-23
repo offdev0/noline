@@ -98,6 +98,7 @@ export const translations = {
             vibe: 'Special Vibe',
             bars: 'Bars',
             desserts: 'Desserts',
+            food: 'Food',
         },
         placeDetail: {
             loading: 'Loading venue details...',
@@ -473,6 +474,7 @@ export const translations = {
             vibe: 'וייב מיוחד',
             bars: 'ברים',
             desserts: 'קינוחים',
+            food: 'אוכל',
         },
         search: {
             placeholder: 'חפש מקום או כתובת',

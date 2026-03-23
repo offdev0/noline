@@ -185,14 +185,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                                     router.push('/favorites');
                                 }}
                             />
-                            <MenuItem
-                                icon="notifications"
-                                label={t('drawer.customNotifications')}
-                                onPress={() => {
-                                    onClose();
-                                    router.push('/(tabs)/customized');
-                                }}
-                            />
+
                             <MenuItem
                                 icon="person-add"
                                 label={t('drawer.profileSharing')}
@@ -272,7 +265,6 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
 
                         <SectionHeader title={t('drawer.account')} />
                         <View style={styles.menuGroup}>
-                            <MenuItem icon="swap-horizontal" label={t('drawer.accountSwitch')} />
                             <MenuItem
                                 icon="log-out-outline"
                                 label={t('drawer.exit')}

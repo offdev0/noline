@@ -2,8 +2,13 @@ import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export const CategoryIcon = ({ imageUrl, label, bgColor }: { imageUrl: any, label: string, bgColor: string }) => (
-    <TouchableOpacity style={styles.categoryItem} activeOpacity={0.7}>
+export const CategoryIcon = ({ imageUrl, label, bgColor, onPress }: { 
+    imageUrl: any, 
+    label: string, 
+    bgColor: string,
+    onPress?: () => void 
+}) => (
+    <TouchableOpacity style={styles.categoryItem} activeOpacity={0.7} onPress={onPress}>
         <View style={[styles.categoryIconBg, { backgroundColor: bgColor }]}>
             <Image
                 source={imageUrl}

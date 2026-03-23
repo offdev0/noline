@@ -52,43 +52,11 @@ export default function GeneralSettings() {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
-                <View style={styles.section}>
-                    <TouchableOpacity
-                        style={styles.listItem}
-                        onPress={() => router.push('/settings/notifications')}
-                    >
-                        <View style={styles.settingInfo}>
-                            <View style={[styles.iconContainer, { backgroundColor: '#F3F4F6' }]}>
-                                <Ionicons name="notifications" size={20} color="#5356FF" />
-                            </View>
-                            <View style={styles.textContainer}>
-                                <Text style={styles.settingLabel}>{t('settings.pushNotifications')}</Text>
-                                <Text style={styles.settingDescription}>{t('settings.pushNotificationsDesc')}</Text>
-                            </View>
-                        </View>
-                        <Ionicons name="chevron-forward" size={18} color="#CCC" />
-                    </TouchableOpacity>
-                    <View style={styles.divider} />
-                    <SettingItem
-                        icon="mail"
-                        label={t('settings.emailUpdates')}
-                        description={t('settings.emailUpdatesDesc')}
-                        value={emailNotifications}
-                        onToggle={setEmailNotifications}
-                    />
-                </View>
+
 
                 <Text style={styles.sectionTitle}>{t('settings.appPreferences')}</Text>
                 <View style={styles.section}>
-                    <SettingItem
-                        icon="moon"
-                        label={t('settings.darkMode')}
-                        description={t('settings.darkModeDesc')}
-                        value={darkMode}
-                        onToggle={setDarkMode}
-                    />
-                    <View style={styles.divider} />
+
                     <SettingItem
                         icon="location"
                         label={t('settings.locationServices')}
@@ -155,7 +123,7 @@ export default function GeneralSettings() {
                         <Ionicons name="chevron-forward" size={18} color="#CCC" />
                     </TouchableOpacity>
                     <View style={styles.divider} />
-                    <TouchableOpacity style={styles.listItem}>
+                    <TouchableOpacity style={styles.listItem} onPress={() => router.push('/terms-of-service')}>
                         <Text style={styles.listItemText}>{t('settings.termsOfService')}</Text>
                         <Ionicons name="chevron-forward" size={18} color="#CCC" />
                     </TouchableOpacity>

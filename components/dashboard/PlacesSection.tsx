@@ -64,25 +64,29 @@ export default function PlacesSection() {
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.categoryScroll}
                 >
-                    <CategoryIcon
+                    <CategoryIcon 
                         imageUrl="https://img.icons8.com/?size=96&id=GpH0R2n99gZy&format=png"
-                        label={t('categories.cafe')}
-                        bgColor="#F5F5F5"
+                        label={t('categories.cafe')} 
+                        bgColor="#F5F5F5" 
+                        onPress={() => router.push({ pathname: '/category/[id]', params: { id: 'cafe' } })}
                     />
-                    <CategoryIcon
+                    <CategoryIcon 
                         imageUrl="https://img.icons8.com/3d-fluency/94/hamburger.png"
-                        label={t('places.food')}
-                        bgColor="#FFF3E0"
+                        label={t('places.food')} 
+                        bgColor="#FFF3E0" 
+                        onPress={() => router.push({ pathname: '/category/[id]', params: { id: 'food' } })}
                     />
-                    <CategoryIcon
+                    <CategoryIcon 
                         imageUrl={"https://img.icons8.com/?size=96&id=g4ya0t-L-Ui_&format=png"}
-                        label={t('categories.bars')}
-                        bgColor="#E0F2F1"
+                        label={t('categories.bars')} 
+                        bgColor="#E0F2F1" 
+                        onPress={() => router.push({ pathname: '/category/[id]', params: { id: 'bars' } })}
                     />
-                    <CategoryIcon
+                    <CategoryIcon 
                         imageUrl={"https://img.icons8.com/?size=96&id=81214&format=png"}
-                        label={t('categories.desserts')}
-                        bgColor="#FCE4EC"
+                        label={t('categories.desserts')} 
+                        bgColor="#FCE4EC" 
+                        onPress={() => router.push({ pathname: '/category/[id]', params: { id: 'desserts' } })}
                     />
                 </ScrollView>
             </View>
