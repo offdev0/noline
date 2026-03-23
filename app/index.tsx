@@ -26,8 +26,22 @@ export default function AuthScreen() {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { login, signUp, signInWithGoogle } = useUser();
+    const { login, signUp, signInWithGoogle, sendPasswordReset } = useUser();
     const router = useRouter();
+
+    const handleForgotPassword = async () => {
+        if (!email) {
+            Alert.alert('Email Required', 'Please enter your email address to reset your password.');
+            return;
+        }
+
+        try {
+            await sendPasswordReset(email);
+            Alert.alert('Reset Email Sent', 'A password reset link has been sent to your email.');
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to send reset email.');
+        }
+    };
 
     const handleAuth = async () => {
         if (!email || !password || (!isLogin && !name)) {
@@ -117,7 +131,7 @@ export default function AuthScreen() {
                         />
 
                         {isLogin && (
-                            <TouchableOpacity style={styles.forgotBtn}>
+                            <TouchableOpacity style={styles.forgotBtn} onPress={handleForgotPassword}>
                                 <Text style={styles.forgotText}>Forgot Password?</Text>
                             </TouchableOpacity>
                         )}
