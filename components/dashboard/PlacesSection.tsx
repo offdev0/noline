@@ -28,7 +28,7 @@ export default function PlacesSection() {
         name: p.name,
         rating: p.rating || 4.5,
         category: p.category,
-        queueStatus: p.status === 'vacant' ? 'Short wait' : 'Quite busy',
+        queueStatus: p.status === 'vacant' ? t('places.shortWait') : t('places.quiteBusy'),
         distance: formatDistance(p.distance),
         image: p.image,
         status: p.status
@@ -38,7 +38,7 @@ export default function PlacesSection() {
 
     return (
         <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-            <SectionHeader title="Best places near you right now" />
+            <SectionHeader title={t('dashboard.bestPlaces')} />
 
             {featuredPlace && (
                 <FeaturedCard
@@ -58,34 +58,34 @@ export default function PlacesSection() {
             </View>
 
             <View style={styles.categorySection}>
-                <SectionHeader title="Explore by category" />
+                <SectionHeader title={t('dashboard.exploreByCategory')} />
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.categoryScroll}
                 >
-                    <CategoryIcon 
+                    <CategoryIcon
                         imageUrl="https://img.icons8.com/?size=96&id=GpH0R2n99gZy&format=png"
-                        label={t('categories.cafe')} 
-                        bgColor="#F5F5F5" 
+                        label={t('categories.cafe')}
+                        bgColor="#F5F5F5"
                         onPress={() => router.push({ pathname: '/category/[id]', params: { id: 'cafe' } })}
                     />
-                    <CategoryIcon 
+                    <CategoryIcon
                         imageUrl="https://img.icons8.com/3d-fluency/94/hamburger.png"
-                        label={t('places.food')} 
-                        bgColor="#FFF3E0" 
+                        label={t('places.food')}
+                        bgColor="#FFF3E0"
                         onPress={() => router.push({ pathname: '/category/[id]', params: { id: 'food' } })}
                     />
-                    <CategoryIcon 
+                    <CategoryIcon
                         imageUrl={"https://img.icons8.com/?size=96&id=g4ya0t-L-Ui_&format=png"}
-                        label={t('categories.bars')} 
-                        bgColor="#E0F2F1" 
+                        label={t('categories.bars')}
+                        bgColor="#E0F2F1"
                         onPress={() => router.push({ pathname: '/category/[id]', params: { id: 'bars' } })}
                     />
-                    <CategoryIcon 
+                    <CategoryIcon
                         imageUrl={"https://img.icons8.com/?size=96&id=81214&format=png"}
-                        label={t('categories.desserts')} 
-                        bgColor="#FCE4EC" 
+                        label={t('categories.desserts')}
+                        bgColor="#FCE4EC"
                         onPress={() => router.push({ pathname: '/category/[id]', params: { id: 'desserts' } })}
                     />
                 </ScrollView>
@@ -93,7 +93,7 @@ export default function PlacesSection() {
 
             <View style={styles.popularDivider}>
                 <Text style={styles.popularTitle}>
-                    <Text style={styles.boldText}>Popular</Text> • Near You
+                    {t('dashboard.popularNearYou')}
                 </Text>
             </View>
 
@@ -113,7 +113,7 @@ export default function PlacesSection() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F8FAFC' },
     gridRow: { flexDirection: 'row', paddingHorizontal: CARD_MARGIN, justifyContent: 'space-between', marginBottom: 24 },
-    categorySection: { marginBottom: 30 },
+    categorySection: { marginBottom: 0 },
     categoryScroll: { paddingHorizontal: CARD_MARGIN, gap: 12 },
     popularDivider: { borderTopWidth: 1, borderTopColor: '#E2E8F0', paddingVertical: 16, paddingHorizontal: CARD_MARGIN },
     popularTitle: { fontSize: 18, color: '#64748B' },

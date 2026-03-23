@@ -15,9 +15,11 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
+    I18nManager
 } from 'react-native';
 
+import { useLanguage } from '@/context/LanguageContext';
 import { useUser } from '@/context/UserContext';
 import { t } from '@/i18n';
 
@@ -42,7 +44,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        const duration = 150; // Instant feel
+        const duration = 150;
         if (isVisible) {
             Animated.parallel([
                 Animated.timing(slideAnim, {
@@ -115,6 +117,8 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
         </View>
     );
 
+    const { language } = useLanguage();
+
     return (
         <Modal
             transparent
@@ -131,14 +135,18 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                 />
             </Animated.View>
 
-            <Animated.View style={[styles.drawerContainer, { transform: [{ translateX: slideAnim }] }]}>
-                <SafeAreaView style={styles.safeArea}>
+            <Animated.View style={[
+                styles.drawerContainer, 
+                { transform: [{ translateX: slideAnim }], direction: 'ltr' } // Force positioning to right
+            ]}>
+                <SafeAreaView style={[styles.safeArea, { direction: 'ltr' }]}>
                     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                        <View style={{ width: 24 }} />
-                        <Text style={styles.headerTitle}>{t('drawer.myProfile')}</Text>
-                        <TouchableOpacity onPress={onClose} disabled={isLoggingOut}>
-                            <Ionicons name="close" size={28} color="#333" />
-                        </TouchableOpacity>
+                        <View style={styles.drawerHeader}>
+                            <Text style={styles.headerTitle}>{t('drawer.myProfile')}</Text>
+                            <TouchableOpacity onPress={onClose} disabled={isLoggingOut}>
+                                <Ionicons name="close" size={28} color="#333" />
+                            </TouchableOpacity>
+                        </View>
 
                         <View style={styles.profileInfoContainer}>
                             <View style={styles.avatarContainer}>
@@ -299,7 +307,7 @@ const styles = StyleSheet.create({
     drawerContainer: {
         position: 'absolute',
         top: 0,
-        right: 0,
+        right: 0, // Using right: 0 with direction: 'ltr' forces it to the physical right
         bottom: 0,
         width: DRAWER_WIDTH,
         backgroundColor: '#F8F9FA',
@@ -309,6 +317,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 10,
         elevation: 10,
+        direction: 'ltr', // Force LTR for this container to stop flipping
     },
     safeArea: {
         flex: 1,
@@ -322,6 +331,14 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingVertical: 15,
+    },
+    drawerHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingTop: 15,
+        paddingBottom: 5,
     },
     headerTitle: {
         fontSize: 18,

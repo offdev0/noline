@@ -48,6 +48,12 @@ const SEARCH_CATEGORIES = [
     { query: 'popular nightclubs and dance floors', category: 'hot' as const },
     { query: 'craft beer pubs and wine bars', category: 'hot' as const },
     { query: 'trendy brunch spots and bistros', category: 'restaurant' as const },
+    { query: 'quiet parks and botanical gardens', category: 'mustVisit' as const },
+    { query: 'museums and historical landmarks', category: 'mustVisit' as const },
+    { query: 'amusement parks and entertainment centers', category: 'fun' as const },
+    { query: 'shopping malls and boutique stores', category: 'shopping' as const },
+    { query: 'spas and wellness centers', category: 'mustVisit' as const },
+    { query: 'casinos and gaming lounges', category: 'casino' as const },
 ];
 
 export class MapsService {

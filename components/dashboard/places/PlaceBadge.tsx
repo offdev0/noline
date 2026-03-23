@@ -1,9 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 interface PlaceBadgeProps {
-    type: 'hot' | 'nowait' | 'rating';
+    type: 'hot' | 'nowait' | 'star';
     text: string | number;
     icon?: string;
 }
@@ -27,20 +27,20 @@ export const PlaceBadge = ({ type, text, icon }: PlaceBadgeProps) => {
     }
     return (
         <View style={[styles.badge, styles.ratingBadge]}>
-            <Ionicons name="flash" size={10} color="#22C55E" style={{ marginRight: 2 }} />
+            <Ionicons name="star" size={15} color="#f9e723ff" style={{ marginRight: 2 }} />
             <Text style={styles.badgeTextDark}>{text}</Text>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    badge: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        paddingHorizontal: 10, 
-        paddingVertical: 5, 
-        borderRadius: 12, 
-        backgroundColor: 'rgba(0,0,0,0.5)' 
+    badge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 12,
+        backgroundColor: 'rgba(0,0,0,0.5)'
     },
     hotBadge: { backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
     noWaitBadge: { backgroundColor: '#0891B2' },

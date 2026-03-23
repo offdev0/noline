@@ -35,18 +35,27 @@ export default function TrendsCategoryScreen() {
         let results = (trendingPlaces || []).filter((place: any) => {
             const category = (place.category || '').toLowerCase();
             const description = (place.description || '').toLowerCase();
+            const name = (place.name || '').toLowerCase();
 
             if (moodStr === 'calm') {
-                return category === 'mustvisit' || category === 'cafe' || description.includes('relaxed') || description.includes('quiet');
+                return category === 'mustvisit' || category === 'cafe' || category === 'restaurant' ||
+                    description.includes('relaxed') || description.includes('quiet') || description.includes('cozy') || 
+                    description.includes('peaceful') || name.includes('cafe') || name.includes('coffee') || name.includes('bakery');
             }
             if (moodStr === 'social') {
-                return category === 'restaurant' || category === 'hot' || category === 'bar' || description.includes('lively');
+                return category === 'restaurant' || category === 'hot' || category === 'bar' || category === 'casino' ||
+                    description.includes('lively') || description.includes('social') || description.includes('popular') || 
+                    description.includes('vibrant') || name.includes('bar') || name.includes('club') || name.includes('pub');
             }
             if (moodStr === 'adventure') {
-                return category === 'fun' || category === 'casino' || category === 'park' || description.includes('exciting');
+                return category === 'fun' || category === 'casino' || category === 'mustvisit' ||
+                    description.includes('exciting') || description.includes('adventure') || description.includes('discovery') || 
+                    description.includes('outdoor') || name.includes('park') || name.includes('zoo') || name.includes('museum');
             }
             if (moodStr === 'spontaneous') {
-                return category === 'shopping' || category === 'mustvisit' || category === 'outdoor';
+                return category === 'shopping' || category === 'mustvisit' || category === 'restaurant' || category === 'hot' ||
+                    description.includes('quick') || description.includes('convenient') || name.includes('shop') || 
+                    name.includes('store') || name.includes('fast') || name.includes('takeaway');
             }
 
             return true;
@@ -65,7 +74,7 @@ export default function TrendsCategoryScreen() {
     }, [selectedMood, trendingPlaces]);
 
     // Limit number of displayed items to avoid memory pressure on devices with many results
-    const MAX_DISPLAY = 20; // reduced to lower memory usage
+    const MAX_DISPLAY = 50; 
     const displayed = (filtered || []).slice(0, MAX_DISPLAY);
 
     const ITEM_HEIGHT = 160; // approximate fixed height for getItemLayout to optimize virtualization

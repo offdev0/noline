@@ -50,8 +50,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        marginTop: 10,
-        marginBottom: 20,
+        marginTop: 1,
+        marginBottom: 10,
     },
     pointsBadge: {
         alignItems: 'center',

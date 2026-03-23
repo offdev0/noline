@@ -135,7 +135,8 @@ export default function SearchBar() {
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: 24,
+        marginBottom: 4,
+        marginTop: 10
     },
     searchBarWrapper: {
         flexDirection: 'row',
