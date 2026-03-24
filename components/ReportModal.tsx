@@ -3,10 +3,15 @@ import { useReports } from '@/context/ReportsContext';
 import { useUser } from '@/context/UserContext';
 import { t } from '@/i18n';
 import { PlaceData } from '@/services/MapsService';
+import { sendLocalNotification } from '../services/NotificationService';
 import { Ionicons } from '@expo/vector-icons';
 import { GeoPoint } from 'firebase/firestore';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ActivityIndicator, Animated, Dimensions, Image, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+if (!sendLocalNotification) {
+    console.log('[ReportModal] WARNING: sendLocalNotification is undefined at load time');
+}
 
 const { height, width } = Dimensions.get('window');
 
@@ -67,6 +72,16 @@ export default function ReportModal({ isVisible, onClose, place }: ReportModalPr
                 crowdLevel: situation.level,
                 liveSituation: situation.label,
             });
+
+            // Trigger success notification
+            if (sendLocalNotification) {
+                await sendLocalNotification(
+                    t('notifications.reportSuccessTitle'),
+                    t('notifications.reportSuccessBody', { name: place.name })
+                );
+            } else {
+                console.log('[ReportModal] sendLocalNotification is not defined');
+            }
 
             setShowSuccess(true);
             startSuccessFlow();

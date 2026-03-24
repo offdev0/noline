@@ -151,6 +151,12 @@ export const translations = {
             termsOfService: 'Terms of Service',
             version: 'Version',
         },
+        notifications: {
+            welcomeBackTitle: 'Welcome back!',
+            welcomeBackBody: 'Great to see you again, %{name}! Check the latest queues near you.',
+            reportSuccessTitle: 'Report Received!',
+            reportSuccessBody: 'Thanks for helping the community at %{name}!',
+        },
         auth: {
             getStarted: "Let's get started.",
             subtitle: 'Controlling your time starts here.',
@@ -570,6 +576,12 @@ export const translations = {
             privacyPolicy: 'מדיניות פרטייות',
             termsOfService: 'תנאי שימוש',
             version: 'גרסה',
+        },
+        notifications: {
+            welcomeBackTitle: 'ברוך שובך!',
+            welcomeBackBody: 'כיף לראות אותך שוב, %{name}! בדוק את התורים הכי חמים בסביבה.',
+            reportSuccessTitle: 'הדיווח התקבל!',
+            reportSuccessBody: 'תודה על העזרה לקהילה ב%{name}!',
         },
         auth: {
             getStarted: 'בוא נתחיל.',

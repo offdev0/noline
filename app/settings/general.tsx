@@ -1,4 +1,5 @@
 import { useLanguage } from '@/context/LanguageContext';
+import { useUser } from '@/context/UserContext';
 import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -16,10 +17,27 @@ import {
 export default function GeneralSettings() {
     const router = useRouter();
     const { language, setLanguage } = useLanguage();
-    const [pushNotifications, setPushNotifications] = useState(true);
-    const [emailNotifications, setEmailNotifications] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
-    const [locationServices, setLocationServices] = useState(true);
+    const { userData, updateSettings } = useUser();
+
+    const [pushNotifications, setPushNotifications] = useState(userData?.settings?.pushNotifications ?? true);
+    const [emailNotifications, setEmailNotifications] = useState(userData?.settings?.emailNotifications ?? false);
+    const [darkMode, setDarkMode] = useState(userData?.settings?.darkMode ?? false);
+    const [locationServices, setLocationServices] = useState(userData?.settings?.locationServices ?? true);
+
+    const handleTogglePush = async (value: boolean) => {
+        setPushNotifications(value);
+        await updateSettings({ pushNotifications: value });
+    };
+
+    const handleToggleEmail = async (value: boolean) => {
+        setEmailNotifications(value);
+        await updateSettings({ emailNotifications: value });
+    };
+
+    const handleToggleLocation = async (value: boolean) => {
+        setLocationServices(value);
+        await updateSettings({ locationServices: value });
+    };
 
     const SettingItem = ({ icon, label, description, value, onToggle }: any) => (
         <View style={styles.settingItem}>
@@ -53,6 +71,18 @@ export default function GeneralSettings() {
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
+                <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
+                <View style={styles.section}>
+                    <SettingItem
+                        icon="notifications-outline"
+                        label={t('settings.pushNotifications')}
+                        description={t('settings.pushNotificationsDesc')}
+                        value={pushNotifications}
+                        onToggle={handleTogglePush}
+                    />
+
+                </View>
+
 
                 <Text style={styles.sectionTitle}>{t('settings.appPreferences')}</Text>
                 <View style={styles.section}>
@@ -62,7 +92,7 @@ export default function GeneralSettings() {
                         label={t('settings.locationServices')}
                         description={t('settings.locationServicesDesc')}
                         value={locationServices}
-                        onToggle={setLocationServices}
+                        onToggle={handleToggleLocation}
                     />
                 </View>
 

@@ -13,6 +13,8 @@ import {
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { doc, getDoc, increment, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { registerForPushNotificationsAsync, sendLocalNotification } from '@/services/NotificationService';
+import { t } from '@/i18n';
 
 export const ALL_MEDALS = [
     require('@/assets/medals/m1.png'),
@@ -38,6 +40,7 @@ interface UserContextType {
     addPoints: (amount: number) => Promise<void>;
     completeTask: (taskId: string, points: number) => Promise<void>;
     isTaskCompleted: (taskId: string) => Promise<boolean>;
+    updateSettings: (settings: any) => Promise<void>;
     level: number;
     medal: any; // Using any for require() type
     medalName: string;
@@ -75,6 +78,7 @@ const UserContext = createContext<UserContextType>({
     addPoints: async () => { },
     completeTask: async () => { },
     isTaskCompleted: async () => false,
+    updateSettings: async () => { },
     level: 1,
     medal: null,
     medalName: 'M1',
@@ -156,13 +160,28 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                         // Already logged in today
                         setStreak(currentStreak);
                     }
-                } else {
-                    // First time tracking
                     await setDoc(userRef, {
                         streak: 0,
                         lastLogin: serverTimestamp(),
                     }, { merge: true });
                     setStreak(0);
+                }
+
+                // Register for push notifications and save token
+                try {
+                    const token = await registerForPushNotificationsAsync();
+                    if (token) {
+                        await setDoc(userRef, { pushToken: token }, { merge: true });
+                        console.log('[UserContext] Token saved to Firestore');
+
+                        // Send welcome notification
+                        await sendLocalNotification(
+                            t('notifications.welcomeBackTitle'),
+                            t('notifications.welcomeBackBody', { name: currentUser.displayName || t('places.user') })
+                        );
+                    }
+                } catch (err) {
+                    console.log('[UserContext] Notification registration failed:', err);
                 }
             } else {
                 // Initialize user document if not exists
@@ -371,6 +390,28 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, []);
 
+    const updateSettings = useCallback(async (settings: any) => {
+        if (!user) return;
+        try {
+            const userRef = doc(db, 'users', user.uid);
+            await setDoc(userRef, {
+                settings: settings
+            }, { merge: true });
+            
+            setUserData((prev: any) => ({
+                ...prev,
+                settings: {
+                    ...(prev?.settings || {}),
+                    ...settings
+                }
+            }));
+            console.log('[UserContext] User settings updated:', settings);
+        } catch (error) {
+            console.error('[UserContext] Error updating settings:', error);
+            throw error;
+        }
+    }, [user]);
+
     // 6-Level System Constants
     const LEVEL_THRESHOLDS = [0, 50, 150, 300, 500, 800]; // Total XP needed at start of Lev 1-6
     const MEDAL_NAMES = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'];
@@ -475,7 +516,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             lastXpGained,
             clearXpGained,
             medalUpgrade,
-            clearMedalUpgrade
+            clearMedalUpgrade,
+            updateSettings
         }}>
             {children}
         </UserContext.Provider>

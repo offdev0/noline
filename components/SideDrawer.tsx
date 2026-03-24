@@ -15,8 +15,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
-    I18nManager
+    View
 } from 'react-native';
 
 import { useLanguage } from '@/context/LanguageContext';
@@ -136,7 +135,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
             </Animated.View>
 
             <Animated.View style={[
-                styles.drawerContainer, 
+                styles.drawerContainer,
                 { transform: [{ translateX: slideAnim }], direction: 'ltr' } // Force positioning to right
             ]}>
                 <SafeAreaView style={[styles.safeArea, { direction: 'ltr' }]}>
