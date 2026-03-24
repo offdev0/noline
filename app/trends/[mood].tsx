@@ -38,43 +38,48 @@ export default function TrendsCategoryScreen() {
             const name = (place.name || '').toLowerCase();
 
             if (moodStr === 'calm') {
-                return category === 'mustvisit' || category === 'cafe' || category === 'restaurant' ||
-                    description.includes('relaxed') || description.includes('quiet') || description.includes('cozy') || 
-                    description.includes('peaceful') || name.includes('cafe') || name.includes('coffee') || name.includes('bakery');
+                return description.includes('relaxed') || description.includes('quiet') || description.includes('cozy') ||
+                    description.includes('peaceful') || name.includes('cafe') || name.includes('coffee') || name.includes('bakery') ||
+                    description.includes('tea');
             }
             if (moodStr === 'social') {
-                return category === 'restaurant' || category === 'hot' || category === 'bar' || category === 'casino' ||
-                    description.includes('lively') || description.includes('social') || description.includes('popular') || 
-                    description.includes('vibrant') || name.includes('bar') || name.includes('club') || name.includes('pub');
+                return category === 'hot' || description.includes('lively') || description.includes('social') || 
+                    description.includes('popular') || description.includes('vibrant') || name.includes('bar') || 
+                    name.includes('club') || name.includes('pub') || name.includes('lounge') || description.includes('music');
             }
             if (moodStr === 'adventure') {
-                return category === 'fun' || category === 'casino' || category === 'mustvisit' ||
-                    description.includes('exciting') || description.includes('adventure') || description.includes('discovery') || 
-                    description.includes('outdoor') || name.includes('park') || name.includes('zoo') || name.includes('museum');
+                return description.includes('unique') || description.includes('discovery') || description.includes('exotic') ||
+                    description.includes('experimental') || description.includes('hidden') || name.includes('fusion') || 
+                    name.includes('experimental') || description.includes('fusion');
             }
             if (moodStr === 'spontaneous') {
-                return category === 'shopping' || category === 'mustvisit' || category === 'restaurant' || category === 'hot' ||
-                    description.includes('quick') || description.includes('convenient') || name.includes('shop') || 
-                    name.includes('store') || name.includes('fast') || name.includes('takeaway');
+                return category === 'shopping' || description.includes('quick') || description.includes('convenient') || 
+                    description.includes('fast') || name.includes('express') || name.includes('fast') || 
+                    name.includes('takeaway') || description.includes('grab');
             }
 
-            return true;
+            return false;
         });
 
-        // FALLBACK: If specific mood results are empty, provide a smart fallback to ensure the screen is never blank
+        // FALLBACK: If specific mood results are empty, provide a distinct slice of trending places to ensure uniqueness
         if (results.length === 0) {
-            console.log(`[TrendsCategory] No results for mood: ${moodStr}, providing fallback results`);
-            if (moodStr === 'calm') results = trendingPlaces.filter(p => (p.rating || 0) >= 4.5); // Highly rated
-            else if (moodStr === 'social') results = trendingPlaces.filter(p => p.category === 'restaurant');
-            else results = [...trendingPlaces].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 10);
+            console.log(`[TrendsCategory] No results for mood: ${moodStr}, providing distinct fallback results`);
+            const sortedByRating = [...trendingPlaces].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            
+            // Assign different slices to different moods to avoid overlap
+            if (moodStr === 'calm') return sortedByRating.slice(0, 8);
+            if (moodStr === 'social') return sortedByRating.slice(8, 16);
+            if (moodStr === 'adventure') return sortedByRating.slice(16, 24);
+            if (moodStr === 'spontaneous') return sortedByRating.slice(24, 32);
+            
+            return sortedByRating.slice(0, 10);
         }
 
-        // Global fallback to ensure SOMETHING is always shown
-        return results.length > 0 ? results : trendingPlaces;
+        return results;
     }, [selectedMood, trendingPlaces]);
 
     // Limit number of displayed items to avoid memory pressure on devices with many results
-    const MAX_DISPLAY = 50; 
+    const MAX_DISPLAY = 50;
     const displayed = (filtered || []).slice(0, MAX_DISPLAY);
 
     const ITEM_HEIGHT = 160; // approximate fixed height for getItemLayout to optimize virtualization

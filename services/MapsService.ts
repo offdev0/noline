@@ -28,16 +28,8 @@ const CATEGORY_MAPPING: Record<string, PlaceData['category']> = {
     'bakery': 'restaurant',
     'meal_takeaway': 'restaurant',
     'food': 'restaurant',
-    'casino': 'casino',
-    'shopping_mall': 'shopping',
-    'store': 'shopping',
-    'amusement_park': 'fun',
-    'movie_theater': 'fun',
-    'event_venue': 'fun',
-    'tourist_attraction': 'mustVisit',
-    'park': 'mustVisit',
-    'museum': 'mustVisit',
-    'stadium': 'mustVisit'
+    'ice_cream_shop': 'restaurant',
+    'supermarket': 'shopping', // Optional: keep as food related
 };
 
 // Category-specific search queries to get diverse results
@@ -48,12 +40,8 @@ const SEARCH_CATEGORIES = [
     { query: 'popular nightclubs and dance floors', category: 'hot' as const },
     { query: 'craft beer pubs and wine bars', category: 'hot' as const },
     { query: 'trendy brunch spots and bistros', category: 'restaurant' as const },
-    { query: 'quiet parks and botanical gardens', category: 'mustVisit' as const },
-    { query: 'museums and historical landmarks', category: 'mustVisit' as const },
-    { query: 'amusement parks and entertainment centers', category: 'fun' as const },
-    { query: 'shopping malls and boutique stores', category: 'shopping' as const },
-    { query: 'spas and wellness centers', category: 'mustVisit' as const },
-    { query: 'casinos and gaming lounges', category: 'casino' as const },
+    { query: 'unique bakeries and dessert parlors', category: 'restaurant' as const },
+    { query: 'popular organic food markets and deli', category: 'shopping' as const },
 ];
 
 export class MapsService {
