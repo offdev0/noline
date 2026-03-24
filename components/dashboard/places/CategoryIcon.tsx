@@ -2,11 +2,11 @@ import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export const CategoryIcon = ({ imageUrl, label, bgColor, onPress }: { 
-    imageUrl: any, 
-    label: string, 
+export const CategoryIcon = ({ imageUrl, label, bgColor, onPress }: {
+    imageUrl: any,
+    label: string,
     bgColor: string,
-    onPress?: () => void 
+    onPress?: () => void
 }) => (
     <TouchableOpacity style={styles.categoryItem} activeOpacity={0.7} onPress={onPress}>
         <View style={[styles.categoryIconBg, { backgroundColor: bgColor }]}>
@@ -22,7 +22,7 @@ export const CategoryIcon = ({ imageUrl, label, bgColor, onPress }: {
 );
 
 const styles = StyleSheet.create({
-    categoryItem: { alignItems: 'center', marginRight: 20 },
+    categoryItem: { alignItems: 'center' },
     categoryIconBg: {
         width: 70,
         height: 70,

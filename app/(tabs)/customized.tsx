@@ -2,6 +2,7 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { t } from '@/i18n';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,6 +36,9 @@ const DURATIONS = [
 
 const isLatinText = (value: string) => /[A-Za-z]/.test(value) && /^[\x00-\x7F]*$/.test(value);
 
+const ROUTE_CACHE_KEY = '@route_cache';
+const COOLDOWN_MS = 30 * 60 * 1000; // 30 mins cooldown
+
 export default function CustomizedScreen() {
     const router = useRouter();
     const { favorites } = useFavorites();
@@ -47,9 +51,29 @@ export default function CustomizedScreen() {
     const [isGenerating, setIsGenerating] = useState(false);
 
 
-    const generateRoute = () => {
+    const generateRoute = async () => {
         if (!selectedRouteType || !selectedDuration) return;
         setIsGenerating(true);
+
+        const cacheKey = `${selectedRouteType}_${selectedDuration}`;
+
+        try {
+            const cachedData = await AsyncStorage.getItem(ROUTE_CACHE_KEY);
+            const cache = cachedData ? JSON.parse(cachedData) : {};
+            const entry = cache[cacheKey];
+
+            if (entry && (Date.now() - entry.timestamp < COOLDOWN_MS)) {
+                // Valid cache hit
+                console.log('[RoutePlanner] Using cached route for:', cacheKey);
+                setTimeout(() => {
+                    setRouteStops(entry.stops);
+                    setIsGenerating(false);
+                }, 800);
+                return;
+            }
+        } catch (e) {
+            console.error('[RoutePlanner] Error reading cache:', e);
+        }
 
         const typeConfig = ROUTE_TYPES.find(r => r.id === selectedRouteType);
         const durConfig = DURATIONS.find(d => d.id === selectedDuration);
@@ -58,10 +82,24 @@ export default function CustomizedScreen() {
         const eligible = allPlaces.filter(p => typeConfig.categories.includes(p.category));
         const pool = eligible.length >= durConfig.stopCount ? eligible : allPlaces;
         const shuffled = [...pool].sort(() => Math.random() - 0.5);
+        const selectedStops = shuffled.slice(0, durConfig.stopCount);
 
-        setTimeout(() => {
-            setRouteStops(shuffled.slice(0, durConfig.stopCount));
+        setTimeout(async () => {
+            setRouteStops(selectedStops);
             setIsGenerating(false);
+
+            // Save to cache
+            try {
+                const cachedData = await AsyncStorage.getItem(ROUTE_CACHE_KEY);
+                const cache = cachedData ? JSON.parse(cachedData) : {};
+                cache[cacheKey] = {
+                    stops: selectedStops,
+                    timestamp: Date.now()
+                };
+                await AsyncStorage.setItem(ROUTE_CACHE_KEY, JSON.stringify(cache));
+            } catch (e) {
+                console.error('[RoutePlanner] Error saving cache:', e);
+            }
         }, 1200);
     };
 
