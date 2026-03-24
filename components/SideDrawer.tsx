@@ -194,6 +194,15 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                             />
 
                             <MenuItem
+                                icon="notifications-outline"
+                                label={t('drawer.customNotifications')}
+                                onPress={() => {
+                                    onClose();
+                                    router.push('/notifications');
+                                }}
+                            />
+
+                            <MenuItem
                                 icon="person-add"
                                 label={t('drawer.profileSharing')}
                                 onPress={async () => {

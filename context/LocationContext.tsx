@@ -24,7 +24,7 @@ interface LocationContextType {
     loading: boolean;
     error: string | null;
     permissionStatus: Location.PermissionStatus | null;
-    requestLocation: () => Promise<void>;
+    requestLocation: (explicit?: boolean) => Promise<void>;
     refreshLocation: () => Promise<void>;
 }
 
@@ -110,7 +110,8 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
     }, []);
 
     // Request location permission and get current location
-    const requestLocation = useCallback(async () => {
+    const requestLocation = useCallback(async (explicit: boolean = false) => {
+        if (loading) return;
         setLoading(true);
         setError(null);
 
@@ -125,19 +126,21 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
 
                 if (status !== Location.PermissionStatus.GRANTED) {
                     setError('Location permission denied');
-                    Alert.alert(
-                        'Location Required',
-                        'We value your privacy, but NoLine works best with location to show you real-time queues nearby in Israel. Still want to proceed without it?',
-                        [
-                            { text: 'Keep Disabled', style: 'cancel' },
-                            {
-                                text: 'Enable in Settings', onPress: () => {
-                                    if (Platform.OS === 'ios') Linking.openURL('app-settings:');
-                                    else Linking.openSettings();
+                    if (explicit) {
+                        Alert.alert(
+                            'Location Required',
+                            'NoLine works best with location to show you real-time queues nearby. You can enable this in your device settings.',
+                            [
+                                { text: 'Cancel', style: 'cancel' },
+                                {
+                                    text: 'Settings', onPress: () => {
+                                        if (Platform.OS === 'ios') Linking.openURL('app-settings:');
+                                        else Linking.openSettings();
+                                    }
                                 }
-                            }
-                        ]
-                    );
+                            ]
+                        );
+                    }
                     setLoading(false);
                     return;
                 }
@@ -177,19 +180,27 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
     // Refresh location (when user manually wants to update)
     const refreshLocation = useCallback(async () => {
         // Always try to request/get location when manually refreshed
-        await requestLocation();
+        await requestLocation(true);
     }, [requestLocation]);
+
+    // Track if we've already tried to auto-request location
+    const hasAutoRequested = React.useRef(false);
 
     // Auto-request location when app state changes or on mount
     useEffect(() => {
+        if (!user) {
+            hasAutoRequested.current = false;
+            return;
+        }
+
         const handleAppStateChange = (nextAppState: string) => {
             if (nextAppState === 'active') {
                 Location.getForegroundPermissionsAsync().then(({ status }) => {
                     setPermissionStatus(status);
-                    // Only auto-request if granted (to update position) or undetermined (to ask)
-                    // If denied, respect the user's choice and don't prompt again
-                    if (user && (status === Location.PermissionStatus.GRANTED || status === Location.PermissionStatus.UNDETERMINED)) {
-                        requestLocation();
+                    // Only auto-request if granted (to update position)
+                    // If denied or undetermined, don't auto-prompt on foreground to avoid annoyance
+                    if (status === Location.PermissionStatus.GRANTED) {
+                        requestLocation(false);
                     }
                 });
             }
@@ -198,15 +209,18 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
         const subscription = AppState.addEventListener('change', handleAppStateChange);
 
         // Initial check if user is logged in
-        // Only auto-prompt if status is undetermined or granted
-        if (user && !loading && (permissionStatus === Location.PermissionStatus.GRANTED || permissionStatus === Location.PermissionStatus.UNDETERMINED)) {
-            requestLocation();
+        // Only auto-prompt once per session if status is undetermined or granted
+        if (user && !loading && !hasAutoRequested.current) {
+            if (permissionStatus === Location.PermissionStatus.GRANTED || permissionStatus === Location.PermissionStatus.UNDETERMINED) {
+                hasAutoRequested.current = true;
+                requestLocation(false);
+            }
         }
 
         return () => {
             subscription.remove();
         };
-    }, [user, permissionStatus, requestLocation]);
+    }, [user, permissionStatus, requestLocation, loading]);
 
     return (
         <LocationContext.Provider

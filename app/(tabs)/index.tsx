@@ -42,7 +42,7 @@ export default function DashboardScreen() {
           {permissionStatus && permissionStatus !== 'granted' && (
             <TouchableOpacity
               style={styles.locationBanner}
-              onPress={requestLocation}
+              onPress={() => requestLocation(true)}
               activeOpacity={0.9}
             >
               <View style={styles.locationBannerContent}>

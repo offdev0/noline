@@ -31,7 +31,7 @@ function MainLayout() {
       inAuthenticatedRoute: !!(segments[0] === '(tabs)' || segments[0] === 'place' || segments[0] === 'map' || segments[0] === 'favorites' || segments[0] === 'rewards' || segments[0] === 'help' || segments[0] === 'about')
     });
 
-    const inAuthenticatedRoute = segments.some(s => ['(tabs)', 'place', 'map', 'favorites', 'rewards', 'help', 'about', 'trends', 'search-results', 'settings', 'account', 'top-reporters', 'category', 'privacy-policy', 'terms-of-service'].includes(s));
+    const inAuthenticatedRoute = segments.some(s => ['(tabs)', 'place', 'map', 'favorites', 'rewards', 'help', 'about', 'trends', 'search-results', 'settings', 'account', 'top-reporters', 'category', 'privacy-policy', 'terms-of-service', 'notifications'].includes(s));
 
     if (user && !inAuthenticatedRoute && segments[0] !== 'modal') {
       console.log('User logged in, redirecting to tabs... Segments:', segments);
@@ -82,6 +82,7 @@ function MainLayout() {
               animation: 'slide_from_bottom',
             }}
           />
+          <Stack.Screen name="notifications" options={{ headerShown: false }} />
           <Stack.Screen name="settings/general" options={{ headerShown: false }} />
           <Stack.Screen name="settings/history" options={{ headerShown: false }} />
           <Stack.Screen name="settings/notifications" options={{ headerShown: false }} />
