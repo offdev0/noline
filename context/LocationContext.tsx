@@ -176,10 +176,9 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
 
     // Refresh location (when user manually wants to update)
     const refreshLocation = useCallback(async () => {
-        if (permissionStatus === Location.PermissionStatus.GRANTED || permissionStatus === null) {
-            await requestLocation();
-        }
-    }, [permissionStatus, requestLocation]);
+        // Always try to request/get location when manually refreshed
+        await requestLocation();
+    }, [requestLocation]);
 
     // Auto-request location when app state changes or on mount
     useEffect(() => {
@@ -187,7 +186,9 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
             if (nextAppState === 'active') {
                 Location.getForegroundPermissionsAsync().then(({ status }) => {
                     setPermissionStatus(status);
-                    if (status !== Location.PermissionStatus.GRANTED && user) {
+                    // Only auto-request if granted (to update position) or undetermined (to ask)
+                    // If denied, respect the user's choice and don't prompt again
+                    if (user && (status === Location.PermissionStatus.GRANTED || status === Location.PermissionStatus.UNDETERMINED)) {
                         requestLocation();
                     }
                 });
@@ -197,7 +198,8 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
         const subscription = AppState.addEventListener('change', handleAppStateChange);
 
         // Initial check if user is logged in
-        if (user && permissionStatus !== Location.PermissionStatus.GRANTED && !loading) {
+        // Only auto-prompt if status is undetermined or granted
+        if (user && !loading && (permissionStatus === Location.PermissionStatus.GRANTED || permissionStatus === Location.PermissionStatus.UNDETERMINED)) {
             requestLocation();
         }
 
