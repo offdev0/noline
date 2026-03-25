@@ -51,22 +51,22 @@ export default function TrendsScreen() {
 
             if (moodStr === 'calm') {
                 return category === 'mustvisit' || category === 'cafe' || category === 'restaurant' ||
-                    description.includes('relaxed') || description.includes('quiet') || description.includes('cozy') || 
+                    description.includes('relaxed') || description.includes('quiet') || description.includes('cozy') ||
                     description.includes('peaceful') || name.includes('cafe') || name.includes('coffee') || name.includes('bakery');
             }
             if (moodStr === 'social') {
                 return category === 'restaurant' || category === 'hot' || category === 'bar' || category === 'casino' ||
-                    description.includes('lively') || description.includes('social') || description.includes('popular') || 
+                    description.includes('lively') || description.includes('social') || description.includes('popular') ||
                     description.includes('vibrant') || name.includes('bar') || name.includes('club') || name.includes('pub');
             }
             if (moodStr === 'adventure') {
                 return category === 'fun' || category === 'casino' || category === 'mustvisit' ||
-                    description.includes('exciting') || description.includes('adventure') || description.includes('discovery') || 
+                    description.includes('exciting') || description.includes('adventure') || description.includes('discovery') ||
                     description.includes('outdoor') || name.includes('park') || name.includes('zoo') || name.includes('museum');
             }
             if (moodStr === 'spontaneous') {
                 return category === 'shopping' || category === 'mustvisit' || category === 'restaurant' || category === 'hot' ||
-                    description.includes('quick') || description.includes('convenient') || name.includes('shop') || 
+                    description.includes('quick') || description.includes('convenient') || name.includes('shop') ||
                     name.includes('store') || name.includes('fast') || name.includes('takeaway');
             }
 
@@ -139,7 +139,7 @@ export default function TrendsScreen() {
                                     <Ionicons name={mood.icon as any} size={22} color={mood.iconColor} />
                                 </LinearGradient>
                                 <Text style={[styles.moodLabel, { color: mood.iconColor }]}>{t(`moods.${mood.label}`)}</Text>
-                                {/* <Text style={styles.moodDescription} numberOfLines={1}>{mood.description}</Text> */}
+                                <Text style={styles.moodDescription} numberOfLines={1}>{mood.description}</Text>
                             </TouchableOpacity>
                         </View>
                     ))}
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     },
     moodItem: {
         alignItems: 'center',
-        width: '48%',
+        width: (width - 40) / 4,
     },
     moodWrapper: {
         alignItems: 'center',
