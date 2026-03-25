@@ -2,42 +2,26 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { t } from '@/i18n';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import {
-    ActivityIndicator,
-    Linking,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import React, { useState, useRef } from 'react';
+import { ScrollView, StyleSheet, Text, View, Linking, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const ROUTE_TYPES = [
-    { id: 'leisure', icon: 'sunny', label: 'leisure', categories: ['mustVisit', 'fun', 'vibe'] },
-    { id: 'food', icon: 'restaurant', label: 'food', categories: ['restaurant', 'cafe'] },
-    { id: 'culture', icon: 'camera', label: 'culture', categories: ['mustVisit'] },
-    { id: 'adventure', icon: 'flash', label: 'adventure', categories: ['casino', 'fun', 'mustVisit'] },
-];
+const { width } = Dimensions.get('window');
 
-const DURATIONS = [
-    { id: '30min', labelKey: 'mins30', stopCount: 1 },
-    { id: '1h', labelKey: 'hour1', stopCount: 2 },
-    { id: '2h', labelKey: 'hours2', stopCount: 3 },
-    { id: 'half', labelKey: 'halfDay', stopCount: 4 },
-    { id: 'full', labelKey: 'fullDay', stopCount: 6 },
+const GROUP_TYPES = [
+    { id: 'alone', icon: 'person-outline', label: 'alone', color: '#6366F1' },
+    { id: 'couple', icon: 'heart-outline', label: 'couple', color: '#EC4899' },
+    { id: 'friends', icon: 'people-outline', label: 'friends', color: '#8B5CF6' },
+    { id: 'family', icon: 'home-outline', label: 'family', color: '#F59E0B' },
 ];
 
 const isLatinText = (value: string) => /[A-Za-z]/.test(value) && /^[\x00-\x7F]*$/.test(value);
-
-const ROUTE_CACHE_KEY = '@route_cache';
-const COOLDOWN_MS = 30 * 60 * 1000; // 30 mins cooldown
 
 export default function CustomizedScreen() {
     const router = useRouter();
@@ -45,85 +29,254 @@ export default function CustomizedScreen() {
     const { language } = useLanguage();
     const { allPlaces } = usePlaces();
 
-    const [selectedRouteType, setSelectedRouteType] = useState<string | null>(null);
-    const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
+    const mapRef = useRef<MapView>(null);
+    const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
     const [routeStops, setRouteStops] = useState<any[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [currentStep, setCurrentStep] = useState(0);
+    const [isFinished, setIsFinished] = useState(false);
 
-
-    const generateRoute = async () => {
-        if (!selectedRouteType || !selectedDuration) return;
+    const generateRoute = async (groupId: string) => {
+        if (allPlaces.length === 0) {
+            alert('Wait a moment, we are still loading places near you...');
+            return;
+        }
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setSelectedGroup(groupId);
         setIsGenerating(true);
 
-        const cacheKey = `${selectedRouteType}_${selectedDuration}`;
+        // Simulation delay for "Personalized" feel
+        setTimeout(() => {
+            // Pick a mix of places
+            // If we have enough places, pick 4. Otherwise pick all available.
+            const pool = allPlaces;
+            const shuffled = [...pool].sort(() => Math.random() - 0.5);
+            const selectedStops = shuffled.slice(0, 4);
 
-        try {
-            const cachedData = await AsyncStorage.getItem(ROUTE_CACHE_KEY);
-            const cache = cachedData ? JSON.parse(cachedData) : {};
-            const entry = cache[cacheKey];
+            const stopsWithTransit = selectedStops.map((stop, i) => {
+                const dist = Math.random() * 1.5 + 0.3; // 0.3 - 1.8 km
+                const mode = dist < 0.8 ? 'walking' : 'taxi';
+                const time = Math.round(dist * (mode === 'walking' ? 12 : 5));
+                
+                // Generate detailed sub-steps
+                const subSteps = mode === 'walking' 
+                    ? [
+                        { icon: 'walk', text: 'Walk to the nearby point' },
+                        { icon: 'navigate', text: 'Follow the direct path' },
+                        { icon: 'flag', text: `Reach ${stop.name}` }
+                    ]
+                    : [
+                        { icon: 'walk', text: 'Walk 5 min to the pickup point' },
+                        { icon: 'car', text: `Take taxi for ${dist.toFixed(1)} km` },
+                        { icon: 'flag', text: `Reach ${stop.name}` }
+                    ];
 
-            if (entry && (Date.now() - entry.timestamp < COOLDOWN_MS)) {
-                // Valid cache hit
-                console.log('[RoutePlanner] Using cached route for:', cacheKey);
-                setTimeout(() => {
-                    setRouteStops(entry.stops);
-                    setIsGenerating(false);
-                }, 800);
-                return;
-            }
-        } catch (e) {
-            console.error('[RoutePlanner] Error reading cache:', e);
-        }
-
-        const typeConfig = ROUTE_TYPES.find(r => r.id === selectedRouteType);
-        const durConfig = DURATIONS.find(d => d.id === selectedDuration);
-        if (!typeConfig || !durConfig) { setIsGenerating(false); return; }
-
-        const eligible = allPlaces.filter(p => typeConfig.categories.includes(p.category));
-        const pool = eligible.length >= durConfig.stopCount ? eligible : allPlaces;
-        const shuffled = [...pool].sort(() => Math.random() - 0.5);
-        const selectedStops = shuffled.slice(0, durConfig.stopCount);
-
-        setTimeout(async () => {
-            setRouteStops(selectedStops);
-            setIsGenerating(false);
-
-            // Save to cache
-            try {
-                const cachedData = await AsyncStorage.getItem(ROUTE_CACHE_KEY);
-                const cache = cachedData ? JSON.parse(cachedData) : {};
-                cache[cacheKey] = {
-                    stops: selectedStops,
-                    timestamp: Date.now()
+                return {
+                    ...stop,
+                    transit: {
+                        mode,
+                        time,
+                        distance: dist.toFixed(1),
+                        subSteps
+                    }
                 };
-                await AsyncStorage.setItem(ROUTE_CACHE_KEY, JSON.stringify(cache));
-            } catch (e) {
-                console.error('[RoutePlanner] Error saving cache:', e);
-            }
-        }, 1200);
-    };
+            });
 
-    const handleOpenInMaps = () => {
-        if (routeStops.length === 0) return;
-        const waypoints = routeStops
-            .filter(p => p.location?.latitude && p.location?.longitude)
-            .map(p => `${p.location.latitude},${p.location.longitude}`)
-            .join('/');
-        const url = `https://www.google.com/maps/dir/${waypoints}`;
-        Linking.openURL(url);
+            setRouteStops(stopsWithTransit);
+            setIsGenerating(false);
+            setCurrentStep(0);
+            setIsFinished(false);
+        }, 1500);
     };
 
     const handleNewRoute = () => {
         setRouteStops([]);
-        setSelectedRouteType(null);
-        setSelectedDuration(null);
+        setSelectedGroup(null);
+        setCurrentStep(0);
+        setIsFinished(false);
     };
 
-    const handleNavigate = (placeId: string) => {
-        router.push({ pathname: '/place/[id]', params: { id: placeId } });
+    const handleNext = () => {
+        if (currentStep < routeStops.length - 1) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setCurrentStep(prev => prev + 1);
+        }
+    };
+
+    const handlePrevious = () => {
+        if (currentStep > 0) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setCurrentStep(prev => prev - 1);
+        }
     };
 
     const favoritePreview = favorites.slice(0, 6);
+
+    const renderSelection = () => (
+        <View style={styles.selectionContainer}>
+            <Text style={styles.sectionLabel}>{t('route.whoAreYouWith')}</Text>
+            <View style={styles.groupGrid}>
+                {GROUP_TYPES.map(group => (
+                    <TouchableOpacity
+                        key={group.id}
+                        style={styles.groupCard}
+                        onPress={() => generateRoute(group.id)}
+                        activeOpacity={0.8}
+                    >
+                        <LinearGradient
+                            colors={[group.color + '15', group.color + '25']}
+                            style={styles.groupCardGradient}
+                        >
+                            <View style={[styles.groupIconCircle, { backgroundColor: group.color + '20' }]}>
+                                <Ionicons name={group.icon as any} size={28} color={group.color} />
+                            </View>
+                            <Text style={styles.groupLabel}>{t(`route.${group.label}`)}</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        </View>
+    );
+
+    const renderGenerating = () => (
+        <View style={styles.generatingContainer}>
+            <ActivityIndicator size="large" color="#6366F1" />
+            <Text style={styles.generatingText}>{t('route.generating')}</Text>
+            <Text style={styles.generatingSub}>{t('route.planSubtitle')}</Text>
+        </View>
+    );
+
+    const renderJourney = () => {
+        const place = routeStops[currentStep];
+        if (!place) return null;
+        const isLastStep = currentStep === routeStops.length - 1;
+
+        return (
+            <View style={styles.journeyWrapper}>
+                {/* Step Indicator */}
+                <View style={styles.stepHeader}>
+                    <Text style={styles.stepTitle}>
+                        {t('route.stop')} {currentStep + 1}
+                    </Text>
+                    <View style={styles.stepDots}>
+                        {routeStops.map((_, i) => (
+                            <View
+                                key={i}
+                                style={[
+                                    styles.stepDot,
+                                    i === currentStep && styles.stepDotActive,
+                                    i < currentStep && styles.stepDotCompleted,
+                                ]}
+                            />
+                        ))}
+                    </View>
+                </View>
+
+                {/* Main Card */}
+                <View style={styles.journeyCard}>
+                    <Image
+                        source={{ uri: place.image }}
+                        style={styles.journeyImage}
+                        contentFit="cover"
+                        transition={600}
+                    />
+                    <LinearGradient
+                        colors={['transparent', 'rgba(15, 23, 42, 0.9)']}
+                        style={styles.journeyImageOverlay}
+                    />
+
+                    <View style={styles.journeyInfo}>
+                        <View style={styles.stepBadge}>
+                            <Text style={styles.stepBadgeText}>{t('route.stop')} {currentStep + 1} / {routeStops.length}</Text>
+                        </View>
+                        <Text style={styles.journeyName}>{place.name}</Text>
+                        <Text style={styles.journeyAddress} numberOfLines={1}>{place.address}</Text>
+
+                        <View style={styles.journeyMeta}>
+                            <View style={styles.ratingBadge}>
+                                <Ionicons name="star" size={14} color="#F59E0B" />
+                                <Text style={styles.ratingText}>{place.rating}</Text>
+                            </View>
+                            <View style={styles.statusBadge}>
+                                <View style={[styles.statusDot, {
+                                    backgroundColor: place.status === 'vacant' ? '#22C55E'
+                                        : place.status === 'medium' ? '#F59E0B' : '#EF4444'
+                                }]} />
+                                <Text style={styles.statusText}>{t(`places.${place.status}`)}</Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Navigation Buttons */}
+                <View style={styles.journeyNav}>
+                    {currentStep > 0 && (
+                        <TouchableOpacity style={styles.navBtnSecondary} onPress={handlePrevious}>
+                            <Ionicons name="arrow-back" size={20} color="#6366F1" />
+                        </TouchableOpacity>
+                    )}
+
+                    <TouchableOpacity
+                        style={[styles.navBtnPrimary, isLastStep && styles.navBtnFinish]}
+                        onPress={isLastStep ? () => setIsFinished(true) : handleNext}
+                    >
+                        <Text style={styles.navBtnTextPrimary}>
+                            {isLastStep ? t('route.journeyComplete') : t('route.nextStop')}
+                        </Text>
+                        {!isLastStep && <Ionicons name="chevron-forward" size={24} color="#fff" />}
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.actionRow}>
+                    <TouchableOpacity
+                        style={styles.secondaryActionBtn}
+                        onPress={() => router.push({ pathname: '/place/[id]', params: { id: place.id } })}
+                    >
+                        <Ionicons name="information-circle-outline" size={20} color="#64748B" />
+                        <Text style={styles.secondaryActionText}>{t('placesSection.viewDetails')}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.mainActionBtn, { flex: 1 }]}
+                        onPress={() => router.push({
+                            pathname: '/route-details',
+                            params: {
+                                stops: JSON.stringify(routeStops),
+                                currentStep: currentStep.toString()
+                            }
+                        })}
+                    >
+                        <Ionicons name="map-outline" size={20} color="#fff" />
+                        <Text style={styles.mainActionText}>{t('route.seeRoute')}</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    };
+
+    const renderFinished = () => (
+        <View style={styles.finishedContainer}>
+            <View style={styles.finishedIconCircle}>
+                <Ionicons name="checkmark-circle" size={80} color="#10B981" />
+            </View>
+            <Text style={styles.finishedTitle}>{t('route.journeyComplete')}</Text>
+            <Text style={styles.finishedSub}>
+                You've visited all {routeStops.length} stops in your personalized route!
+            </Text>
+
+            <TouchableOpacity style={styles.startAgainBtn} onPress={handleNewRoute}>
+                <LinearGradient
+                    colors={['#6366F1', '#4F46E5']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.startAgainGradient}
+                >
+                    <Ionicons name="refresh" size={24} color="#fff" />
+                    <Text style={styles.startAgainText}>{t('route.backToStart')}</Text>
+                </LinearGradient>
+            </TouchableOpacity>
+        </View>
+    );
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -132,215 +285,68 @@ export default function CustomizedScreen() {
                 contentContainerStyle={styles.scrollContent}
             >
                 {/* Header */}
-                <Text style={styles.pageTitle}>{t('route.planTitle')}</Text>
-                <Text style={styles.pageSubtitle}>{t('route.planSubtitle')}</Text>
+                <View style={styles.header}>
+                    <Text style={styles.pageTitle}>{t('route.personalizedTitle')}</Text>
+                    <Text style={styles.pageSubtitle}>{t('route.planSubtitle')}</Text>
+                </View>
 
-                {/* Route Planner Card */}
-                <View style={styles.plannerCard}>
-                    {/* Route Type Section */}
-                    <Text style={styles.sectionLabel}>{t('route.routeType')}</Text>
-                    <View style={styles.typeRow}>
-                        {ROUTE_TYPES.map(type => {
-                            const isSelected = selectedRouteType === type.id;
-                            return (
-                                <TouchableOpacity
-                                    key={type.id}
-                                    style={[styles.typeChip, isSelected && styles.typeChipSelected]}
-                                    onPress={() => setSelectedRouteType(type.id)}
-                                    activeOpacity={0.8}
-                                >
-                                    <View style={[styles.typeIconCircle, isSelected && styles.typeIconCircleSelected]}>
-                                        <Ionicons
-                                            name={type.icon as any}
-                                            size={18}
-                                            color={isSelected ? '#fff' : '#6366F1'}
-                                        />
-                                    </View>
-                                    <Text style={[styles.typeChipText, isSelected && styles.typeChipTextSelected]}>
-                                        {t(`route.${type.label}`)}
-                                    </Text>
+                {/* Main Content Area */}
+                <View style={styles.mainArea}>
+                    {isGenerating
+                        ? renderGenerating()
+                        : isFinished
+                            ? renderFinished()
+                            : routeStops.length > 0
+                                ? renderJourney()
+                                : renderSelection()
+                    }
+                </View>
+
+                {/* Favorites - Only show when not in the middle of a journey */}
+                {routeStops.length === 0 && !isGenerating && (
+                    <>
+                        <View style={styles.favoritesHeader}>
+                            <Text style={styles.favoritesTitle}>{t('trends.yourFavorites')}</Text>
+                            {favorites.length > 0 && (
+                                <TouchableOpacity onPress={() => router.push('/favorites')}>
+                                    <Text style={styles.favoritesSeeMore}>{t('trends.seeAll')}</Text>
                                 </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-
-                    {/* Duration Section */}
-                    <Text style={styles.sectionLabel}>{t('route.duration')}</Text>
-                    <View style={styles.durationRow}>
-                        {DURATIONS.map(dur => {
-                            const isSelected = selectedDuration === dur.id;
-                            return (
-                                <TouchableOpacity
-                                    key={dur.id}
-                                    style={[styles.durationChip, isSelected && styles.durationChipSelected]}
-                                    onPress={() => setSelectedDuration(dur.id)}
-                                    activeOpacity={0.8}
-                                >
-                                    <Text style={[styles.durationChipText, isSelected && styles.durationChipTextSelected]}>
-                                        {t(`route.${dur.labelKey}`)}
-                                    </Text>
-                                    <Text style={[styles.durationStopText, isSelected && { color: 'rgba(255,255,255,0.7)' }]}>
-                                        {dur.stopCount} {t('route.stop')}
-                                        {dur.stopCount > 1 ? 's' : ''}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-
-                    {/* Generate Button */}
-                    <TouchableOpacity
-                        style={[
-                            styles.generateBtn,
-                            (!selectedRouteType || !selectedDuration) && styles.generateBtnDisabled,
-                        ]}
-                        onPress={generateRoute}
-                        disabled={!selectedRouteType || !selectedDuration || isGenerating}
-                        activeOpacity={0.85}
-                    >
-                        <LinearGradient
-                            colors={
-                                selectedRouteType && selectedDuration
-                                    ? ['#6366F1', '#4F46E5']
-                                    : ['#CBD5E1', '#94A3B8']
-                            }
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.generateGradient}
-                        >
-                            {isGenerating ? (
-                                <>
-                                    <ActivityIndicator size="small" color="#fff" />
-                                    <Text style={styles.generateBtnText}>{t('route.generating')}</Text>
-                                </>
-                            ) : (
-                                <>
-                                    <Ionicons name="sparkles" size={18} color="#fff" />
-                                    <Text style={styles.generateBtnText}>{t('route.generateRoute')}</Text>
-                                </>
                             )}
-                        </LinearGradient>
-                    </TouchableOpacity>
-                </View>
+                        </View>
 
-                {/* Route Results */}
-                {routeStops.length > 0 && (
-                    <View style={styles.routeResultSection}>
-                        <LinearGradient colors={['#4F46E5', '#6366F1']} style={styles.routeResultBanner}>
-                            <Ionicons name="checkmark-circle" size={28} color="#fff" />
-                            <View style={{ flex: 1, marginLeft: 12 }}>
-                                <Text style={styles.routeResultTitle}>
-                                    {t('route.stopCount', { count: routeStops.length })}
-                                </Text>
-                                <Text style={styles.routeResultSub}>
-                                    {ROUTE_TYPES.find(r => r.id === selectedRouteType)
-                                        ? t(`route.${ROUTE_TYPES.find(r => r.id === selectedRouteType)!.label}`)
-                                        : ''}{' '}
-                                    · {DURATIONS.find(d => d.id === selectedDuration)
-                                        ? t(`route.${DURATIONS.find(d => d.id === selectedDuration)!.labelKey}`)
-                                        : ''}
-                                </Text>
+                        {favorites.length === 0 ? (
+                            <View style={styles.emptyFavBox}>
+                                <Ionicons name="heart-outline" size={40} color="#CBD5E1" />
+                                <Text style={styles.emptyFavText}>{t('trends.favoritesEmpty')}</Text>
                             </View>
-                        </LinearGradient>
-
-                        {routeStops.map((place, index) => (
-                            <TouchableOpacity
-                                key={place.id}
-                                style={styles.stopCard}
-                                onPress={() => handleNavigate(place.id)}
-                                activeOpacity={0.9}
-                            >
-                                <View style={styles.stopNumberBadge}>
-                                    <Text style={styles.stopNumber}>{index + 1}</Text>
-                                </View>
-                                {index < routeStops.length - 1 && <View style={styles.stopConnector} />}
-                                <Image
-                                    source={{ uri: place.image }}
-                                    style={styles.stopImage}
-                                    contentFit="cover"
-                                    cachePolicy="memory-disk"
-                                    transition={200}
-                                />
-                                <View style={styles.stopInfo}>
-                                    <Text style={styles.stopLabel}>
-                                        {t('route.stop')} {index + 1}
-                                    </Text>
-                                    <Text style={styles.stopName} numberOfLines={1}>{place.name}</Text>
-                                    <Text style={styles.stopAddress} numberOfLines={1}>{place.address}</Text>
-                                    <View style={styles.stopMeta}>
-                                        <Ionicons name="star" size={11} color="#FFD700" />
-                                        <Text style={styles.stopRating}>{place.rating}</Text>
-                                        <View style={[styles.statusDot, {
-                                            backgroundColor: place.status === 'vacant' ? '#22C55E'
-                                                : place.status === 'medium' ? '#F59E0B' : '#EF4444'
-                                        }]} />
-                                    </View>
-                                </View>
-                                <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
-                            </TouchableOpacity>
-                        ))}
-
-                        {/* Action buttons */}
-                        <TouchableOpacity style={styles.openMapsBtn} onPress={handleOpenInMaps} activeOpacity={0.85}>
-                            <LinearGradient
-                                colors={['#10B981', '#059669']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.openMapsGradient}
-                            >
-                                <Ionicons name="navigate" size={20} color="#fff" />
-                                <Text style={styles.openMapsBtnText}>{t('route.openInMaps')}</Text>
-                            </LinearGradient>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.finishBtn} onPress={handleNewRoute} activeOpacity={0.8}>
-                            <Ionicons name="refresh" size={18} color="#6366F1" />
-                            <Text style={styles.finishBtnText}>{t('route.finishRoute')}</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-
-                {/* Favorites */}
-                <View style={styles.favoritesHeader}>
-                    <Text style={styles.favoritesTitle}>{t('trends.yourFavorites')}</Text>
-                    {favorites.length > 0 && (
-                        <TouchableOpacity onPress={() => router.push('/favorites')}>
-                            <Text style={styles.favoritesSeeMore}>{t('trends.seeAll')}</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-                {favorites.length === 0 ? (
-                    <View style={styles.emptyFavBox}>
-                        <Ionicons name="heart-outline" size={40} color="#CBD5E1" />
-                        <Text style={styles.emptyFavText}>{t('trends.favoritesEmpty')}</Text>
-                    </View>
-                ) : (
-                    <View style={styles.favoritesGrid}>
-                        {favoritePreview.map((place) => (
-                            <TouchableOpacity
-                                key={place.id}
-                                style={styles.favoriteCard}
-                                onPress={() => handleNavigate(place.id)}
-                                activeOpacity={0.9}
-                            >
-                                <Image
-                                    source={{ uri: place.image }}
-                                    style={styles.favoriteImage}
-                                    contentFit="cover"
-                                    cachePolicy="memory-disk"
-                                    transition={200}
-                                />
-                                <View style={styles.favoriteContent}>
-                                    <Text style={[styles.favoriteName, language === 'he' && isLatinText(place.name) && styles.ltrText]} numberOfLines={1}>{place.name}</Text>
-                                    <View style={styles.favoriteMeta}>
-                                        <Ionicons name="star" size={12} color="#FFD700" />
-                                        <Text style={styles.favoriteRating}>{place.rating?.toFixed(1) || '4.5'}</Text>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
+                        ) : (
+                            <View style={styles.favoritesGrid}>
+                                {favoritePreview.map((place) => (
+                                    <TouchableOpacity
+                                        key={place.id}
+                                        style={styles.favoriteCard}
+                                        onPress={() => router.push({ pathname: '/place/[id]', params: { id: place.id } })}
+                                        activeOpacity={0.9}
+                                    >
+                                        <Image
+                                            source={{ uri: place.image }}
+                                            style={styles.favoriteImage}
+                                            contentFit="cover"
+                                            cachePolicy="memory-disk"
+                                            transition={200}
+                                        />
+                                        <View style={styles.favoriteContent}>
+                                            <Text style={[styles.favoriteName, language === 'he' && isLatinText(place.name) && styles.ltrText]} numberOfLines={1}>{place.name}</Text>
+                                            <View style={styles.favoriteMeta}>
+                                                <Ionicons name="star" size={12} color="#FFD700" />
+                                                <Text style={styles.favoriteRating}>{place.rating?.toFixed(1) || '4.5'}</Text>
+                                            </View>
+                                        </View>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
+                    </>
                 )}
 
                 <View style={{ height: 100 }} />
@@ -353,169 +359,434 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F8FAFC' },
     scrollContent: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 },
 
-    // Header
+    header: { marginBottom: 24 },
     pageTitle: { fontSize: 26, fontWeight: '800', color: '#0F172A', marginBottom: 6 },
-    pageSubtitle: { fontSize: 14, color: '#64748B', marginBottom: 20, lineHeight: 20 },
+    pageSubtitle: { fontSize: 14, color: '#64748B', lineHeight: 20 },
 
-    // Planner Card
-    plannerCard: {
+    mainArea: {
+        marginBottom: 32,
+    },
+
+    // Selection
+    selectionContainer: {},
+    sectionLabel: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#475569',
+        marginBottom: 16,
+    },
+    groupGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    groupCard: {
+        width: (width - 52) / 2,
         backgroundColor: '#fff',
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 24,
+        borderRadius: 20,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 14,
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 3,
+    },
+    groupCardGradient: {
+        padding: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+    },
+    groupIconCircle: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 12,
+    },
+    groupLabel: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#1E293B',
+    },
+
+    // Generating
+    generatingContainer: {
+        height: 300,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    generatingText: {
+        marginTop: 16,
+        fontSize: 18,
+        color: '#1E293B',
+        fontWeight: '800',
+    },
+    generatingSub: {
+        marginTop: 8,
+        fontSize: 14,
+        color: '#64748B',
+        fontWeight: '500',
+        textAlign: 'center',
+        paddingHorizontal: 40,
+    },
+    // Finished
+    finishedContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 40,
+        backgroundColor: '#fff',
+        borderRadius: 32,
+        paddingHorizontal: 20,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.05,
+        shadowRadius: 20,
         elevation: 5,
+    },
+    finishedIconCircle: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#ECFDF5',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 24,
+    },
+    finishedTitle: {
+        fontSize: 24,
+        fontWeight: '800',
+        color: '#0F172A',
+        marginBottom: 8,
+    },
+    finishedSub: {
+        fontSize: 16,
+        color: '#64748B',
+        textAlign: 'center',
+        lineHeight: 24,
+        marginBottom: 32,
+        paddingHorizontal: 20,
+    },
+    startAgainBtn: {
+        width: '100%',
+        borderRadius: 20,
+        overflow: 'hidden',
+    },
+    startAgainGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 18,
+        gap: 12,
+    },
+    startAgainText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '800',
+    },
+    // Journey
+    journeyWrapper: {
+    },
+    mapContainer: {
+        height: 200,
+        borderRadius: 24,
+        overflow: 'hidden',
+        marginBottom: 20,
+        backgroundColor: '#E2E8F0',
         borderWidth: 1,
         borderColor: '#F1F5F9',
     },
-    sectionLabel: {
-        fontSize: 13,
-        fontWeight: '700',
-        color: '#64748B',
-        textTransform: 'uppercase',
-        letterSpacing: 0.8,
-        marginBottom: 12,
+    map: {
+        width: '100%',
+        height: '100%',
+    },
+    markerCircle: {
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: '#fff',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#94A3B8',
+    },
+    markerCircleActive: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        borderColor: '#6366F1',
+        backgroundColor: '#fff',
+    },
+    markerCircleCompleted: {
+        borderColor: '#6366F1',
+        backgroundColor: '#6366F1',
+    },
+    markerDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#94A3B8',
+    },
+    markerDotActive: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: '#6366F1',
     },
 
-    // Route Type
-    typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 22 },
-    typeChip: {
+    // Transit
+    transitWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 20,
-        borderWidth: 1.5,
-        borderColor: '#E2E8F0',
-        backgroundColor: '#F8FAFC',
-        gap: 7,
+        paddingHorizontal: 10,
+        marginBottom: 20,
     },
-    typeChipSelected: { backgroundColor: '#EEF2FF', borderColor: '#6366F1' },
-    typeIconCircle: {
+    transitLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#6366F1',
+        opacity: 0.3,
+    },
+    transitContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F1F5F9', // Light background
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 20,
+        gap: 8,
+        marginHorizontal: 10,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    transitBadge: {
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: '#EEF2FF',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    typeIconCircleSelected: { backgroundColor: '#6366F1' },
-    typeChipText: { fontSize: 13, fontWeight: '700', color: '#475569' },
-    typeChipTextSelected: { color: '#4338CA' },
-
-    // Duration
-    durationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 22 },
-    durationChip: {
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 16,
-        borderWidth: 1.5,
-        borderColor: '#E2E8F0',
-        backgroundColor: '#F8FAFC',
-        alignItems: 'center',
-    },
-    durationChipSelected: { backgroundColor: '#6366F1', borderColor: '#6366F1' },
-    durationChipText: { fontSize: 13, fontWeight: '800', color: '#475569' },
-    durationChipTextSelected: { color: '#fff' },
-    durationStopText: { fontSize: 10, color: '#94A3B8', fontWeight: '600', marginTop: 2 },
-
-    // Generate Button
-    generateBtn: { borderRadius: 16, overflow: 'hidden' },
-    generateBtnDisabled: { opacity: 0.5 },
-    generateGradient: {
-        flexDirection: 'row',
+        backgroundColor: '#6366F1', // Active color
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 16,
-        gap: 8,
     },
-    generateBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+    transitText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#475569',
+    },
 
-    // Route Result
-    routeResultSection: {
-        marginBottom: 24,
-    },
-    routeResultBanner: {
+    stepHeader: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        borderRadius: 18,
-        padding: 16,
+        marginBottom: 16,
+    },
+    stepTitle: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: '#6366F1',
+        textTransform: 'uppercase',
+    },
+    stepDots: {
+        flexDirection: 'row',
+        gap: 6,
+    },
+    stepDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#E2E8F0',
+    },
+    stepDotActive: {
+        width: 24,
+        backgroundColor: '#6366F1',
+    },
+    stepDotCompleted: {
+        backgroundColor: '#6366F1',
+        opacity: 0.5,
+    },
+    journeyCard: {
+        height: 380,
+        borderRadius: 24,
+        overflow: 'hidden',
+        backgroundColor: '#000',
+        marginBottom: 20,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.2,
+        shadowRadius: 20,
+    },
+    journeyImage: {
+        width: '100%',
+        height: '100%',
+    },
+    journeyImageOverlay: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '50%',
+    },
+    journeyInfo: {
+        position: 'absolute',
+        bottom: 24,
+        left: 20,
+        right: 20,
+    },
+    stepBadge: {
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        alignSelf: 'flex-start',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+        marginBottom: 8,
+    },
+    stepBadgeText: {
+        color: '#fff',
+        fontSize: 11,
+        fontWeight: '800',
+        textTransform: 'uppercase',
+    },
+    journeyName: {
+        fontSize: 24,
+        fontWeight: '800',
+        color: '#fff',
+        marginBottom: 4,
+    },
+    journeyAddress: {
+        fontSize: 14,
+        color: 'rgba(255,255,255,0.7)',
         marginBottom: 12,
     },
-    routeResultTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
-    routeResultSub: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
-
-    stopCard: {
+    journeyMeta: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    ratingBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
-        borderRadius: 18,
-        padding: 12,
-        marginBottom: 8,
-        borderWidth: 1,
-        borderColor: '#F1F5F9',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
-        position: 'relative',
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        gap: 4,
     },
-    stopNumberBadge: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        backgroundColor: '#6366F1',
-        justifyContent: 'center',
+    ratingText: {
+        color: '#fff',
+        fontWeight: '800',
+        fontSize: 13,
+    },
+    statusBadge: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginRight: 10,
-        zIndex: 2,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        gap: 6,
     },
-    stopNumber: { color: '#fff', fontSize: 13, fontWeight: '800' },
-    stopConnector: {
-        position: 'absolute',
-        left: 26,
-        bottom: -8,
-        width: 2,
+    statusText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 12,
+    },
+    statusDot: {
+        width: 8,
         height: 8,
-        backgroundColor: '#E2E8F0',
-        zIndex: 1,
+        borderRadius: 4,
     },
-    stopImage: { width: 64, height: 64, borderRadius: 14, marginRight: 12 },
-    stopInfo: { flex: 1 },
-    stopLabel: { fontSize: 10, color: '#6366F1', fontWeight: '700', textTransform: 'uppercase', marginBottom: 2 },
-    stopName: { fontSize: 14, fontWeight: '800', color: '#0F172A', marginBottom: 2 },
-    stopAddress: { fontSize: 11, color: '#64748B', marginBottom: 4 },
-    stopMeta: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-    stopRating: { fontSize: 11, fontWeight: '700', color: '#92400E' },
-    statusDot: { width: 6, height: 6, borderRadius: 3 },
 
-    openMapsBtn: { borderRadius: 16, overflow: 'hidden', marginTop: 8 },
-    openMapsGradient: {
+    journeyNav: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 12,
+    },
+    navBtnPrimary: {
+        flex: 1,
+        backgroundColor: '#6366F1',
+        height: 56,
+        borderRadius: 18,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 15,
         gap: 8,
     },
-    openMapsBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
-
-    finishBtn: {
+    navBtnFinish: {
+        backgroundColor: '#10B981',
+    },
+    navBtnSecondary: {
+        flex: 1,
+        backgroundColor: '#EEF2FF',
+        height: 56,
+        borderRadius: 18,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 14,
-        borderRadius: 16,
+        gap: 8,
+    },
+    navBtnTextPrimary: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    navBtnTextSecondary: {
+        color: '#6366F1',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    actionRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 8,
+    },
+    mainActionBtn: {
+        flex: 1.5,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#0F172A',
+        height: 54,
+        borderRadius: 18,
+        gap: 8,
+    },
+    mainActionText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    secondaryActionBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fff',
+        height: 54,
+        borderRadius: 18,
         borderWidth: 1.5,
-        borderColor: '#E2E8F0',
-        marginTop: 10,
+        borderColor: '#F1F5F9',
         gap: 8,
     },
-    finishBtnText: { color: '#6366F1', fontSize: 15, fontWeight: '700' },
-
+    secondaryActionText: {
+        color: '#64748B',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    fullWidthActionBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fff',
+        height: 54,
+        borderRadius: 18,
+        borderWidth: 1.5,
+        borderColor: '#F1F5F9',
+        gap: 8,
+    },
     // Favorites
     favoritesHeader: {
         flexDirection: 'row',

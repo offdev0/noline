@@ -14,6 +14,7 @@ interface PlacesContextType {
     restaurants: PlaceData[];
     recommendedPlaces: PlaceData[];
     vibePlaces: PlaceData[];
+    leisurePlaces: PlaceData[];
     searchResults: PlaceData[];
     loading: boolean;
     performSearch: (locationName: string) => Promise<PlaceData[]>;
@@ -34,6 +35,7 @@ const PlacesContext = createContext<PlacesContextType>({
     restaurants: [],
     recommendedPlaces: [],
     vibePlaces: [],
+    leisurePlaces: [],
     searchResults: [],
     loading: false,
     performSearch: async () => [],
@@ -219,26 +221,30 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [location, permissionStatus, isManualSearch, currentSearchName, language]);
 
-    const memoizedHotPlaces = useMemo(() => allPlaces.filter(p => p.category === 'hot'), [allPlaces]);
-    const memoizedRestaurants = useMemo(() => allPlaces.filter(p => p.category === 'restaurant'), [allPlaces]);
+    const filteredPlaces = useMemo(() => allPlaces.filter(p => !p.isLeisure), [allPlaces]);
+    const leisurePlaces = useMemo(() => allPlaces.filter(p => p.isLeisure), [allPlaces]);
+
+    const memoizedHotPlaces = useMemo(() => filteredPlaces.filter(p => p.category === 'hot'), [filteredPlaces]);
+    const memoizedRestaurants = useMemo(() => filteredPlaces.filter(p => p.category === 'restaurant'), [filteredPlaces]);
     const memoizedRecommendedPlaces = useMemo(() => {
-        const mustVisit = allPlaces.filter(p => p.category === 'mustVisit');
-        return mustVisit.length > 0 ? mustVisit : [...allPlaces].sort((a, b) => b.rating - a.rating);
-    }, [allPlaces]);
+        const mustVisit = filteredPlaces.filter(p => p.category === 'mustVisit');
+        return mustVisit.length > 0 ? mustVisit : [...filteredPlaces].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    }, [filteredPlaces]);
     const memoizedVibePlaces = useMemo(() => {
-        const vibes = allPlaces.filter(p => p.category === 'fun' || p.category === 'casino' || p.category === 'shopping');
-        return vibes.length > 0 ? vibes : allPlaces.filter(p => p.category === 'hot');
-    }, [allPlaces]);
+        const vibes = filteredPlaces.filter(p => p.category === 'fun' || p.category === 'casino' || p.category === 'shopping');
+        return vibes.length > 0 ? vibes : filteredPlaces.filter(p => p.category === 'hot');
+    }, [filteredPlaces]);
 
     return (
         <PlacesContext.Provider
             value={{
                 allPlaces,
-                trendingPlaces: allPlaces,
+                trendingPlaces: filteredPlaces,
                 hotPlaces: memoizedHotPlaces,
                 restaurants: memoizedRestaurants,
                 recommendedPlaces: memoizedRecommendedPlaces,
                 vibePlaces: memoizedVibePlaces,
+                leisurePlaces,
                 searchResults,
                 loading,
                 performSearch,

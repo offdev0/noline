@@ -35,12 +35,11 @@ export const FeaturedCard = ({ place, onPress }: { place: PlaceProps; onPress: (
 
             <View style={styles.cardContentOverlay}>
                 <Text style={styles.cardNameLarge}>{place.name}</Text>
-                <Text style={styles.cardDetailText}>{t('places.veryPopular')} • {place.queueStatus} • {place.distance} {t('places.away')}</Text>
+                <Text style={styles.cardDetailText}> • {t('places.veryPopular')}  •</Text>
             </View>
         </View>
         <View style={styles.cardFooter}>
-            <Ionicons name="star" size={14} color="#94A3B8" />
-            <Text style={styles.footerText}>{place.distance} • {place.queueStatus}</Text>
+            <Text style={styles.footerText}>{place.queueStatus}  {place.distance} {t('places.away')}</Text>
         </View>
     </TouchableOpacity>
 );
@@ -58,14 +57,11 @@ export const GridCard = ({ place, onPress }: { place: PlaceProps; onPress: () =>
             </View>
 
             <View style={styles.cardContentOverlaySmall}>
-                <Text style={styles.cardNameSmall} numberOfLines={1}>{place.name}</Text>
-                <Text style={styles.cardDetailTextSmall} numberOfLines={1}>
-                    {place.status === 'vacant' ? t('places.greatForDate') : t('places.greatDrinks')}
+                <Text style={styles.cardNameSmall} >{place.name}</Text>
+                <Text style={styles.cardDetailTextSmall} >
+                    {/* {place?.description} */}
                 </Text>
-                <View style={styles.inlineDistance}>
-                    <Ionicons name="location-sharp" size={10} color="#fff" />
-                    <Text style={styles.cardDetailTextSmall}> {place.distance} • {t('places.open')}</Text>
-                </View>
+
             </View>
         </View>
         <View style={styles.cardFooter}>
@@ -86,7 +82,6 @@ export const ListCard = ({ place, onPress }: { place: PlaceProps; onPress: () =>
             </View>
             <View style={styles.cardContentOverlay}>
                 <Text style={styles.cardNameLarge}>{place.name}</Text>
-                <Text style={styles.cardDetailText}>{place.queueStatus} • {place.distance} {t('places.away')}</Text>
             </View>
         </View>
         <View style={styles.cardFooter}>
@@ -122,7 +117,7 @@ const styles = StyleSheet.create({
     cardImageContainer: { height: 160, position: 'relative' },
     cardImage: { width: '100%', height: '100%' },
     cardContentOverlay: { position: 'absolute', bottom: 16, left: 16, right: 16 },
-    cardNameLarge: { fontSize: 24, fontWeight: '800', color: '#fff', marginBottom: 4 },
+    cardNameLarge: { fontSize: 20, fontWeight: '800', color: '#fff', marginBottom: 4 },
     cardDetailText: { fontSize: 14, color: 'rgba(255,255,255,0.9)', fontWeight: '500' },
     cardFooter: { height: 38, backgroundColor: '#F1F5F9', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
     footerText: { color: '#64748B', fontWeight: '600', fontSize: 14, marginLeft: 6 },

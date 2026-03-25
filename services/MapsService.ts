@@ -15,6 +15,7 @@ export interface PlaceData {
         longitude: number;
     };
     hours?: string;
+    isLeisure?: boolean;
 }
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyDlLpauOduyhpqXWPzczYs9Ad3MfvJ35EM';
@@ -29,7 +30,12 @@ const CATEGORY_MAPPING: Record<string, PlaceData['category']> = {
     'meal_takeaway': 'restaurant',
     'food': 'restaurant',
     'ice_cream_shop': 'restaurant',
-    'supermarket': 'shopping', // Optional: keep as food related
+    'supermarket': 'shopping',
+    'park': 'mustVisit',
+    'tourist_attraction': 'mustVisit',
+    'museum': 'mustVisit',
+    'zoo': 'mustVisit',
+    'aquarium': 'mustVisit',
 };
 
 // Category-specific search queries to get diverse results
@@ -42,6 +48,8 @@ const SEARCH_CATEGORIES = [
     { query: 'trendy brunch spots and bistros', category: 'restaurant' as const },
     { query: 'unique bakeries and dessert parlors', category: 'restaurant' as const },
     { query: 'popular organic food markets and deli', category: 'shopping' as const },
+    { query: 'beautiful parks, gardens and nature walks', category: 'mustVisit' as const },
+    { query: 'top tourist attractions and museums', category: 'mustVisit' as const },
 ];
 
 export class MapsService {
@@ -194,7 +202,8 @@ export class MapsService {
                 location: {
                     latitude: p.location.latitude,
                     longitude: p.location.longitude,
-                }
+                },
+                isLeisure: ['park', 'museum', 'zoo', 'aquarium', 'tourist_attraction'].some(type => p.types?.includes(type))
             });
         });
 
@@ -262,7 +271,8 @@ export class MapsService {
                         location: {
                             latitude: p.location.latitude,
                             longitude: p.location.longitude,
-                        }
+                        },
+                        isLeisure: ['park', 'museum', 'zoo', 'aquarium', 'tourist_attraction'].some(type => p.types?.includes(type))
                     };
                 });
         } catch (error) {
