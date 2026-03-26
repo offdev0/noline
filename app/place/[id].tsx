@@ -35,7 +35,7 @@ const isLatinText = (value: string) => /[A-Za-z]/.test(value) && /^[\x00-\x7F]*$
 export default function PlaceDetailScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
-    const { getPlaceById, allPlaces, searchResults, loading: globalLoading } = usePlaces();
+    const { getPlaceById, fetchPlaceByIdAsync, allPlaces, searchResults, loading: globalLoading } = usePlaces();
     const { toggleFavorite, isFavorite } = useFavorites();
     const { reports } = useReports();
     const { user } = useUser();
@@ -43,9 +43,17 @@ export default function PlaceDetailScreen() {
     const [isReportVisible, setIsReportVisible] = useState(false);
     const [isReviewVisible, setIsReviewVisible] = useState(false);
     const [isImageModalVisible, setIsImageModalVisible] = useState(false);
+    const [isFetchingPlace, setIsFetchingPlace] = useState(false);
 
     // Get dynamic data from context
-    const place = useMemo(() => getPlaceById(id), [id, getPlaceById]);
+    const place = useMemo(() => getPlaceById(id || ''), [id, getPlaceById, allPlaces, searchResults]);
+
+    React.useEffect(() => {
+        if (!place && id) {
+            setIsFetchingPlace(true);
+            fetchPlaceByIdAsync(id).finally(() => setIsFetchingPlace(false));
+        }
+    }, [id, place, fetchPlaceByIdAsync]);
     const isPlaceFavorite = useMemo(() => isFavorite(id || ''), [id, isFavorite]);
 
     // Derived coordinates
@@ -73,7 +81,7 @@ export default function PlaceDetailScreen() {
         return t('time.daysAgo', { count: Math.floor(diff / 86400) });
     };
 
-    if (globalLoading && !place) {
+    if ((globalLoading || isFetchingPlace) && !place) {
         return (
             <View style={styles.loaderContainer}>
                 <ActivityIndicator size="large" color="#5356FF" />

@@ -22,6 +22,7 @@ interface PlacesContextType {
     resetSearch: () => void;
     recordPlaceClick: (place: PlaceData) => Promise<void>;
     getPlaceById: (id: string) => PlaceData | undefined;
+    fetchPlaceByIdAsync: (id: string) => Promise<PlaceData | null>;
     currentSearchCenter: { latitude: number; longitude: number } | null;
     currentSearchName: string | null;
     searchHistory: string[];
@@ -43,6 +44,7 @@ const PlacesContext = createContext<PlacesContextType>({
     resetSearch: () => { },
     recordPlaceClick: async () => { },
     getPlaceById: () => undefined,
+    fetchPlaceByIdAsync: async () => null,
     currentSearchCenter: null,
     currentSearchName: null,
     searchHistory: [],
@@ -204,6 +206,24 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         return allPlaces.find(p => p.id === id) || searchResults.find(p => p.id === id);
     };
 
+    const fetchPlaceByIdAsync = async (id: string): Promise<PlaceData | null> => {
+        // First check in current lists
+        const existing = getPlaceById(id);
+        if (existing) return existing;
+
+        try {
+            const fetched = await MapsService.fetchPlaceById(id, language);
+            if (fetched) {
+                // Prepend to allPlaces so it is cached in the local current session
+                setAllPlaces(prev => [fetched, ...prev]);
+                return fetched;
+            }
+        } catch (error) {
+            console.error('[PlacesContext] fetchPlaceByIdAsync Error:', error);
+        }
+        return null;
+    };
+
     useEffect(() => {
         const isFallbackActive = currentSearchName === 'Israel';
 
@@ -252,6 +272,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                 recordPlaceClick,
                 resetSearch,
                 getPlaceById,
+                fetchPlaceByIdAsync,
                 currentSearchCenter,
                 currentSearchName,
                 searchHistory,

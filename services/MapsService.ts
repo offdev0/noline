@@ -280,4 +280,63 @@ export class MapsService {
             return [];
         }
     }
+
+    /**
+     * Fetches details for a single place by ID
+     */
+    static async fetchPlaceById(placeId: string, languageCode: string = 'en'): Promise<PlaceData | null> {
+        console.log(`[MapsService] fetchPlaceById: ${placeId} (${languageCode})`);
+        try {
+            const url = `https://places.googleapis.com/v1/places/${placeId}`;
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
+                    'X-Goog-FieldMask': 'id,displayName,formattedAddress,rating,types,photos,editorialSummary,location',
+                }
+            });
+
+            if (!response.ok) {
+                console.error(`[MapsService] Error fetching place ${placeId}:`, await response.text());
+                return null;
+            }
+
+            const p = await response.json();
+            if (!p.location?.latitude) return null;
+
+            let category: PlaceData['category'] = 'mustVisit';
+            if (p.types) {
+                const foundType = p.types.find((t: string) => CATEGORY_MAPPING[t]);
+                if (foundType) {
+                    category = CATEGORY_MAPPING[foundType];
+                }
+            }
+
+            let imageUrl = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800';
+            if (p.photos && p.photos.length > 0) {
+                imageUrl = `https://places.googleapis.com/v1/${p.photos[0].name}/media?key=${GOOGLE_MAPS_API_KEY}&maxWidthPx=800`;
+            }
+
+            return {
+                id: p.id,
+                name: p.displayName?.text || 'Great Place',
+                description: p.editorialSummary?.text || 'A popular local spot.',
+                category,
+                distance: '--- km',
+                status: 'medium',
+                image: imageUrl,
+                rating: p.rating || 4.2,
+                address: p.formattedAddress || 'Address not available',
+                location: {
+                    latitude: p.location.latitude,
+                    longitude: p.location.longitude,
+                },
+                isLeisure: ['park', 'museum', 'zoo', 'aquarium', 'tourist_attraction'].some(type => p.types?.includes(type))
+            };
+        } catch (error) {
+            console.error('[MapsService] fetchPlaceById Exception:', error);
+            return null;
+        }
+    }
 }

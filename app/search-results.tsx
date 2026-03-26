@@ -84,7 +84,10 @@ export default function SearchResultsScreen() {
 
             <View style={styles.cardContent}>
                 <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.cardAddress} numberOfLines={1}>{item.address}</Text>
+                <View style={styles.distanceContainer}>
+                    <Ionicons name="location-outline" size={10} color="#64748B" />
+                    <Text style={styles.cardAddress} numberOfLines={1}>{item.distance}</Text>
+                </View>
                 <View style={[styles.statusBadge, { backgroundColor: getQueueColor(item.status) + '20' }]}>
                     <View style={[styles.statusDot, { backgroundColor: getQueueColor(item.status) }]} />
                     <Text style={[styles.statusText, { color: getQueueColor(item.status) }]}>
@@ -304,10 +307,16 @@ const styles = StyleSheet.create({
         color: '#0F172A',
         marginBottom: 4,
     },
+    distanceContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
+        marginBottom: 8,
+    },
     cardAddress: {
         fontSize: 11,
         color: '#64748B',
-        marginBottom: 8,
+        fontWeight: '600',
     },
     statusBadge: {
         flexDirection: 'row',
