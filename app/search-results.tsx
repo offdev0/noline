@@ -1,3 +1,4 @@
+import { formatDistance } from '@/utils/formatters';
 import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -85,8 +86,10 @@ export default function SearchResultsScreen() {
             <View style={styles.cardContent}>
                 <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
                 <View style={styles.distanceContainer}>
-                    <Ionicons name="location-outline" size={10} color="#64748B" />
-                    <Text style={styles.cardAddress} numberOfLines={1}>{item.distance}</Text>
+                    <Ionicons name="location-sharp" size={12} color="#94A3B8" />
+                    <Text style={styles.cardAddress} numberOfLines={1}>
+                        {formatDistance(item.distance)} • {t('places.open')}
+                    </Text>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: getQueueColor(item.status) + '20' }]}>
                     <View style={[styles.statusDot, { backgroundColor: getQueueColor(item.status) }]} />
@@ -310,11 +313,11 @@ const styles = StyleSheet.create({
     distanceContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 3,
+        gap: 4,
         marginBottom: 8,
     },
     cardAddress: {
-        fontSize: 11,
+        fontSize: 12,
         color: '#64748B',
         fontWeight: '600',
     },

@@ -274,7 +274,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                                 icon="mail-outline"
                                 label={t('drawer.contactUs')}
                                 onPress={() => {
-                                    Linking.openURL('mailto:support@noline.app');
+                                    Linking.openURL('mailto:Noline012@gmail.com');
                                 }}
                             />
                         </View>

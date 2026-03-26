@@ -89,7 +89,7 @@ export class MapsService {
         latitude: number,
         longitude: number,
         languageCode: string = 'en',
-        radiusMeters: number = 10000,
+        radiusMeters: number = 100,
         restrictToIsrael: boolean = false
     ): Promise<PlaceData[]> {
         console.log(`[MapsService] Fetching places near: ${latitude}, ${longitude} (Language: ${languageCode}, restrictToIsrael: ${restrictToIsrael})`);
@@ -156,11 +156,9 @@ export class MapsService {
             if (!p.location?.latitude || !p.location?.longitude) return;
             if (seenIds.has(p.id)) return;
 
-            // For GPS results: hard-filter anything beyond the radius to prevent distant foreign places
-            if (!restrictToIsrael) {
-                const dist = this.getRawDistance(latitude, longitude, p.location.latitude, p.location.longitude);
-                if (dist > radiusKm * 1.5) return; // allow 50% slack for radius bias behavior
-            }
+            // Hard-filter anything beyond the radius to prevent distant foreign or far-away places
+            const dist = this.getRawDistance(latitude, longitude, p.location.latitude, p.location.longitude);
+            if (dist > radiusKm * 1.5) return; // allow 50% slack for radius bias behavior
 
             // For Israel fallback: hard-filter to Israel bounding box
             if (restrictToIsrael) {

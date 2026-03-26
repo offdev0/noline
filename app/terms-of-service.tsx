@@ -1,4 +1,3 @@
-import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -14,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const LAST_UPDATED = 'January 1, 2025';
-const CONTACT_EMAIL = 'support@noline.app';
+const CONTACT_EMAIL = 'Noline012@gmail.com';
 
 const SECTIONS = [
     {

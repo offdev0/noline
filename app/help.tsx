@@ -88,7 +88,7 @@ export default function HelpScreen() {
     ];
 
     const contactMethods = [
-        { icon: 'mail-outline', label: t('help.emailSupport'), value: 'support@noline.app' },
+        { icon: 'mail-outline', label: t('help.emailSupport'), value: 'Noline012@gmail.com' },
     ];
 
     return (
@@ -139,7 +139,7 @@ export default function HelpScreen() {
                         <TouchableOpacity
                             key={index}
                             style={styles.contactItem}
-                            onPress={() => Linking.openURL('mailto:support@noline.app')}
+                            onPress={() => Linking.openURL('mailto:Noline012@gmail.com')}
                         >
                             <View style={styles.contactIconCircle}>
                                 <Ionicons name={method.icon as any} size={22} color="#4F46E5" />
