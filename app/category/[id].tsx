@@ -62,6 +62,7 @@ export default function CategoryScreen() {
                 <View style={styles.cardHeader}>
                     <View style={styles.nameContent}>
                         <Text style={[styles.placeName, language === 'he' && isLatinText(item.name) && styles.ltrText]}>{item.name}</Text>
+                        <Text style={styles.placeDescription} numberOfLines={1}>{item.description}</Text>
                         <Text style={styles.placeAddress} numberOfLines={1}>{item.address}</Text>
                     </View>
                     <View style={styles.ratingBadge}>
@@ -160,7 +161,8 @@ const styles = StyleSheet.create({
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
     nameContent: { flex: 1, marginRight: 12 },
     placeName: { fontSize: 18, fontWeight: '800', color: '#1E293B', marginBottom: 2 },
-    placeAddress: { fontSize: 13, color: '#64748B', fontWeight: '500' },
+    placeDescription: { fontSize: 12, color: '#64748B', marginBottom: 4, fontWeight: '500' },
+    placeAddress: { fontSize: 13, color: '#64748B', fontWeight: '500', marginBottom: 6 },
     ratingBadge: { 
         flexDirection: 'row', 
         alignItems: 'center', 

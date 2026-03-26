@@ -20,6 +20,7 @@ export interface PlaceProps {
     distance: string;
     image: string;
     status: string;
+    description: string;
 }
 
 export const FeaturedCard = ({ place, onPress }: { place: PlaceProps; onPress: () => void }) => (
@@ -35,7 +36,7 @@ export const FeaturedCard = ({ place, onPress }: { place: PlaceProps; onPress: (
 
             <View style={styles.cardContentOverlay}>
                 <Text style={styles.cardNameLarge}>{place.name}</Text>
-                <Text style={styles.cardDetailText}> • {t('places.veryPopular')}  •</Text>
+                <Text style={styles.cardDetailText} numberOfLines={1}>{place.description}</Text>
             </View>
         </View>
         <View style={styles.cardFooter}>
@@ -57,9 +58,9 @@ export const GridCard = ({ place, onPress }: { place: PlaceProps; onPress: () =>
             </View>
 
             <View style={styles.cardContentOverlaySmall}>
-                <Text style={styles.cardNameSmall} >{place.name}</Text>
-                <Text style={styles.cardDetailTextSmall} >
-                    {/* {place?.description} */}
+                <Text style={styles.cardNameSmall} numberOfLines={1}>{place.name}</Text>
+                <Text style={styles.cardDetailTextSmall} numberOfLines={1}>
+                    {place.description}
                 </Text>
 
             </View>
@@ -81,7 +82,8 @@ export const ListCard = ({ place, onPress }: { place: PlaceProps; onPress: () =>
                 <PlaceBadge type="star" text={place.rating} />
             </View>
             <View style={styles.cardContentOverlay}>
-                <Text style={styles.cardNameLarge}>{place.name}</Text>
+                <Text style={styles.cardNameLarge} numberOfLines={1}>{place.name}</Text>
+                <Text style={styles.cardDetailText} numberOfLines={1}>{place.description}</Text>
             </View>
         </View>
         <View style={styles.cardFooter}>

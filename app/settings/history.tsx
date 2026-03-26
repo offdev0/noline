@@ -10,13 +10,13 @@ import { collection, doc, getDocs, limit, query, where } from 'firebase/firestor
 import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface RecentPlace {
     id: string;
@@ -24,6 +24,7 @@ interface RecentPlace {
     address: string;
     rating: number;
     image: string;
+    description: string;
     searchedOn: Date;
 }
 
@@ -72,6 +73,7 @@ export default function HistoryScreen() {
                     address: data.searchedAddress || 'Address not available',
                     rating: placeFromContext?.rating || data.rating || 4.2,
                     image: placeFromContext?.image || data.imageUrl || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400',
+                    description: placeFromContext?.description || '',
                     searchedOn: data.searchedOn?.toDate() || new Date(),
                 });
                 if (places.length >= 20) break;
@@ -127,6 +129,7 @@ export default function HistoryScreen() {
                             />
                             <View style={styles.recentContent}>
                                 <Text style={[styles.recentName, language === 'he' && isLatinText(place.name) && styles.ltrText]} numberOfLines={1}>{place.name}</Text>
+                                <Text style={styles.recentDescription} numberOfLines={1}>{place.description}</Text>
                                 <Text style={styles.recentAddress} numberOfLines={1}>{place.address}</Text>
                                 <View style={styles.recentMeta}>
                                     <Ionicons name="star" size={12} color="#FFD700" />
@@ -186,7 +189,8 @@ const styles = StyleSheet.create({
     },
     recentImage: { width: 60, height: 60, borderRadius: 14 },
     recentContent: { flex: 1, marginLeft: 14 },
-    recentName: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
+    recentName: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 2 },
+    recentDescription: { fontSize: 11, color: '#64748B', marginBottom: 2, fontWeight: '500' },
     recentAddress: { fontSize: 12, color: '#64748B', marginBottom: 4 },
     recentMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     recentRating: { fontSize: 12, fontWeight: '700', color: '#92400E' },

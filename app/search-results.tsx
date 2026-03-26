@@ -85,6 +85,7 @@ export default function SearchResultsScreen() {
 
             <View style={styles.cardContent}>
                 <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.cardDescription} numberOfLines={1}>{item.description}</Text>
                 <View style={styles.distanceContainer}>
                     <Ionicons name="location-sharp" size={12} color="#94A3B8" />
                     <Text style={styles.cardAddress} numberOfLines={1}>
@@ -308,7 +309,13 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '800',
         color: '#0F172A',
-        marginBottom: 4,
+        marginBottom: 2,
+    },
+    cardDescription: {
+        fontSize: 11,
+        color: '#64748B',
+        marginBottom: 6,
+        fontWeight: '500',
     },
     distanceContainer: {
         flexDirection: 'row',

@@ -31,7 +31,8 @@ export default function PlacesSection() {
         queueStatus: p.status === 'vacant' ? t('places.shortWait') : t('places.quiteBusy'),
         distance: formatDistance(p.distance),
         image: p.image,
-        status: p.status
+        status: p.status,
+        description: p.description || ''
     });
 
     if (loading && allPlaces.length === 0) return null;
