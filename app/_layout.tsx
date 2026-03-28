@@ -1,11 +1,11 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 
+import OnboardingScreen from '@/components/Loading';
 import MedalUpgradeModal from '@/components/rewards/MedalUpgradeModal';
 import { FavoritesProvider } from '@/context/FavoritesContext';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
@@ -46,15 +46,7 @@ function MainLayout() {
 
   if (authLoading || langLoading) {
     return (
-      <LinearGradient
-        colors={['#5356FF', '#3787FF']}
-        style={styles.loadingContainer}
-      >
-        <View style={styles.loadingContent}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      </LinearGradient>
+      <OnboardingScreen />
     );
   }
 
@@ -63,6 +55,7 @@ function MainLayout() {
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack key={language}>
           <Stack.Screen name="index" options={{ headerShown: false, statusBarStyle: 'dark' }} />
+          <Stack.Screen name="login" options={{ headerShown: false, statusBarStyle: 'dark' }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false, statusBarHidden: false, statusBarStyle: 'dark', statusBarTranslucent: true }} />
           <Stack.Screen name="place" options={{ headerShown: false }} />
           <Stack.Screen name="favorites" options={{ headerShown: false }} />

@@ -83,6 +83,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
     const handleLogout = async () => {
         setIsLoggingOut(true);
         try {
+
             onClose();
             await new Promise(resolve => setTimeout(resolve, 100));
             await logout();

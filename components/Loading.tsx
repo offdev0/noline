@@ -1,8 +1,8 @@
-import { useRouter } from 'expo-router';
 import React from 'react';
 import {
     Dimensions,
     StyleSheet,
+    Text,
     View
 } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -11,14 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const { width, height } = Dimensions.get('window');
 
 export default function OnboardingScreen() {
-    const router = useRouter();
 
-    React.useEffect(() => {
-        const timer = setTimeout(() => {
-            router.replace('/login');
-        }, 3000);
-        return () => clearTimeout(timer);
-    }, []);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -29,7 +22,10 @@ export default function OnboardingScreen() {
                     style={styles.image}
                     resizeMode="contain"
                 />
+                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#7337ff' }}>Loading...</Text>
             </View>
+
+
         </SafeAreaView>
     );
 }
