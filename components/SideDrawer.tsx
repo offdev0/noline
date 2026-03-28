@@ -23,7 +23,7 @@ import { useUser } from '@/context/UserContext';
 import { t } from '@/i18n';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const DRAWER_WIDTH = SCREEN_WIDTH * 0.85;
+const DRAWER_WIDTH = SCREEN_WIDTH;
 
 interface SideDrawerProps {
     isVisible: boolean;
@@ -33,17 +33,23 @@ interface SideDrawerProps {
 
 export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawerProps) {
     const router = useRouter();
+    const { language } = useLanguage();
     const { logout, userData, level, medal, medalName, progressToNextLevel, xpToNextLevel, nextMedalName, points, streak } = useUser();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const displayName = userData?.display_name || userEmail?.split('@')[0] || t('places.user');
     const profilePic = userData?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=6366F1&color=fff&size=128`;
 
-    const slideAnim = useRef(new Animated.Value(DRAWER_WIDTH)).current;
+    const isRTL = language === 'he';
+    const hiddenValue = isRTL ? DRAWER_WIDTH : -DRAWER_WIDTH;
+    const slideAnim = useRef(new Animated.Value(hiddenValue)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         const duration = 150;
+        const isRTL = language === 'he';
+        const hiddenValue = isRTL ? DRAWER_WIDTH : -DRAWER_WIDTH;
+
         if (isVisible) {
             Animated.parallel([
                 Animated.timing(slideAnim, {
@@ -60,7 +66,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
         } else {
             Animated.parallel([
                 Animated.timing(slideAnim, {
-                    toValue: DRAWER_WIDTH,
+                    toValue: hiddenValue,
                     duration,
                     useNativeDriver: true,
                 }),
@@ -71,7 +77,7 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
                 }),
             ]).start();
         }
-    }, [isVisible]);
+    }, [isVisible, language]);
 
     // Handle logout
     const handleLogout = async () => {
@@ -116,7 +122,6 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
         </View>
     );
 
-    const { language } = useLanguage();
 
     return (
         <Modal
@@ -136,9 +141,13 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
 
             <Animated.View style={[
                 styles.drawerContainer,
-                { transform: [{ translateX: slideAnim }], direction: 'ltr' } // Force positioning to right
+                {
+                    transform: [{ translateX: slideAnim }],
+                    left: isRTL ? undefined : 0,
+                    right: isRTL ? 0 : undefined,
+                }
             ]}>
-                <SafeAreaView style={[styles.safeArea, { direction: 'ltr' }]}>
+                <SafeAreaView style={styles.safeArea}>
                     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                         <View style={styles.drawerHeader}>
                             <Text style={styles.headerTitle}>{t('drawer.myProfile')}</Text>
@@ -315,7 +324,6 @@ const styles = StyleSheet.create({
     drawerContainer: {
         position: 'absolute',
         top: 0,
-        right: 0, // Using right: 0 with direction: 'ltr' forces it to the physical right
         bottom: 0,
         width: DRAWER_WIDTH,
         backgroundColor: '#F8F9FA',
@@ -325,13 +333,13 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 10,
         elevation: 10,
-        direction: 'ltr', // Force LTR for this container to stop flipping
     },
     safeArea: {
         flex: 1,
     },
     scrollContent: {
         paddingBottom: 40,
+        paddingTop: 24
     },
     headerRow: {
         flexDirection: 'row',
