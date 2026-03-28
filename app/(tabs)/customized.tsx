@@ -4,15 +4,16 @@ import { usePlaces } from '@/context/PlacesContext';
 import { t } from '@/i18n';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { GroupSelection } from '@/components/customized/GroupSelection';
+import { FavoritesSection } from '@/components/customized/FavoritesSection';
 import { GeneratingRoute } from '@/components/customized/GeneratingRoute';
+import { GroupSelection } from '@/components/customized/GroupSelection';
 import { JourneyCard } from '@/components/customized/JourneyCard';
 import { JourneyFinished } from '@/components/customized/JourneyFinished';
-import { FavoritesSection } from '@/components/customized/FavoritesSection';
+import { TimeSelection } from '@/components/customized/TimeSelection';
 
 export default function CustomizedScreen() {
     const router = useRouter();
@@ -21,32 +22,40 @@ export default function CustomizedScreen() {
     const { allPlaces } = usePlaces();
 
     const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+    const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
     const [routeStops, setRouteStops] = useState<any[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
 
-    const generateRoute = async (groupId: string) => {
+    const generateRoute = async (groupId: string, durationId: string) => {
         if (allPlaces.length === 0) {
             alert('Wait a moment, we are still loading places near you...');
             return;
         }
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        setSelectedGroup(groupId);
+        setSelectedDuration(durationId);
         setIsGenerating(true);
 
         // Simulation delay for "Personalized" feel
         setTimeout(() => {
             const pool = allPlaces;
             const shuffled = [...pool].sort(() => Math.random() - 0.5);
-            const selectedStops = shuffled.slice(0, 4);
+
+            // Adjust stops based on duration
+            const stopsCount =
+                durationId === '1h' ? 2 :
+                    durationId === '3h' ? 3 :
+                        durationId === 'half' ? 5 : 8;
+
+            const selectedStops = shuffled.slice(0, stopsCount);
 
             const stopsWithTransit = selectedStops.map((stop, i) => {
                 const dist = Math.random() * 1.5 + 0.3; // 0.3 - 1.8 km
                 const mode = dist < 0.8 ? 'walking' : 'taxi';
                 const time = Math.round(dist * (mode === 'walking' ? 12 : 5));
-                
-                const subSteps = mode === 'walking' 
+
+                const subSteps = mode === 'walking'
                     ? [
                         { icon: 'walk', text: 'Walk to the nearby point' },
                         { icon: 'navigate', text: 'Follow the direct path' },
@@ -79,6 +88,7 @@ export default function CustomizedScreen() {
     const handleNewRoute = () => {
         setRouteStops([]);
         setSelectedGroup(null);
+        setSelectedDuration(null);
         setCurrentStep(0);
         setIsFinished(false);
     };
@@ -116,7 +126,7 @@ export default function CustomizedScreen() {
                     ) : isFinished ? (
                         <JourneyFinished numStops={routeStops.length} onReset={handleNewRoute} />
                     ) : routeStops.length > 0 ? (
-                        <JourneyCard 
+                        <JourneyCard
                             place={routeStops[currentStep]}
                             currentStep={currentStep}
                             totalSteps={routeStops.length}
@@ -132,14 +142,19 @@ export default function CustomizedScreen() {
                                 }
                             })}
                         />
+                    ) : selectedGroup ? (
+                        <TimeSelection
+                            onSelect={(durationId) => generateRoute(selectedGroup, durationId)}
+                            onBack={() => setSelectedGroup(null)}
+                        />
                     ) : (
-                        <GroupSelection onSelect={generateRoute} />
+                        <GroupSelection onSelect={(groupId) => setSelectedGroup(groupId)} />
                     )}
                 </View>
 
                 {/* Favorites - Only show when not in the middle of a journey */}
                 {routeStops.length === 0 && !isGenerating && (
-                    <FavoritesSection 
+                    <FavoritesSection
                         favorites={favorites}
                         language={language}
                         onViewAll={() => router.push('/favorites')}

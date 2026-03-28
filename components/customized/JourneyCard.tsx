@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { t } from '@/i18n';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { t } from '@/i18n';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface JourneyCardProps {
     place: any;
@@ -32,6 +32,11 @@ export const JourneyCard: React.FC<JourneyCardProps> = ({
     return (
         <View style={styles.container}>
             {/* Step Indicator */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => { }} style={styles.backBtn}>
+                    <Ionicons name="arrow-back" size={24} color="#64748B" />
+                </TouchableOpacity>
+            </View>
             <View style={styles.stepHeader}>
                 <Text style={styles.stepTitle}>
                     {t('route.stop')} {currentStep + 1}
@@ -133,6 +138,24 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 16,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 20,
+        gap: 12,
+    },
+    backBtn: {
+        padding: 7,
+        backgroundColor: '#e8e9ebff',
+        borderRadius: 10,
+
+
+    },
+    label: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1E293B',
     },
     stepTitle: {
         fontSize: 14,

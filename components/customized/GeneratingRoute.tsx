@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { t } from '@/i18n';
+import React from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 export const GeneratingRoute = () => {
     return (
