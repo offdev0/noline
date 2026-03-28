@@ -14,6 +14,7 @@ interface JourneyCardProps {
     onFinish: () => void;
     onViewDetails: () => void;
     onSeeRoute: () => void;
+    onBack?: () => void;
 }
 
 export const JourneyCard: React.FC<JourneyCardProps> = ({
@@ -25,6 +26,7 @@ export const JourneyCard: React.FC<JourneyCardProps> = ({
     onFinish,
     onViewDetails,
     onSeeRoute,
+    onBack,
 }) => {
     if (!place) return null;
     const isLastStep = currentStep === totalSteps - 1;
@@ -33,7 +35,7 @@ export const JourneyCard: React.FC<JourneyCardProps> = ({
         <View style={styles.container}>
             {/* Step Indicator */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => { }} style={styles.backBtn}>
+                <TouchableOpacity onPress={onBack} style={styles.backBtn}>
                     <Ionicons name="arrow-back" size={24} color="#64748B" />
                 </TouchableOpacity>
             </View>

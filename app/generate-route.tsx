@@ -138,6 +138,10 @@ export default function GenerateRouteScreen() {
                                     currentStep: currentStep.toString()
                                 }
                             })}
+                            onBack={() => {
+                                setRouteStops([]);
+                                setSelectedDuration(null);
+                            }}
                         />
                     ) : (
                         <TimeSelection
