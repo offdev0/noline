@@ -1,71 +1,48 @@
 import AuthButton from '@/components/auth/AuthButton';
 import AuthInput from '@/components/auth/AuthInput';
-import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import { useUser } from '@/context/UserContext';
 import { t } from '@/i18n';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Alert,
-    Dimensions, Image, KeyboardAvoidingView,
+    Dimensions,
+    Image,
+    KeyboardAvoidingView,
     Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 
-export default function AuthScreen() {
-    const [isLogin, setIsLogin] = useState(true);
+export default function ForgotPasswordScreen() {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
-
-    const { login, signUp, signInWithGoogle } = useUser();
+    const { sendPasswordReset } = useUser();
     const router = useRouter();
 
-    const handleForgotPassword = () => {
-        router.push('/forgot-password');
-    };
-
-    const handleAuth = async () => {
-        if (!email || !password || (!isLogin && !name)) {
-            Alert.alert(t('common.error'), 'Please fill all fields');
+    const handleResetPassword = async () => {
+        if (!email) {
+            Alert.alert(t('auth.errorTitle'), t('auth.enterEmailForReset'));
             return;
         }
 
         setLoading(true);
         try {
-            if (isLogin) {
-                await login(email, password);
-            } else {
-                await signUp(email, password, name);
-            }
+            await sendPasswordReset(email);
+            Alert.alert(
+                t('auth.success'),
+                t('auth.passwordResetSent'),
+                [{ text: t('auth.ok'), onPress: () => router.back() }]
+            );
         } catch (error: any) {
-            Alert.alert('Authentication Failed', error.message || 'Check your credentials');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGoogleAuth = async () => {
-        try {
-            setLoading(true);
-            await signInWithGoogle();
-        } catch (error: any) {
-            if (error.code === 'DEVELOPER_ERROR') {
-                Alert.alert(
-                    t('auth.googleBuildRequiredTitle'),
-                    t('auth.googleBuildRequiredMessage')
-                );
-            } else {
-                Alert.alert(t('auth.googleLoginErrorTitle'), error.message);
-            }
+            Alert.alert(t('auth.errorTitle'), error.message || 'Failed to send reset email.');
         } finally {
             setLoading(false);
         }
@@ -80,6 +57,13 @@ export default function AuthScreen() {
                 style={styles.keyboardView}
             >
                 <Animated.View entering={FadeInDown.delay(200).duration(800)} style={styles.content}>
+                    <TouchableOpacity 
+                        style={styles.backButton} 
+                        onPress={() => router.back()}
+                    >
+                        <Ionicons name="arrow-back" size={24} color="#1F2937" />
+                    </TouchableOpacity>
+
                     <View style={styles.header}>
                         <View style={styles.logoCircle}>
                             <Image
@@ -88,63 +72,34 @@ export default function AuthScreen() {
                                 resizeMode="contain"
                             />
                         </View>
-                        <Text style={styles.title}>NoLine</Text>
+                        <Text style={styles.title}>{t('auth.forgotPassword')}</Text>
                         <Text style={styles.subtitle}>
-                            {isLogin ? 'Welcome back! Log in to continue.' : 'Create an account to start avoiding queues.'}
+                            {t('auth.enterEmailForReset')}
                         </Text>
                     </View>
 
                     <View style={styles.form}>
-                        {!isLogin && (
-                            <AuthInput
-                                icon="person-outline"
-                                placeholder="Full Name"
-                                value={name}
-                                onChangeText={setName}
-                            />
-                        )}
-
                         <AuthInput
                             icon="mail-outline"
-                            placeholder="Email Address"
+                            placeholder={t('auth.email')}
                             keyboardType="email-address"
                             value={email}
                             onChangeText={setEmail}
                         />
 
-                        <AuthInput
-                            icon="lock-closed-outline"
-                            placeholder="Password"
-                            secureTextEntry
-                            value={password}
-                            onChangeText={setPassword}
-                        />
-
-                        {isLogin && (
-                            <TouchableOpacity style={styles.forgotBtn} onPress={handleForgotPassword}>
-                                <Text style={styles.forgotText}>Forgot Password?</Text>
-                            </TouchableOpacity>
-                        )}
-
                         <AuthButton
-                            title={isLogin ? 'Log In' : 'Sign Up'}
-                            onPress={handleAuth}
+                            title="Send Reset Link"
+                            onPress={handleResetPassword}
                             loading={loading}
-                        />
-
-                        <SocialAuthButtons
-                            onGooglePress={handleGoogleAuth}
-                            isLoading={loading}
-                            mode={isLogin ? 'login' : 'signup'}
                         />
 
                         <View style={styles.footer}>
                             <Text style={styles.footerText}>
-                                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                                {t('auth.haveAccount').split('?')[0]}?{" "}
                             </Text>
-                            <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+                            <TouchableOpacity onPress={() => router.back()}>
                                 <Text style={styles.footerLink}>
-                                    {isLogin ? 'Sign Up' : 'Log In'}
+                                    {t('auth.login')}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -169,7 +124,6 @@ const styles = StyleSheet.create({
     },
     content: {
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        // marginHorizontal: 30,
         marginBottom: -30,
         borderRadius: 32,
         paddingHorizontal: 30,
@@ -180,7 +134,13 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 40,
         elevation: 15,
-
+    },
+    backButton: {
+        position: 'absolute',
+        top: 20,
+        left: 20,
+        zIndex: 10,
+        padding: 8,
     },
     header: {
         alignItems: 'center',
@@ -207,21 +167,12 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     form: {
-        gap: 0, // Gap handled by individual components (marginBottom)
-    },
-    forgotBtn: {
-        alignSelf: 'flex-end',
-        marginBottom: 16,
-    },
-    forgotText: {
-        color: '#5356FF',
-        fontSize: 14,
-        fontWeight: '600',
+        gap: 0,
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginTop: 10,
+        marginTop: 20,
     },
     footerText: {
         color: '#6B7280',

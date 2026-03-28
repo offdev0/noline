@@ -90,6 +90,7 @@ function MainLayout() {
           <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
           <Stack.Screen name="terms-of-service" options={{ headerShown: false }} />
           <Stack.Screen name="route-details" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="forgot-password" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         </Stack>
         <MedalUpgradeModal />

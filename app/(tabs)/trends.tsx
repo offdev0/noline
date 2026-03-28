@@ -139,7 +139,7 @@ export default function TrendsScreen() {
                                     <Ionicons name={mood.icon as any} size={22} color={mood.iconColor} />
                                 </LinearGradient>
                                 <Text style={[styles.moodLabel, { color: mood.iconColor }]}>{t(`moods.${mood.label}`)}</Text>
-                                <Text style={styles.moodDescription} numberOfLines={1}>{mood.description}</Text>
+                                {/* <Text style={styles.moodDescription} numberOfLines={1}>{mood.description}</Text> */}
                             </TouchableOpacity>
                         </View>
                     ))}

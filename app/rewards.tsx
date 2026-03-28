@@ -133,9 +133,9 @@ export default function RewardsScreen() {
                 {/* XP Progress Section */}
                 <View style={styles.card}>
                     <View style={styles.progressHeader}>
-                      
+
                         <View style={styles.progressInfo}>
-                            
+
                             <View style={styles.progressBarContainer}>
                                 <View style={[styles.progressBar, { width: `${progressToNextLevel}%` }]} />
                             </View>
@@ -177,7 +177,7 @@ export default function RewardsScreen() {
                                 <View style={styles.taskItem}>
                                     <View style={styles.taskIconWrapper}>
                                         <Ionicons
-                                        //@ts-ignore
+                                            //@ts-ignore
                                             name={mission.icon}
                                             size={20}
                                             color={isCompleted ? '#10B981' : '#6366F1'}
@@ -233,18 +233,18 @@ export default function RewardsScreen() {
                                         </TouchableOpacity>
                                     ) : (
                                         <View style={styles.achievementLockedWrap}>
-                                            <ColorMatrix 
-                                            //@ts-ignore
-                                            matrix={GRAYSCALE_MATRIX}>
+                                            <ColorMatrix
+                                                //@ts-ignore
+                                                matrix={GRAYSCALE_MATRIX}>
                                                 <Image
                                                     source={medalAsset}
                                                     style={styles.achievementMedal}
                                                     resizeMode="contain"
                                                 />
                                             </ColorMatrix>
-                                            <View style={styles.achievementLockBadge}>
+                                            {/* <View style={styles.achievementLockBadge}>
                                                 <Ionicons name="lock-closed" size={16} color="#FFFFFF" />
-                                            </View>
+                                            </View> */}
                                         </View>
                                     )}
                                 </View>
@@ -360,8 +360,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 6,
         borderRadius: 12,
-        marginTop:30,
-        marginLeft:-15
+        marginTop: 30,
+        marginLeft: -15
     },
     levelBadgeText: {
         color: '#6366F1',

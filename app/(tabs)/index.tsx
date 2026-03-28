@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     paddingHorizontal: 20,
-    marginBottom: 0,
-    flexDirection: "row",
+    marginBottom: 10,
+    // flexDirection: "row",
   },
   titleBlue: {
     fontSize: 22,
