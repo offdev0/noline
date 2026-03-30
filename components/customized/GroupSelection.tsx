@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -48,10 +48,11 @@ export const GroupSelection: React.FC<GroupSelectionProps> = ({ onSelect }) => {
 const styles = StyleSheet.create({
     container: {},
     label: {
-        fontSize: 16,
+        fontSize: 22,
         fontWeight: '700',
-        color: '#475569',
-        marginBottom: 16,
+        color: '#111111ff',
+        marginBottom: 26,
+        marginTop: 20
     },
     grid: {
         flexDirection: 'row',

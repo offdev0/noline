@@ -1,10 +1,9 @@
-import { useFavorites } from '@/context/FavoritesContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { usePlaces } from '@/context/PlacesContext';
 import { t } from '@/i18n';
 import * as Haptics from 'expo-haptics';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -110,12 +109,6 @@ export default function GenerateRouteScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
-                {/* Header */}
-                <View style={styles.header}>
-                    <Text style={styles.pageTitle}>{t('route.personalizedTitle')}</Text>
-                    <Text style={styles.pageSubtitle}>{t('route.planSubtitle')}</Text>
-                </View>
-
                 {/* Main Content Area */}
                 <View style={styles.mainArea}>
                     {isGenerating ? (
@@ -143,11 +136,18 @@ export default function GenerateRouteScreen() {
                                 setSelectedDuration(null);
                             }}
                         />
+
                     ) : (
-                        <TimeSelection
-                            onSelect={(durationId) => generateRoute(durationId)}
-                            onBack={() => router.back()}
-                        />
+                        <>
+                            <View style={styles.header}>
+                                <Text style={styles.pageTitle}>{t('route.personalizedTitle')}</Text>
+                            </View>
+
+                            <TimeSelection
+                                onSelect={(durationId) => generateRoute(durationId)}
+                                onBack={() => router.back()}
+                            />
+                        </>
                     )}
                 </View>
 
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F8FAFC' },
     scrollContent: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 },
 
-    header: { marginBottom: 24 },
+    header: { marginBottom: 10, marginTop: 24 },
     pageTitle: { fontSize: 26, fontWeight: '800', color: '#0F172A', marginBottom: 6 },
     pageSubtitle: { fontSize: 14, color: '#64748B', lineHeight: 20 },
 

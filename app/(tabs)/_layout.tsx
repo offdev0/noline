@@ -21,6 +21,7 @@ export default function TabLayout() {
         tabBarInactiveTintColor: INACTIVE_COLOR,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarShowLabel: false,
         tabBarStyle: {
           position: 'absolute',
           bottom: 25,
@@ -28,7 +29,7 @@ export default function TabLayout() {
           right: 20,
           backgroundColor: '#FFFFFF',
           borderRadius: 25,
-          height: 75,
+          height: 65,
           borderTopWidth: 0,
           borderWidth: 1,
           borderColor: '#F1F5F9',
@@ -38,14 +39,6 @@ export default function TabLayout() {
           shadowRadius: 20,
           elevation: 5,
         },
-        tabBarItemStyle: {
-          paddingTop: 10,
-        },
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '700',
-          paddingBottom: 10,
-        }
       }}>
 
       {/* Home Tab */}

@@ -1,9 +1,8 @@
 import { useFavorites } from '@/context/FavoritesContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { t } from '@/i18n';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FavoritesSection } from '@/components/customized/FavoritesSection';
@@ -27,11 +26,7 @@ export default function CustomizedScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
-                {/* Header */}
-                <View style={styles.header}>
-                    <Text style={styles.pageTitle}>{t('route.personalizedTitle')}</Text>
-                    <Text style={styles.pageSubtitle}>{t('route.planSubtitle')}</Text>
-                </View>
+
 
                 {/* Selection Section */}
                 <View style={styles.mainArea}>
