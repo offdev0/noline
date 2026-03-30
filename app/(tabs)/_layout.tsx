@@ -21,7 +21,7 @@ export default function TabLayout() {
         tabBarInactiveTintColor: INACTIVE_COLOR,
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarShowLabel: false,
+        // tabBarShowLabel: false,
         tabBarStyle: {
           position: 'absolute',
           bottom: 25,
@@ -29,7 +29,7 @@ export default function TabLayout() {
           right: 20,
           backgroundColor: '#FFFFFF',
           borderRadius: 25,
-          height: 65,
+          height: 60,
           borderTopWidth: 0,
           borderWidth: 1,
           borderColor: '#F1F5F9',
