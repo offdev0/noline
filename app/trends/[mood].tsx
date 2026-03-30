@@ -43,18 +43,18 @@ export default function TrendsCategoryScreen() {
                     description.includes('tea');
             }
             if (moodStr === 'social') {
-                return category === 'hot' || description.includes('lively') || description.includes('social') || 
-                    description.includes('popular') || description.includes('vibrant') || name.includes('bar') || 
+                return category === 'hot' || description.includes('lively') || description.includes('social') ||
+                    description.includes('popular') || description.includes('vibrant') || name.includes('bar') ||
                     name.includes('club') || name.includes('pub') || name.includes('lounge') || description.includes('music');
             }
             if (moodStr === 'adventure') {
                 return description.includes('unique') || description.includes('discovery') || description.includes('exotic') ||
-                    description.includes('experimental') || description.includes('hidden') || name.includes('fusion') || 
+                    description.includes('experimental') || description.includes('hidden') || name.includes('fusion') ||
                     name.includes('experimental') || description.includes('fusion');
             }
             if (moodStr === 'spontaneous') {
-                return category === 'shopping' || description.includes('quick') || description.includes('convenient') || 
-                    description.includes('fast') || name.includes('express') || name.includes('fast') || 
+                return category === 'shopping' || description.includes('quick') || description.includes('convenient') ||
+                    description.includes('fast') || name.includes('express') || name.includes('fast') ||
                     name.includes('takeaway') || description.includes('grab');
             }
 
@@ -65,13 +65,13 @@ export default function TrendsCategoryScreen() {
         if (results.length === 0) {
             console.log(`[TrendsCategory] No results for mood: ${moodStr}, providing distinct fallback results`);
             const sortedByRating = [...trendingPlaces].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-            
+
             // Assign different slices to different moods to avoid overlap
             if (moodStr === 'calm') return sortedByRating.slice(0, 8);
             if (moodStr === 'social') return sortedByRating.slice(8, 16);
             if (moodStr === 'adventure') return sortedByRating.slice(16, 24);
             if (moodStr === 'spontaneous') return sortedByRating.slice(24, 32);
-            
+
             return sortedByRating.slice(0, 10);
         }
 
@@ -150,7 +150,7 @@ export default function TrendsCategoryScreen() {
                             <Ionicons name={moodObj.icon as any} size={36} color={moodObj.iconColor} />
                         </View>
                         <Text style={styles.moodTitle}>{t(`moods.${moodObj.label}`).toString().toUpperCase()}</Text>
-                        <Text style={styles.moodSubtitle}>{t('trends.placesFor', { mood: t(`moods.${moodObj.label}`) })}</Text>
+                        <Text style={styles.moodSubtitle}>{t(`moods.${moodObj.label}Desc`)}</Text>
                         <TouchableOpacity style={styles.changeBtn} onPress={() => router.push('/(tabs)/trends')}>
                             <Text style={styles.changeBtnText}>{t('trends.changeMood')}</Text>
                         </TouchableOpacity>
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     moodHeader: { alignItems: 'center', paddingHorizontal: 20, marginBottom: 20 },
     moodCircleLarge: { width: 96, height: 96, borderRadius: 48, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 2, borderColor: 'transparent', shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 4 },
     moodTitle: { fontSize: 20, fontWeight: '900', color: '#0F172A', marginTop: 12 },
-    moodSubtitle: { fontSize: 13, color: '#64748B', marginTop: 6 },
+    moodSubtitle: { fontSize: 13, color: '#64748B', marginTop: 6, textAlign: 'center' },
     changeBtn: { marginTop: 10, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: '#EEF2FF' },
     changeBtnText: { color: '#6366F1', fontWeight: '800' },
 

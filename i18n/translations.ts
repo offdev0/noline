@@ -26,10 +26,14 @@ export const translations = {
         },
         moods: {
             calm: 'Calm',
+            calmDesc: 'Find your peace in quiet, cozy spots perfect for relaxing.',
             social: 'Social',
+            socialDesc: 'Connect with others at the most vibrant and lively venues.',
             adventure: 'Adventurous',
+            adventureDesc: 'Discover unique, hidden gems and experimental experiences.',
             freedom: 'Spontaneous',
             spontaneous: 'Spontaneous',
+            spontaneousDesc: 'Quick and convenient spots for your fast-paced moments.',
         },
         trends: {
             heroTitle: 'What do you\nwant now?',
@@ -42,7 +46,7 @@ export const translations = {
             favoritesEmpty: 'Places you heart will appear here',
             goBack: 'Go back',
             changeMood: 'Change mood',
-            placesFor: 'Places for %{mood}',
+            placesFor: 'Placesaaa for %{mood}',
             noPlaces: 'No places found for this mood.',
             showingFirst: 'Showing first %{count} of %{total} places',
         },
@@ -459,10 +463,14 @@ export const translations = {
         },
         moods: {
             calm: 'רגוע',
+            calmDesc: 'מצאו את השלווה שלכם במקומות שקטים ונעימים המושלמים לרגיעה.',
             social: 'חברתי',
+            socialDesc: 'התחברו עם אחרים במקומות התוססים והחיים ביותר.',
             adventure: 'הרפתקני',
+            adventureDesc: 'גלו פנינות נסתרות וחוויות ניסיוניות ייחודיות.',
             freedom: 'ספונטני',
             spontaneous: 'ספונטני',
+            spontaneousDesc: 'מקומות מהירים ונוחים לרגעים הקצביים שלכם.',
         },
         trends: {
             heroTitle: 'מה בא לך\nעכשיו?',
