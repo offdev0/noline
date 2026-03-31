@@ -22,7 +22,7 @@ export const TimeSelection: React.FC<TimeSelectionProps> = ({ onSelect, onBack }
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-                    <Ionicons name="arrow-back" size={24} color="#64748B" />
+                    <Ionicons name="arrow-back" size={24} color="#e6e9ecff" />
                 </TouchableOpacity>
             </View>
             <View style={styles.grid}>
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     },
     backBtn: {
         padding: 7,
-        backgroundColor: '#e8e9ebff',
+        backgroundColor: '#1c1d1dff',
         borderRadius: 10,
 
 

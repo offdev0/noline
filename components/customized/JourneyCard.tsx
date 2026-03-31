@@ -36,7 +36,7 @@ export const JourneyCard: React.FC<JourneyCardProps> = ({
             {/* Step Indicator */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-                    <Ionicons name="arrow-back" size={24} color="#64748B" />
+                    <Ionicons name="arrow-back" size={24} color="#eaedf0ff" />
                 </TouchableOpacity>
             </View>
             <View style={styles.stepHeader}>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     },
     backBtn: {
         padding: 7,
-        backgroundColor: '#e8e9ebff',
+        backgroundColor: '#1c1d1dff',
         borderRadius: 10,
 
 

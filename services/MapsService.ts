@@ -185,7 +185,13 @@ export class MapsService {
                 imageUrl = `https://places.googleapis.com/v1/${p.photos[0].name}/media?key=${GOOGLE_MAPS_API_KEY}&maxWidthPx=800`;
             }
 
+            // Categorize as leisure if it matches certain types
+            const isLeisure = ['park', 'museum', 'zoo', 'aquarium', 'tourist_attraction'].some(type => p.types?.includes(type));
+
+            // Deterministic status based on ID so it doesn't change on every refresh
             const statusOptions: PlaceData['status'][] = ['vacant', 'medium', 'loaded'];
+            const statusIndex = p.id.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0);
+            const status = statusOptions[statusIndex % statusOptions.length];
 
             allPlaces.push({
                 id: p.id,
@@ -193,7 +199,7 @@ export class MapsService {
                 description: p.editorialSummary?.text || t('places.popularSpot', { category: t(`categories.${category}`) }),
                 category,
                 distance: this.calculateDistance(latitude, longitude, p.location.latitude, p.location.longitude),
-                status: statusOptions[index % statusOptions.length],
+                status,
                 image: imageUrl,
                 rating: p.rating || 4.2,
                 address: p.formattedAddress || 'Address not available',
@@ -201,7 +207,7 @@ export class MapsService {
                     latitude: p.location.latitude,
                     longitude: p.location.longitude,
                 },
-                isLeisure: ['park', 'museum', 'zoo', 'aquarium', 'tourist_attraction'].some(type => p.types?.includes(type))
+                isLeisure
             });
         });
 

@@ -1,5 +1,7 @@
 import { useLanguage } from '@/context/LanguageContext';
+import { useLocation } from '@/context/LocationContext';
 import { usePlaces } from '@/context/PlacesContext';
+import { MapsService } from '@/services/MapsService';
 import { t } from '@/i18n';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -17,6 +19,7 @@ export default function GenerateRouteScreen() {
     const { groupId } = useLocalSearchParams<{ groupId: string }>();
     const { allPlaces } = usePlaces();
     const { language } = useLanguage();
+    const { location: userLocation } = useLocation();
 
     const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
     const [routeStops, setRouteStops] = useState<any[]>([]);
@@ -29,39 +32,110 @@ export default function GenerateRouteScreen() {
             alert('Wait a moment, we are still loading places near you...');
             return;
         }
+
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setSelectedDuration(durationId);
         setIsGenerating(true);
 
         // Simulation delay for "Personalized" feel
         setTimeout(() => {
-            const pool = allPlaces;
-            const shuffled = [...pool].sort(() => Math.random() - 0.5);
+            // 1. Start with the pool of all places
+            let pool = [...allPlaces];
 
-            // Adjust stops based on duration
+            // 2. Filter by group type (groupId) to make it truly personalized
+            if (groupId) {
+                if (groupId === 'alone') {
+                    // Solo: Cafes, museums, parks, shopping
+                    pool = pool.filter(p =>
+                        p.category === 'restaurant' ||
+                        p.category === 'mustVisit' ||
+                        p.category === 'shopping' ||
+                        p.isLeisure
+                    );
+                } else if (groupId === 'couple') {
+                    // Couples: Nice restaurants, scenic must-visits, special vibes
+                    pool = pool.filter(p =>
+                        p.category === 'restaurant' ||
+                        p.category === 'mustVisit' ||
+                        p.category === 'hot'
+                    );
+                } else if (groupId === 'friends') {
+                    // Friends: Bars (hot), entertainment (fun), restaurants
+                    pool = pool.filter(p =>
+                        p.category === 'hot' ||
+                        p.category === 'fun' ||
+                        p.category === 'restaurant'
+                    );
+                } else if (groupId === 'family') {
+                    // Family: Parks, kid-friendly must-visits, leisure spots
+                    pool = pool.filter(p =>
+                        p.category === 'mustVisit' ||
+                        p.isLeisure ||
+                        p.category === 'fun'
+                    );
+                }
+            }
+
+            // Fallback if filtering was too strict
+            if (pool.length < 5) pool = [...allPlaces];
+
+            // 3. Sort by rating and proximity to ensure high-quality, consistent suggestions
+            const sortedByBest = pool.sort((a, b) => {
+                // Primary: Quality (Rating)
+                if ((b.rating || 0) !== (a.rating || 0)) {
+                    return (b.rating || 0) - (a.rating || 0);
+                }
+                
+                // Secondary: Proximity (if user location is available)
+                if (userLocation) {
+                    const distA = MapsService.getRawDistance(userLocation.latitude, userLocation.longitude, a.location.latitude, a.location.longitude);
+                    const distB = MapsService.getRawDistance(userLocation.latitude, userLocation.longitude, b.location.latitude, b.location.longitude);
+                    return distA - distB;
+                }
+                return 0;
+            });
+
+            // 4. Adjust stops count based on duration
             const stopsCount =
                 durationId === '1h' ? 2 :
                     durationId === '3h' ? 3 :
                         durationId === 'half' ? 5 : 8;
 
-            const selectedStops = shuffled.slice(0, stopsCount);
+            const selectedStops = sortedByBest.slice(0, stopsCount);
+
+            // 5. Calculate transit between stops based on actual distance if possible
+            let currentLat = userLocation?.latitude || selectedStops[0].location.latitude;
+            let currentLng = userLocation?.longitude || selectedStops[0].location.longitude;
 
             const stopsWithTransit = selectedStops.map((stop, i) => {
-                const dist = Math.random() * 1.5 + 0.3; // 0.3 - 1.8 km
+                const actualDist = MapsService.getRawDistance(
+                    currentLat,
+                    currentLng,
+                    stop.location.latitude,
+                    stop.location.longitude
+                );
+
+                // Ground it in real distance
+                const dist = actualDist > 0 ? actualDist : 0.5;
+
                 const mode = dist < 0.8 ? 'walking' : 'taxi';
                 const time = Math.round(dist * (mode === 'walking' ? 12 : 5));
 
                 const subSteps = mode === 'walking'
                     ? [
-                        { icon: 'walk', text: 'Walk to the nearby point' },
-                        { icon: 'navigate', text: 'Follow the direct path' },
-                        { icon: 'flag', text: `Reach ${stop.name}` }
+                        { icon: 'walk', text: t('route.walkToNearby') },
+                        { icon: 'navigate', text: t('route.followPath') },
+                        { icon: 'flag', text: `${t('route.reach')} ${stop.name}` }
                     ]
                     : [
-                        { icon: 'walk', text: 'Walk 5 min to the pickup point' },
-                        { icon: 'car', text: `Take taxi for ${dist.toFixed(1)} km` },
-                        { icon: 'flag', text: `Reach ${stop.name}` }
+                        { icon: 'walk', text: t('route.walkToPickup') },
+                        { icon: 'car', text: `${t('route.takeTaxi')} ${dist.toFixed(1)} ${t('route.km')}` },
+                        { icon: 'flag', text: `${t('route.reach')} ${stop.name}` }
                     ];
+
+                // Update current location for next stop
+                currentLat = stop.location.latitude;
+                currentLng = stop.location.longitude;
 
                 return {
                     ...stop,
