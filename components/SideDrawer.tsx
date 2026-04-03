@@ -81,16 +81,12 @@ export default function SideDrawer({ isVisible, onClose, userEmail }: SideDrawer
 
     // Handle logout
     const handleLogout = async () => {
-        setIsLoggingOut(true);
         try {
-
             onClose();
-            await new Promise(resolve => setTimeout(resolve, 100));
             await logout();
-            router.replace('/');
+            router.replace('/login');
         } catch (error) {
             console.error("Error signing out: ", error);
-            setIsLoggingOut(false);
         }
     };
 
