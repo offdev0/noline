@@ -191,7 +191,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
             setSearchResults(data);
-            setAllPlaces(data); // Sync allPlaces with search results to update the app context
+            // Sync with allPlaces removed to keep dashboard on current location
             await saveSearchHistory(locationName, locationName);
             return data;
         } catch (error) {
@@ -216,6 +216,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         if (location) {
             fetchByCoordinates(location.latitude, location.longitude);
         }
+        setSearchResults([]);
     };
 
     const getPlaceById = (id: string) => {
