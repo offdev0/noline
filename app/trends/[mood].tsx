@@ -62,13 +62,13 @@ export default function TrendsCategoryScreen() {
         });
 
         // SUPPLEMENT: If specific mood results are too few, add top-rated ones for better UX
-        if (results.length < 8 && trendingPlaces.length > 0) {
+        if (results.length < 15 && trendingPlaces.length > 0) {
             const seenIds = new Set(results.map(r => r.id));
             const topRatedFallback = [...trendingPlaces]
                 .sort((a, b) => (b.rating || 0) - (a.rating || 0))
                 .filter(p => !seenIds.has(p.id));
 
-            results = [...results, ...topRatedFallback.slice(0, 8 - results.length)];
+            results = [...results, ...topRatedFallback.slice(0, 15 - results.length)];
         }
 
         return results;
