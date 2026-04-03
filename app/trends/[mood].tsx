@@ -61,18 +61,14 @@ export default function TrendsCategoryScreen() {
             return false;
         });
 
-        // FALLBACK: If specific mood results are empty, provide a distinct slice of trending places to ensure uniqueness
-        if (results.length === 0) {
-            console.log(`[TrendsCategory] No results for mood: ${moodStr}, providing distinct fallback results`);
-            const sortedByRating = [...trendingPlaces].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        // SUPPLEMENT: If specific mood results are too few, add top-rated ones for better UX
+        if (results.length < 8 && trendingPlaces.length > 0) {
+            const seenIds = new Set(results.map(r => r.id));
+            const topRatedFallback = [...trendingPlaces]
+                .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                .filter(p => !seenIds.has(p.id));
 
-            // Assign different slices to different moods to avoid overlap
-            if (moodStr === 'calm') return sortedByRating.slice(0, 8);
-            if (moodStr === 'social') return sortedByRating.slice(8, 16);
-            if (moodStr === 'adventure') return sortedByRating.slice(16, 24);
-            if (moodStr === 'spontaneous') return sortedByRating.slice(24, 32);
-
-            return sortedByRating.slice(0, 10);
+            results = [...results, ...topRatedFallback.slice(0, 8 - results.length)];
         }
 
         return results;
