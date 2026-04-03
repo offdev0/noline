@@ -1,5 +1,5 @@
-import { formatDistance } from '@/utils/formatters';
 import { t } from '@/i18n';
+import { formatDistance } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -197,6 +197,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F8FAFC',
+        paddingTop: 24
     },
     header: {
         flexDirection: 'row',

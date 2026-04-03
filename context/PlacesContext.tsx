@@ -190,6 +190,21 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                 });
             }
 
+            // Recalculate distances from user's actual base location (GPS or Israel fallback)
+            const baseCoords = (permissionStatus === 'granted' && location)
+                ? location
+                : { latitude: 32.0853, longitude: 34.7818 };
+
+            data = data.map(place => ({
+                ...place,
+                distance: MapsService.calculateDistance(
+                    baseCoords.latitude,
+                    baseCoords.longitude,
+                    place.location.latitude,
+                    place.location.longitude
+                )
+            }));
+
             setSearchResults(data);
             // Sync with allPlaces removed to keep dashboard on current location
             await saveSearchHistory(locationName, locationName);
