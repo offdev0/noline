@@ -1,6 +1,7 @@
 import AuthButton from '@/components/auth/AuthButton';
 import AuthInput from '@/components/auth/AuthInput';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
+import LoadingScreen from '@/components/Loading'; // Added LoadingScreen
 import { useUser } from '@/context/UserContext';
 import { t } from '@/i18n';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,6 +10,7 @@ import React, { useState } from 'react';
 import {
     Alert,
     Dimensions, Image, KeyboardAvoidingView,
+    Modal, // Added Modal for overlay
     Platform,
     StyleSheet,
     Text,
@@ -73,6 +75,11 @@ export default function AuthScreen() {
 
     return (
         <View style={styles.container}>
+            {/* Loading Modal - only shown during actual auth process as requested */}
+            <Modal transparent visible={loading} animationType="fade">
+                <LoadingScreen />
+            </Modal>
+
             <LinearGradient colors={['#ed75ffff', '#7337ffff']} style={StyleSheet.absoluteFill} />
 
             <KeyboardAvoidingView

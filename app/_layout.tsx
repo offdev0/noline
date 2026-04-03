@@ -44,10 +44,9 @@ function MainLayout() {
     }
   }, [user, authLoading, langLoading, segments]);
 
+  // Restore loading screen while deciding auth state to avoid "flash" of login screen
   if (authLoading || langLoading) {
-    return (
-      <OnboardingScreen />
-    );
+    return <OnboardingScreen />;
   }
 
   return (
