@@ -75,7 +75,7 @@ export default function TrendsCategoryScreen() {
     }, [selectedMood, trendingPlaces]);
 
     // Limit number of displayed items to avoid memory pressure on devices with many results
-    const MAX_DISPLAY = 50;
+    const MAX_DISPLAY = 15;
     const displayed = (filtered || []).slice(0, MAX_DISPLAY);
 
     const ITEM_HEIGHT = 160; // approximate fixed height for getItemLayout to optimize virtualization
