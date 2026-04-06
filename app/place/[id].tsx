@@ -198,9 +198,7 @@ export default function PlaceDetailScreen() {
                                     {latestReport ? latestReport.liveSituation : t(`places.${place.status}`)}
                                 </Text>
                             </View>
-                            <Text style={styles.updatedText}>
-                                {t('time.reported', { time: formatTimestamp(latestReport?.Timestamp) })}
-                            </Text>
+                           
                         </View>
                     </SafeAreaView>
                 </LinearGradient>
@@ -444,7 +442,7 @@ const styles = StyleSheet.create({
     headerButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(15, 23, 42, 0.4)', justifyContent: 'center', alignItems: 'center' },
     headerRightActions: { flexDirection: 'row', gap: 12 },
     statusBadgeContainer: { alignItems: 'flex-end', paddingHorizontal: 20, paddingBottom: 25 },
-    statusBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15, 23, 42, 0.7)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+    statusBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15, 23, 42, 0.7)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12,marginTop:-50 },
     statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
     statusText: { color: '#fff', fontSize: 13, fontWeight: '700' },
     updatedText: { color: 'rgba(255,255,255,0.9)', fontSize: 11, marginTop: 4, fontWeight: '600' },

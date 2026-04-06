@@ -21,6 +21,7 @@ export const GroupSelection: React.FC<GroupSelectionProps> = ({ onSelect }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.label}>{t('route.whoAreYouWith')}</Text>
+            <Text style={styles.label2}>{t('route.getBetter')}</Text>
             <View style={styles.grid}>
                 {GROUP_TYPES.map(group => (
                     <TouchableOpacity
@@ -53,6 +54,12 @@ const styles = StyleSheet.create({
         color: '#111111ff',
         marginBottom: 26,
         marginTop: 20
+    },
+    label2: {
+        fontSize: 18,
+        fontWeight: '400',
+        color: '#64748B',
+        marginBottom: 26,
     },
     grid: {
         flexDirection: 'row',

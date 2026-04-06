@@ -1,18 +1,19 @@
 import { useLanguage } from '@/context/LanguageContext';
 import { useLocation } from '@/context/LocationContext';
 import { usePlaces } from '@/context/PlacesContext';
-import { MapsService } from '@/services/MapsService';
 import { t } from '@/i18n';
+import { MapsService } from '@/services/MapsService';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GeneratingRoute } from '@/components/customized/GeneratingRoute';
 import { JourneyCard } from '@/components/customized/JourneyCard';
 import { JourneyFinished } from '@/components/customized/JourneyFinished';
 import { TimeSelection } from '@/components/customized/TimeSelection';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function GenerateRouteScreen() {
     const router = useRouter();
@@ -213,6 +214,9 @@ export default function GenerateRouteScreen() {
 
                     ) : (
                         <>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                    <Ionicons name="arrow-back" size={24} color="#e6e9ecff" />
+                </TouchableOpacity>
                             <View style={styles.header}>
                                 <Text style={styles.pageTitle}>{t('route.personalizedTitle')}</Text>
                             </View>
@@ -241,5 +245,13 @@ const styles = StyleSheet.create({
 
     mainArea: {
         marginBottom: 32,
+    },
+    backBtn: {
+        padding: 7,
+        backgroundColor: '#1c1d1dff',
+        borderRadius: 10,
+        width:70
+
+
     },
 });

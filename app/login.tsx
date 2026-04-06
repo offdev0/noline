@@ -90,7 +90,7 @@ export default function AuthScreen() {
                     <View style={styles.header}>
                         <View style={styles.logoCircle}>
                             <Image
-                                source={require('@/assets/logo.png')}
+                                source={require('@/assets/image.png')}
                                 style={styles.logo}
                                 resizeMode="contain"
                             />
@@ -171,8 +171,8 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     logo: {
-        width: 120,
-        height: 120,
+        width: 170,
+        height: 170,
     },
     content: {
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
