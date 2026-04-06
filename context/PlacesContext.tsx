@@ -29,6 +29,42 @@ interface PlacesContextType {
     addToHistory: (query: string) => void;
 }
 
+const FOOD_QUERY_REGEX = /(restaurant|cafe|coffee|bistro|brunch|pizza|burger|sushi|bakery|tea|diner)/i;
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const buildSearchRegex = (query: string) => {
+    const tokens = query.trim().split(/\s+/).filter(Boolean).map(escapeRegExp);
+    if (tokens.length === 0) return null;
+    return new RegExp(tokens.join('.*'), 'i');
+};
+
+const matchesSearchRegex = (place: PlaceData, regex: RegExp) => (
+    regex.test(place.name) ||
+    regex.test(place.description) ||
+    regex.test(place.address) ||
+    regex.test(place.category)
+);
+
+const filterPlacesByQuery = (places: PlaceData[], regex: RegExp | null, restrictToRestaurants: boolean) => {
+    if (!regex) return restrictToRestaurants ? places.filter(p => p.category === 'restaurant') : places;
+    return places.filter(place => {
+        if (restrictToRestaurants && place.category !== 'restaurant') return false;
+        return matchesSearchRegex(place, regex);
+    });
+};
+
+const mergePlacesById = (primary: PlaceData[], secondary: PlaceData[]) => {
+    const seen = new Set(primary.map(p => p.id));
+    const merged = [...primary];
+    secondary.forEach(place => {
+        if (seen.has(place.id)) return;
+        seen.add(place.id);
+        merged.push(place);
+    });
+    return merged;
+};
+
 const PlacesContext = createContext<PlacesContextType>({
     allPlaces: [],
     trendingPlaces: [],
@@ -155,14 +191,20 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const performSearch = async (locationName: string): Promise<PlaceData[]> => {
-        const queryWithIsrael = locationName.toLowerCase().includes('israel')
-            ? locationName
-            : `${locationName}, Israel`;
+        const trimmedQuery = locationName.trim();
+        if (!trimmedQuery) return [];
+
+        const queryWithIsrael = trimmedQuery.toLowerCase().includes('israel')
+            ? trimmedQuery
+            : `${trimmedQuery}, Israel`;
 
         console.log(`[PlacesContext] performSearch: "${queryWithIsrael}"`);
         setLoading(true);
         try {
-            addToHistory(locationName);
+            addToHistory(trimmedQuery);
+
+            const searchRegex = buildSearchRegex(trimmedQuery);
+            const isFoodQuery = FOOD_QUERY_REGEX.test(trimmedQuery);
 
             let targetCoords: { latitude: number; longitude: number } | null = null;
             try {
@@ -175,11 +217,24 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                 }
             } catch (err) { }
 
-            let data: PlaceData[] = [];
-            if (targetCoords) {
-                data = await MapsService.fetchPlacesByCoordinates(targetCoords.latitude, targetCoords.longitude, language);
-            } else {
-                data = await MapsService.fetchNearbyPlaces(queryWithIsrael, language);
+            const biasCoords = targetCoords || ((permissionStatus === 'granted' && location) ? location : null);
+
+            const textResults = filterPlacesByQuery(
+                await MapsService.fetchPlacesByTextQuery(trimmedQuery, language, biasCoords || undefined),
+                searchRegex,
+                isFoodQuery
+            );
+
+            let data: PlaceData[] = textResults;
+            if (data.length < 8) {
+                let nearbyResults: PlaceData[] = [];
+                if (targetCoords) {
+                    nearbyResults = await MapsService.fetchPlacesByCoordinates(targetCoords.latitude, targetCoords.longitude, language);
+                } else {
+                    nearbyResults = await MapsService.fetchNearbyPlaces(queryWithIsrael, language);
+                }
+                const filteredNearby = isFoodQuery ? filterPlacesByQuery(nearbyResults, searchRegex, true) : nearbyResults;
+                data = mergePlacesById(data, filteredNearby);
             }
 
             if (targetCoords) {
@@ -207,7 +262,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
 
             setSearchResults(data);
             // Sync with allPlaces removed to keep dashboard on current location
-            await saveSearchHistory(locationName, locationName);
+            await saveSearchHistory(trimmedQuery, trimmedQuery);
             return data;
         } catch (error) {
             console.error('[PlacesContext] performSearch Error:', error);

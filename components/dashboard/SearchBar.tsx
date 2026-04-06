@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Image,
@@ -18,10 +18,18 @@ import { usePlaces } from '@/context/PlacesContext';
 import { useUser } from '@/context/UserContext';
 import { t } from '@/i18n';
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const buildSearchRegex = (query: string) => {
+    const tokens = query.trim().split(/\s+/).filter(Boolean).map(escapeRegExp);
+    if (tokens.length === 0) return null;
+    return new RegExp(tokens.join('.*'), 'i');
+};
+
 export default function SearchBar() {
     const router = useRouter();
     const { userData } = useUser();
-    const { searchHistory, performSearch } = usePlaces();
+    const { searchHistory, performSearch, restaurants } = usePlaces();
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
@@ -36,7 +44,7 @@ export default function SearchBar() {
             return;
         }
 
-        Keyboard.dismiss();
+        Keyboard.dismiss(); 
         setIsSearching(true);
 
         try {
@@ -69,6 +77,19 @@ export default function SearchBar() {
             setIsSearching(false);
         }
     };
+
+    const suggestions = useMemo(() => {
+        const regex = buildSearchRegex(searchQuery);
+        if (!regex) return [];
+        return restaurants
+            .filter(place => (
+                regex.test(place.name) ||
+                regex.test(place.description) ||
+                regex.test(place.address)
+            ))
+            .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+            .slice(0, 6);
+    }, [restaurants, searchQuery]);
 
     return (
         <View style={styles.container}>
@@ -108,8 +129,30 @@ export default function SearchBar() {
                 </TouchableOpacity>
             </View>
 
+            {isFocused && searchQuery.trim().length > 0 && suggestions.length > 0 && (
+                <View style={styles.suggestionsContainer}>
+                    <Text style={styles.suggestionsTitle}>{t('search.suggestions')}</Text>
+                    {suggestions.map((place, idx) => (
+                        <TouchableOpacity
+                            key={place.id}
+                            style={[styles.suggestionRow, idx === suggestions.length - 1 && styles.suggestionRowLast]}
+                            onPress={() => {
+                                setSearchQuery(place.name);
+                                handleSearch(place.name);
+                            }}
+                        >
+                            <Ionicons name="restaurant" size={16} color="#6366F1" />
+                            <View style={styles.suggestionTextBlock}>
+                                <Text style={styles.suggestionText} numberOfLines={1}>{place.name}</Text>
+                                <Text style={styles.suggestionSubText} numberOfLines={1}>{place.address}</Text>
+                            </View>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            )}
+
             {/* Recent Searches - Only show when focused */}
-            {isFocused && searchHistory.length > 0 && (
+            {isFocused && searchQuery.trim().length === 0 && searchHistory.length > 0 && (
                 <View style={styles.historyContainer}>
                     <Text style={styles.historyTitle}>{t('search.recentSearches')}</Text>
                     <View style={styles.historyChips}>
@@ -179,6 +222,54 @@ const styles = StyleSheet.create({
         backgroundColor: '#EEF0FF',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    suggestionsContainer: {
+        marginTop: 10,
+        marginHorizontal: 25,
+        backgroundColor: '#fff',
+        borderRadius: 18,
+        paddingVertical: 8,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 3,
+    },
+    suggestionsTitle: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#64748B',
+        marginBottom: 6,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        paddingHorizontal: 12,
+    },
+    suggestionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        gap: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F1F5F9',
+    },
+    suggestionRowLast: {
+        borderBottomWidth: 0,
+    },
+    suggestionTextBlock: {
+        flex: 1,
+    },
+    suggestionText: {
+        fontSize: 14,
+        color: '#0F172A',
+        fontWeight: '600',
+    },
+    suggestionSubText: {
+        fontSize: 12,
+        color: '#64748B',
+        marginTop: 2,
     },
     historyContainer: {
         marginTop: 12,

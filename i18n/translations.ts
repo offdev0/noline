@@ -241,6 +241,7 @@ export const translations = {
         },
         search: {
             placeholder: 'Search for a place or address',
+            suggestions: 'Suggestions',
             recentSearches: 'Recent Searches',
             placesFound: 'places found',
         },
@@ -556,6 +557,7 @@ export const translations = {
         },
         search: {
             placeholder: 'חפש מקום או כתובת',
+            suggestions: 'הצעות חיפוש',
             recentSearches: 'חיפושים אחרונים',
             placesFound: 'מקומות נמצאו',
         },

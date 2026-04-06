@@ -26,7 +26,11 @@ export default function DashboardScreen() {
   return (
     <View style={{ flex: 1 }}>
       <SafeAreaView style={styles.container} edges={['top']}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
 
           <DashboardHeader onMenuPress={() => setIsDrawerOpen(true)} />
 

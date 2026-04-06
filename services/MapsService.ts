@@ -215,6 +215,99 @@ export class MapsService {
     }
 
     /**
+     * Fetch places for a specific text query (business or place name)
+     */
+    static async fetchPlacesByTextQuery(
+        query: string,
+        languageCode: string = 'en',
+        center?: { latitude: number; longitude: number },
+        radiusMeters: number = 15000
+    ): Promise<PlaceData[]> {
+        const trimmed = query.trim();
+        if (!trimmed) return [];
+
+        console.log(`[MapsService] fetchPlacesByTextQuery: "${trimmed}" (Language: ${languageCode})`);
+
+        try {
+            const body: any = {
+                textQuery: trimmed,
+                maxResultCount: 20,
+                languageCode: languageCode
+            };
+
+            if (center) {
+                body.locationBias = {
+                    circle: {
+                        center: { latitude: center.latitude, longitude: center.longitude },
+                        radius: radiusMeters
+                    }
+                };
+            }
+
+            const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
+                    'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.types,places.photos,places.editorialSummary,places.location',
+                    'X-Goog-Language-Code': languageCode
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                console.error('[MapsService] fetchPlacesByTextQuery API Error:', await response.text());
+                return [];
+            }
+
+            const data = await response.json();
+            const places = data.places || [];
+
+            return places
+                .filter((p: any) => p.location?.latitude && p.location?.longitude)
+                .map((p: any) => {
+                    let category: PlaceData['category'] = 'mustVisit';
+                    if (p.types) {
+                        const foundType = p.types.find((t: string) => CATEGORY_MAPPING[t]);
+                        if (foundType) {
+                            category = CATEGORY_MAPPING[foundType];
+                        }
+                    }
+
+                    let imageUrl = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800';
+                    if (p.photos && p.photos.length > 0) {
+                        imageUrl = `https://places.googleapis.com/v1/${p.photos[0].name}/media?key=${GOOGLE_MAPS_API_KEY}&maxWidthPx=800`;
+                    }
+
+                    const statusOptions: PlaceData['status'][] = ['vacant', 'medium', 'loaded'];
+                    const statusIndex = p.id.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0);
+
+                    return {
+                        id: p.id,
+                        name: p.displayName?.text || 'Great Place',
+                        description: p.editorialSummary?.text || t('places.popularSpot', { category: t(`categories.${category}`) }),
+                        category,
+                        distance: center
+                            ? this.calculateDistance(center.latitude, center.longitude, p.location.latitude, p.location.longitude)
+                            : '--- km',
+                        status: statusOptions[statusIndex % statusOptions.length],
+                        image: imageUrl,
+                        rating: p.rating || 4.2,
+                        address: p.formattedAddress || 'Address not available',
+                        location: {
+                            latitude: p.location.latitude,
+                            longitude: p.location.longitude,
+                        },
+                        isLeisure: ['park', 'museum', 'zoo', 'aquarium', 'tourist_attraction'].some(type => p.types?.includes(type))
+                    };
+                });
+        } catch (error) {
+            console.error('[MapsService] fetchPlacesByTextQuery Error:', error);
+            return [];
+        }
+    }
+
+    /**
      * Legacy method - now uses coordinates internally
      */
     static async fetchNearbyPlaces(locationName: string, languageCode: string = 'en'): Promise<PlaceData[]> {
