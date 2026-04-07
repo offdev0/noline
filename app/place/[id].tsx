@@ -68,6 +68,30 @@ export default function PlaceDetailScreen() {
         [reports, id]);
 
     const latestReport = placeReports[0];
+    const latestReportSeconds = latestReport?.Timestamp?.seconds || latestReport?.Timestamp?._seconds || 0;
+    const hasRecentReport = latestReportSeconds > 0
+        && (Math.floor(Date.now() / 1000) - latestReportSeconds) <= 3600;
+    const getStatusDescription = (report?: typeof latestReport) => {
+        if (!report) return t('placeDetail.estimatedStatus');
+        if (report.isOpen === false) return t('placeDetail.statusDescriptions.closed');
+
+        switch (report.crowdLevel) {
+            case 1:
+                return t('placeDetail.statusDescriptions.calm');
+            case 2:
+                return t('placeDetail.statusDescriptions.pressure');
+            case 3:
+                return t('placeDetail.statusDescriptions.slow');
+            case 4:
+                return t('placeDetail.statusDescriptions.busy');
+            default:
+                return report.liveSituation || t('placeDetail.estimatedStatus');
+        }
+    };
+
+    const statusSubtitle = hasRecentReport
+        ? getStatusDescription(latestReport)
+        : t('placeDetail.estimatedStatus');
 
     const formatTimestamp = (ts: any) => {
         if (!ts) return t('common.unknown');
@@ -195,10 +219,15 @@ export default function PlaceDetailScreen() {
                             <View style={styles.statusBadge}>
                                 <View style={[styles.statusDot, { backgroundColor: getQueueColor(place.status) }]} />
                                 <Text style={styles.statusText}>
-                                    {latestReport ? latestReport.liveSituation : t(`places.${place.status}`)}
+                                    {t(`places.${place.status}`)}
+                                </Text>
+                               
+                            </View>
+                            <View style={styles.statusSubBadge}>
+                                <Text style={styles.statusSubText}>
+                                    {statusSubtitle}
                                 </Text>
                             </View>
-                           
                         </View>
                     </SafeAreaView>
                 </LinearGradient>
@@ -441,10 +470,21 @@ const styles = StyleSheet.create({
     headerActions: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10 },
     headerButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(15, 23, 42, 0.4)', justifyContent: 'center', alignItems: 'center' },
     headerRightActions: { flexDirection: 'row', gap: 12 },
-    statusBadgeContainer: { alignItems: 'flex-end', paddingHorizontal: 20, paddingBottom: 25 },
-    statusBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15, 23, 42, 0.7)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12,marginTop:-50 },
+    statusBadgeContainer: { alignItems: 'flex-end', paddingHorizontal: 20, paddingBottom: 60 },
+    statusBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15, 23, 42, 0.7)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
     statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
     statusText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+    statusSubBadge: {
+        marginTop: 6,
+        backgroundColor: 'rgba(15, 23, 42, 0.55)',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10,
+        maxWidth: 240,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.15)',
+    },
+    statusSubText: { color: '#E2E8F0', fontSize: 12, fontWeight: '600', lineHeight: 16 },
     updatedText: { color: 'rgba(255,255,255,0.9)', fontSize: 11, marginTop: 4, fontWeight: '600' },
     contentSection: { flex: 1, marginTop: -30, backgroundColor: '#fff', borderTopLeftRadius: 30, borderTopRightRadius: 30 },
     contentWrapper: { paddingHorizontal: 24, paddingTop: 30, paddingBottom: 150 },
