@@ -155,6 +155,114 @@ export const translations = {
             termsOfService: 'Terms of Service',
             version: 'Version',
         },
+        privacyPolicy: {
+            title: 'Privacy Policy',
+            heroSubtitle: 'Noline respects your privacy and is committed to protecting your personal information.',
+            lastUpdatedLabel: 'Last updated: %{date}',
+            lastUpdatedDate: '[Date]',
+            sections: {
+                infoCollect: {
+                    title: 'What information we collect',
+                    content: 'When you use Noline, we may collect information such as your account details, including your email address, username, and profile information if you choose to create an account.\n\nWe may collect your location information to show nearby places, relevant reports, and personalized recommendations.\n\nWe may collect content you choose to submit, including reports, comments, ratings, and photos.\n\nWe may collect usage information such as searches, saved places, app activity, device information, crash data, and analytics data to improve the app\'s performance and user experience.',
+                },
+                useInfo: {
+                    title: 'How we use your information',
+                    content: 'We use your information to operate the app, show nearby places, display user reports, improve recommendations, personalize your experience, prevent abuse, improve performance, and provide support.\n\nIf you enable notifications, we may use your information to send relevant updates, reminders, or activity-based alerts.',
+                },
+                location: {
+                    title: 'How location data is used',
+                    content: 'Your location is used to show places near you, improve relevance, and support features based on your area. You can stop sharing location at any time through your device settings, but some features may not work properly without it.',
+                },
+                userContent: {
+                    title: 'How user content works',
+                    content: 'Reports, photos, comments, and other content submitted by users may be shown inside the app to help other users make better decisions.\n\nSome information in Noline is based on user reports, available signals, and typical activity patterns. This information may change over time and may not always reflect the exact current situation.',
+                },
+                sharing: {
+                    title: 'Sharing of information',
+                    content: 'We do not sell your personal information.\n\nWe may share information with service providers that help us operate the app, such as hosting, analytics, notifications, crash reporting, maps, and infrastructure providers.\n\nWe may also share information if required by law, to protect our rights, or to prevent fraud, abuse, or harm.',
+                },
+                retention: {
+                    title: 'Data retention',
+                    content: 'We keep personal information only for as long as needed to operate the app, comply with legal obligations, resolve disputes, and enforce our policies.\n\nUser-submitted content may remain in the app for a reasonable period unless deleted, removed for policy reasons, or no longer needed.',
+                },
+                rights: {
+                    title: 'Your choices and rights',
+                    content: 'You can review, update, or delete certain account information through the app or by contacting us.\n\nYou can request deletion of your account and associated personal data by using the account deletion option in the app or by contacting us at %{email}.\n\nYou can turn off location access, photo access, or notifications at any time from your device settings.',
+                },
+                security: {
+                    title: 'Security',
+                    content: 'We take reasonable measures to protect your information and work to keep the app safe and reliable for our users. However, no system is completely secure.',
+                },
+                children: {
+                    title: 'Children',
+                    content: 'Noline is not intended for children under the age required by applicable law to use the service independently.',
+                },
+                changes: {
+                    title: 'Changes to this policy',
+                    content: 'We may update this Privacy Policy from time to time. If we make material changes, we will update the date above and, where appropriate, provide notice in the app.',
+                },
+            },
+            contact: {
+                title: 'Contact us',
+                description: 'If you have any questions about this Privacy Policy or want to request deletion of your data, you can contact us at:',
+                emailLabel: 'Email',
+            },
+            footer: '© 2025 Noline. All rights reserved.',
+        },
+        termsOfService: {
+            title: 'Terms of Use',
+            heroSubtitle: 'Welcome to Noline. By using the app, you agree to these Terms of Use.',
+            lastUpdatedLabel: 'Last updated: %{date}',
+            lastUpdatedDate: '[Date]',
+            sections: {
+                aboutService: {
+                    title: 'About the service',
+                    content: 'Noline helps users discover places, view reports, and get insights based on user activity, available information, and app-generated recommendations.\n\nNoline is designed to help users make better decisions, but it does not guarantee that any information in the app is complete, accurate, available at all times, or fully up to date.',
+                },
+                reportsActivity: {
+                    title: 'Reports and activity information',
+                    content: 'Some information in the app is based on recent user reports, historical activity, estimated patterns, and available data.\n\nThis means that wait times, crowd levels, availability, opening status, and similar information may change at any time and may not always reflect the exact real-time situation.',
+                },
+                userContent: {
+                    title: 'User content',
+                    content: 'If you submit reports, photos, comments, or other content, you are responsible for making sure that your content is accurate, relevant, lawful, and does not violate the rights of others.\n\nYou may not upload false, misleading, abusive, offensive, unrelated, or illegal content.\n\nWe may review, remove, limit, or disable any content or account at our discretion if we believe it violates these Terms, harms the app, harms users, or creates legal or safety risks.',
+                },
+                businessInfo: {
+                    title: 'Business and place information',
+                    content: 'Information shown about places may come from users, third-party providers, or app-generated logic.\n\nNoline does not claim that business-related information is always correct, complete, or current.\n\nIf a business owner or user believes that certain information is incorrect or harmful, they may contact us at %{email}, and we may review the request.',
+                },
+                photosReports: {
+                    title: 'Photos and reports',
+                    content: 'Photos and reports submitted by users are meant to help other users. They must be related to the relevant place and must not include unlawful, private, or harmful content.\n\nWe may remove photos or reports that are not relevant, are misleading, or violate these Terms.',
+                },
+                permittedUse: {
+                    title: 'Permitted use',
+                    content: 'You may use Noline only for personal and lawful use.\n\nYou may not use the app to manipulate reports, spam the platform, harm businesses, impersonate others, interfere with the service, or misuse the content and features of the app.',
+                },
+                availability: {
+                    title: 'Availability and changes',
+                    content: 'We may update, change, limit, suspend, or remove features at any time.\n\nWe do not guarantee that the app or any specific feature will always be available without interruption or error.',
+                },
+                limitation: {
+                    title: 'Limitation of liability',
+                    content: 'Noline is provided on an "as is" and "as available" basis.\n\nTo the maximum extent permitted by law, Noline and its operators are not liable for losses, damages, decisions, delays, missed opportunities, business impacts, or other outcomes resulting from reliance on app content, reports, estimates, or recommendations.\n\nThis includes situations where place information, crowd levels, wait times, or opening status are inaccurate, delayed, unavailable, or changed after being displayed.',
+                },
+                termination: {
+                    title: 'Termination',
+                    content: 'We may suspend or terminate access to the app if a user violates these Terms or uses the service in a harmful, abusive, or unlawful way.',
+                },
+                changes: {
+                    title: 'Changes to these Terms',
+                    content: 'We may update these Terms from time to time. If we make material changes, we will update the date above and, where appropriate, provide notice in the app.',
+                },
+            },
+            contact: {
+                title: 'Contact us',
+                description: 'If you have questions about these Terms, please contact us at:',
+                emailLabel: 'Email',
+            },
+            footer: '© 2025 Noline. All rights reserved.',
+        },
         notifications: {
             welcomeBackTitle: 'Welcome back!',
             welcomeBackBody: 'Great to see you again, %{name}! Check the latest queues near you.',
@@ -626,6 +734,114 @@ export const translations = {
             privacyPolicy: 'מדיניות פרטייות',
             termsOfService: 'תנאי שימוש',
             version: 'גרסה',
+        },
+        privacyPolicy: {
+            title: 'מדיניות פרטיות',
+            heroSubtitle: 'Noline מכבדת את פרטיותך ומחויבת להגנה על המידע האישי שלך.',
+            lastUpdatedLabel: 'עודכן לאחרונה: %{date}',
+            lastUpdatedDate: '[תאריך]',
+            sections: {
+                infoCollect: {
+                    title: 'איזה מידע אנו אוספים',
+                    content: 'כאשר אתה משתמש ב-Noline, ייתכן שנאסוף מידע כגון פרטי החשבון שלך, כולל כתובת האימייל, שם המשתמש ופרטי הפרופיל אם תבחר ליצור חשבון.\n\nייתכן שנאסוף מידע על המיקום שלך כדי להציג מקומות קרובים, דיווחים רלוונטיים והמלצות מותאמות אישית.\n\nייתכן שנאסוף תוכן שתבחר לשלוח, כולל דיווחים, תגובות, דירוגים ותמונות.\n\nייתכן שנאסוף מידע שימוש כגון חיפושים, מקומות שמורים, פעילות באפליקציה, מידע על המכשיר, נתוני קריסות ונתוני אנליטיקה כדי לשפר את ביצועי האפליקציה וחוויית המשתמש.',
+                },
+                useInfo: {
+                    title: 'כיצד אנו משתמשים במידע שלך',
+                    content: 'אנו משתמשים במידע שלך כדי להפעיל את האפליקציה, להציג מקומות קרובים, להציג דיווחי משתמשים, לשפר המלצות, להתאים אישית את החוויה שלך, למנוע שימוש לרעה, לשפר ביצועים ולספק תמיכה.\n\nאם הפעלת התראות, ייתכן שנשתמש במידע שלך כדי לשלוח עדכונים רלוונטיים, תזכורות או התראות מבוססות פעילות.',
+                },
+                location: {
+                    title: 'כיצד נעשה שימוש במידע מיקום',
+                    content: 'המיקום שלך משמש כדי להציג מקומות לידך, לשפר רלוונטיות ולתמוך בתכונות המבוססות על האזור שלך. ניתן להפסיק לשתף מיקום בכל עת דרך הגדרות המכשיר, אך ייתכן שחלק מהתכונות לא יעבדו כראוי בלעדיו.',
+                },
+                userContent: {
+                    title: 'כיצד פועל תוכן משתמשים',
+                    content: 'דיווחים, תמונות, תגובות ותוכן נוסף שמשתמשים שולחים עשויים להופיע בתוך האפליקציה כדי לעזור למשתמשים אחרים לקבל החלטות טובות יותר.\n\nחלק מהמידע ב-Noline מבוסס על דיווחי משתמשים, אותות זמינים ודפוסי פעילות טיפוסיים. מידע זה עשוי להשתנות עם הזמן ולא תמיד ישקף את המצב המדויק הנוכחי.',
+                },
+                sharing: {
+                    title: 'שיתוף מידע',
+                    content: 'אנו לא מוכרים את המידע האישי שלך.\n\nייתכן שנשתף מידע עם ספקי שירות שעוזרים לנו להפעיל את האפליקציה, כגון אירוח, אנליטיקה, התראות, דיווחי קריסה, מפות וספקי תשתית.\n\nייתכן שנשתף מידע גם אם הדבר נדרש על פי חוק, כדי להגן על זכויותינו או כדי למנוע הונאה, שימוש לרעה או נזק.',
+                },
+                retention: {
+                    title: 'שמירת מידע',
+                    content: 'אנו שומרים מידע אישי רק כל עוד הוא נדרש להפעלת האפליקציה, לעמידה בהתחייבויות חוקיות, ליישוב מחלוקות ולאכיפת המדיניות שלנו.\n\nתוכן שמוגש על ידי משתמשים עשוי להישאר באפליקציה לפרק זמן סביר אלא אם נמחק, הוסר מסיבות מדיניות או שאינו נדרש עוד.',
+                },
+                rights: {
+                    title: 'הבחירות והזכויות שלך',
+                    content: 'ניתן לעיין, לעדכן או למחוק מידע מסוים של החשבון דרך האפליקציה או באמצעות יצירת קשר איתנו.\n\nאפשר לבקש מחיקה של החשבון והמידע האישי המשויך אליו באמצעות אפשרות מחיקת החשבון באפליקציה או באמצעות פניה אל %{email}.\n\nניתן לכבות גישה למיקום, גישה לתמונות או התראות בכל עת דרך הגדרות המכשיר.',
+                },
+                security: {
+                    title: 'אבטחה',
+                    content: 'אנו נוקטים אמצעים סבירים כדי להגן על המידע שלך ופועלים לשמור על האפליקציה בטוחה ואמינה עבור המשתמשים שלנו. עם זאת, אין מערכת מאובטחת במאת האחוזים.',
+                },
+                children: {
+                    title: 'ילדים',
+                    content: 'Noline אינה מיועדת לילדים מתחת לגיל הנדרש על פי החוק החל כדי להשתמש בשירות באופן עצמאי.',
+                },
+                changes: {
+                    title: 'שינויים במדיניות זו',
+                    content: 'אנו עשויים לעדכן את מדיניות הפרטיות מעת לעת. אם נבצע שינויים מהותיים, נעדכן את התאריך למעלה ובמקרים המתאימים נספק הודעה באפליקציה.',
+                },
+            },
+            contact: {
+                title: 'יצירת קשר',
+                description: 'אם יש לך שאלות לגבי מדיניות פרטיות זו או אם ברצונך לבקש מחיקה של הנתונים שלך, אפשר ליצור איתנו קשר בכתובת:',
+                emailLabel: 'אימייל',
+            },
+            footer: '© 2025 Noline. כל הזכויות שמורות.',
+        },
+        termsOfService: {
+            title: 'תנאי שימוש',
+            heroSubtitle: 'ברוכים הבאים ל-Noline. בשימוש באפליקציה אתה מסכים לתנאי שימוש אלה.',
+            lastUpdatedLabel: 'עודכן לאחרונה: %{date}',
+            lastUpdatedDate: '[תאריך]',
+            sections: {
+                aboutService: {
+                    title: 'על השירות',
+                    content: 'Noline עוזרת למשתמשים לגלות מקומות, לצפות בדיווחים ולקבל תובנות המבוססות על פעילות משתמשים, מידע זמין והמלצות שנוצרות באפליקציה.\n\nNoline נועדה לעזור למשתמשים לקבל החלטות טובות יותר, אך היא אינה מתחייבת שהמידע באפליקציה יהיה מלא, מדויק, זמין בכל עת או מעודכן במלואו.',
+                },
+                reportsActivity: {
+                    title: 'דיווחים ומידע על פעילות',
+                    content: 'חלק מהמידע באפליקציה מבוסס על דיווחים אחרונים של משתמשים, פעילות היסטורית, דפוסים מוערכים ומידע זמין.\n\nמשמעות הדבר היא שזמני המתנה, רמות עומס, זמינות, סטטוס פתיחה ומידע דומה עשויים להשתנות בכל עת ולא תמיד ישקפו את המצב בזמן אמת באופן מדויק.',
+                },
+                userContent: {
+                    title: 'תוכן משתמשים',
+                    content: 'אם אתה שולח דיווחים, תמונות, תגובות או תוכן אחר, אתה אחראי לכך שהתוכן שלך יהיה מדויק, רלוונטי, חוקי ואינו מפר זכויות של אחרים.\n\nאין להעלות תוכן שקרי, מטעה, פוגעני, מעליב, לא קשור או בלתי חוקי.\n\nאנו עשויים לבדוק, להסיר, להגביל או להשבית כל תוכן או חשבון לפי שיקול דעתנו אם נחשוב שהוא מפר את התנאים, פוגע באפליקציה, פוגע במשתמשים או יוצר סיכונים משפטיים או בטיחותיים.',
+                },
+                businessInfo: {
+                    title: 'מידע על עסקים ומקומות',
+                    content: 'מידע שמוצג על מקומות יכול להגיע ממשתמשים, מספקי צד שלישי או מלוגיקה שנוצרת באפליקציה.\n\nNoline אינה טוענת שמידע עסקי תמיד נכון, מלא או מעודכן.\n\nאם בעל עסק או משתמש סבור שמידע מסוים שגוי או מזיק, ניתן ליצור איתנו קשר ב-%{email}, ואנו עשויים לבדוק את הבקשה.',
+                },
+                photosReports: {
+                    title: 'תמונות ודיווחים',
+                    content: 'תמונות ודיווחים שנשלחים על ידי משתמשים נועדו לעזור למשתמשים אחרים. הם חייבים להיות קשורים למקום הרלוונטי ואסור לכלול תוכן בלתי חוקי, פרטי או מזיק.\n\nאנו עשויים להסיר תמונות או דיווחים שאינם רלוונטיים, מטעים או מפרים את התנאים.',
+                },
+                permittedUse: {
+                    title: 'שימוש מותר',
+                    content: 'מותר להשתמש ב-Noline לשימוש אישי וחוקי בלבד.\n\nאין להשתמש באפליקציה כדי לשבש דיווחים, לספאם את הפלטפורמה, לפגוע בעסקים, להתחזות לאחרים, להפריע לשירות או לעשות שימוש לרעה בתוכן ובתכונות של האפליקציה.',
+                },
+                availability: {
+                    title: 'זמינות ושינויים',
+                    content: 'אנו עשויים לעדכן, לשנות, להגביל, להשעות או להסיר תכונות בכל עת.\n\nאיננו מתחייבים שהאפליקציה או כל תכונה מסוימת יהיו זמינים תמיד ללא הפסקות או תקלות.',
+                },
+                limitation: {
+                    title: 'הגבלת אחריות',
+                    content: 'Noline ניתנת במצב "as is" ובמצב "as available".\n\nבמידה המרבית המותרת על פי חוק, Noline ומפעיליה אינם אחראים להפסדים, נזקים, החלטות, עיכובים, הזדמנויות שהוחמצו, פגיעות עסקיות או תוצאות אחרות הנובעות מהסתמכות על תוכן האפליקציה, דיווחים, הערכות או המלצות.\n\nזה כולל מצבים שבהם מידע על מקומות, רמות עומס, זמני המתנה או סטטוס פתיחה אינם מדויקים, מתעכבים, אינם זמינים או השתנו לאחר שהוצגו.',
+                },
+                termination: {
+                    title: 'סיום',
+                    content: 'אנו עשויים להשעות או לסיים את הגישה לאפליקציה אם משתמש מפר את התנאים או משתמש בשירות באופן מזיק, פוגעני או בלתי חוקי.',
+                },
+                changes: {
+                    title: 'שינויים בתנאים',
+                    content: 'אנו עשויים לעדכן תנאים אלה מעת לעת. אם נבצע שינויים מהותיים, נעדכן את התאריך למעלה ובמקרים המתאימים נספק הודעה באפליקציה.',
+                },
+            },
+            contact: {
+                title: 'יצירת קשר',
+                description: 'אם יש לך שאלות לגבי תנאים אלה, אפשר ליצור איתנו קשר בכתובת:',
+                emailLabel: 'אימייל',
+            },
+            footer: '© 2025 Noline. כל הזכויות שמורות.',
         },
         notifications: {
             welcomeBackTitle: 'ברוך שובך!',

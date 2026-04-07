@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -12,44 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const LAST_UPDATED = 'January 1, 2025';
-const CONTACT_EMAIL = 'Noline012@gmail.com';
-
-const SECTIONS = [
-    {
-        title: '1. Acceptance of Terms',
-        content: `By downloading, installing, or using the Noline mobile application, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the app.`,
-    },
-    {
-        title: '2. User Accounts',
-        content: `You are responsible for maintaining the confidentiality of your account credentials. You agree to provide accurate information and to keep it updated. We reserve the right to suspend or terminate accounts that violate these terms.`,
-    },
-    {
-        title: '3. Community Reporting',
-        content: `Noline relies on community-contributed queue data. You agree that any reports you submit will be based on your actual, real-time observations and will be as accurate as possible. Misleading or abusive reporting may result in account termination.`,
-    },
-    {
-        title: '4. Prohibited Conduct',
-        content: `You agree not to:
-• Use the app for any illegal or unauthorized purpose.
-• Attempt to gain unauthorized access to our systems.
-• Interfere with or disrupt the service or servers.
-• Use automated systems (bots, scrapers) to collect data from the app.
-• Harass or harm other users of the community.`,
-    },
-    {
-        title: '5. Intellectual Property',
-        content: `The Noline app, including its code, design, logos, and original content, is protected by intellectual property laws. You may not copy, modify, or distribute any part of the app without our prior written consent.`,
-    },
-    {
-        title: '6. Limitation of Liability',
-        content: `Noline provides real-time data but cannot guarantee its 100% accuracy at all times, as queue conditions change rapidly. We are not liable for any decisions made based on the information provided in the app. The service is provided "as is" and "as available".`,
-    },
-    {
-        title: '7. Changes to Terms',
-        content: `We may modify these terms at any time. We will notify you of significant changes via the app. Your continued use of Noline after changes are posted constitutes acceptance of the updated terms.`,
-    },
-];
+const CONTACT_EMAIL = 'noline012@gmail.com';
 
 export default function TermsOfServiceScreen() {
     const router = useRouter();
@@ -59,13 +23,60 @@ export default function TermsOfServiceScreen() {
         setExpandedSection(prev => prev === index ? null : index);
     };
 
+    const lastUpdatedText = t('termsOfService.lastUpdatedLabel', {
+        date: t('termsOfService.lastUpdatedDate'),
+    });
+
+    const sections = [
+        {
+            title: t('termsOfService.sections.aboutService.title'),
+            content: t('termsOfService.sections.aboutService.content'),
+        },
+        {
+            title: t('termsOfService.sections.reportsActivity.title'),
+            content: t('termsOfService.sections.reportsActivity.content'),
+        },
+        {
+            title: t('termsOfService.sections.userContent.title'),
+            content: t('termsOfService.sections.userContent.content'),
+        },
+        {
+            title: t('termsOfService.sections.businessInfo.title'),
+            content: t('termsOfService.sections.businessInfo.content', { email: CONTACT_EMAIL }),
+        },
+        {
+            title: t('termsOfService.sections.photosReports.title'),
+            content: t('termsOfService.sections.photosReports.content'),
+        },
+        {
+            title: t('termsOfService.sections.permittedUse.title'),
+            content: t('termsOfService.sections.permittedUse.content'),
+        },
+        {
+            title: t('termsOfService.sections.availability.title'),
+            content: t('termsOfService.sections.availability.content'),
+        },
+        {
+            title: t('termsOfService.sections.limitation.title'),
+            content: t('termsOfService.sections.limitation.content'),
+        },
+        {
+            title: t('termsOfService.sections.termination.title'),
+            content: t('termsOfService.sections.termination.content'),
+        },
+        {
+            title: t('termsOfService.sections.changes.title'),
+            content: t('termsOfService.sections.changes.content'),
+        },
+    ];
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#0F172A" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Terms of Service</Text>
+                <Text style={styles.headerTitle}>{t('termsOfService.title')}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -73,15 +84,13 @@ export default function TermsOfServiceScreen() {
                 {/* Hero */}
                 <LinearGradient colors={['#4F46E5', '#6366F1']} style={styles.heroCard}>
                     <Ionicons name="document-text" size={48} color="#fff" />
-                    <Text style={styles.heroTitle}>Noline Terms</Text>
-                    <Text style={styles.heroSubtitle}>
-                        Please read these terms carefully before using our services.
-                    </Text>
-                    <Text style={styles.lastUpdated}>Last updated: {LAST_UPDATED}</Text>
+                    <Text style={styles.heroTitle}>{t('termsOfService.title')}</Text>
+                    <Text style={styles.heroSubtitle}>{t('termsOfService.heroSubtitle')}</Text>
+                    <Text style={styles.lastUpdated}>{lastUpdatedText}</Text>
                 </LinearGradient>
 
                 {/* Accordion Sections */}
-                {SECTIONS.map((section, index) => (
+                {sections.map((section, index) => (
                     <TouchableOpacity
                         key={index}
                         style={styles.sectionCard}
@@ -103,7 +112,8 @@ export default function TermsOfServiceScreen() {
                 ))}
 
                 {/* Contact */}
-                <Text style={styles.contactTitle}>Questions?</Text>
+                <Text style={styles.contactTitle}>{t('termsOfService.contact.title')}</Text>
+                <Text style={styles.contactDescription}>{t('termsOfService.contact.description')}</Text>
                 <TouchableOpacity
                     style={styles.contactCard}
                     onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)}
@@ -112,14 +122,14 @@ export default function TermsOfServiceScreen() {
                         <Ionicons name="mail-outline" size={22} color="#4F46E5" />
                     </View>
                     <View style={styles.contactInfo}>
-                        <Text style={styles.contactLabel}>Legal Department</Text>
+                        <Text style={styles.contactLabel}>{t('termsOfService.contact.emailLabel')}</Text>
                         <Text style={styles.contactValue}>{CONTACT_EMAIL}</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
                 </TouchableOpacity>
 
                 <View style={styles.footer}>
-                    <Text style={styles.footerText}>© 2025 Noline. All rights reserved.</Text>
+                    <Text style={styles.footerText}>{t('termsOfService.footer')}</Text>
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -186,6 +196,7 @@ const styles = StyleSheet.create({
         paddingTop: 14,
     },
     contactTitle: { fontSize: 18, fontWeight: '800', color: '#1E293B', marginBottom: 12, marginTop: 8 },
+    contactDescription: { fontSize: 14, color: '#475569', lineHeight: 22, marginBottom: 12 },
     contactCard: {
         flexDirection: 'row',
         alignItems: 'center',
