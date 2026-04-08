@@ -39,6 +39,12 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow NoLine to access your photos to update your profile picture."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/logo.png",

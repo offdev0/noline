@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
     Image,
     KeyboardAvoidingView,
@@ -19,19 +21,135 @@ import { useUser } from '@/context/UserContext';
 
 export default function AccountDetails() {
     const router = useRouter();
-    const { userData, user } = useUser();
-    const [displayName, setDisplayName] = useState(userData?.display_name || '');
+    const { userData, user, updateProfileDetails } = useUser();
+    const [displayName, setDisplayName] = useState(userData?.display_name || user?.displayName || '');
+    const [photoUrl, setPhotoUrl] = useState(userData?.photo_url || user?.photoURL || '');
+    const [localPhotoUri, setLocalPhotoUri] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
-    const profilePic = userData?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName || 'User')}&background=6366F1&color=fff&size=128`;
+    useEffect(() => {
+        if (!displayName && (userData?.display_name || user?.displayName)) {
+            setDisplayName(userData?.display_name || user?.displayName || '');
+        }
+        if (!photoUrl && (userData?.photo_url || user?.photoURL)) {
+            setPhotoUrl(userData?.photo_url || user?.photoURL || '');
+        }
+    }, [displayName, photoUrl, user, userData]);
+
+    const cloudName = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    const profilePic = localPhotoUri || photoUrl || userData?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName || 'User')}&background=6366F1&color=fff&size=128`;
+
+    const uploadToCloudinary = async (asset: ImagePicker.ImagePickerAsset) => {
+        if (!cloudName || !uploadPreset) {
+            Alert.alert(
+                'Cloudinary not configured',
+                'Set EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME and EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET in your environment.'
+            );
+            return null;
+        }
+
+        const formData = new FormData();
+        const fileName = asset.fileName || `avatar-${user?.uid || 'user'}.jpg`;
+
+        formData.append('file', {
+            uri: asset.uri,
+            type: asset.mimeType || 'image/jpeg',
+            name: fileName,
+        } as any);
+        formData.append('upload_preset', uploadPreset);
+        formData.append('folder', 'avatars');
+
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result?.error?.message || 'Upload failed');
+        }
+
+        return result.secure_url as string;
+    };
+
+    const handlePickAvatar = async () => {
+        if (isUploading) return;
+
+        if (!cloudName || !uploadPreset) {
+            Alert.alert(
+                'Cloudinary not configured',
+                'Set EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME and EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET in your environment.'
+            );
+            return;
+        }
+
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+            Alert.alert('Permission required', 'Please allow photo library access to upload a profile photo.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+
+        if (result.canceled) return;
+
+        const asset = result.assets?.[0];
+        if (!asset?.uri) {
+            Alert.alert('Error', 'Could not read the selected image.');
+            return;
+        }
+
+        setLocalPhotoUri(asset.uri);
+        setIsUploading(true);
+
+        try {
+            const uploadedUrl = await uploadToCloudinary(asset);
+            if (!uploadedUrl) {
+                setLocalPhotoUri(null);
+                return;
+            }
+
+            setPhotoUrl(uploadedUrl);
+            setLocalPhotoUri(null);
+            await updateProfileDetails({ photoUrl: uploadedUrl });
+            Alert.alert('Success', 'Profile photo updated successfully!');
+        } catch (error) {
+            console.error('Avatar upload failed:', error);
+            setLocalPhotoUri(null);
+            Alert.alert('Upload failed', 'Please try again.');
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     const handleSave = async () => {
+        const trimmedName = displayName.trim();
+        if (!trimmedName) {
+            Alert.alert('Missing name', 'Please enter a display name.');
+            return;
+        }
+
         setIsSaving(true);
-        // Simulate saving
-        setTimeout(() => {
-            setIsSaving(false);
+        try {
+            await updateProfileDetails({
+                displayName: trimmedName,
+                photoUrl: photoUrl || undefined,
+            });
             Alert.alert('Success', 'Profile updated successfully!');
-        }, 1000);
+        } catch (error) {
+            console.error('Profile update failed:', error);
+            Alert.alert('Error', 'Could not update profile. Please try again.');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -52,8 +170,16 @@ export default function AccountDetails() {
                     <View style={styles.profileSection}>
                         <View style={styles.avatarContainer}>
                             <Image source={{ uri: profilePic }} style={styles.avatar} />
-                            <TouchableOpacity style={styles.editBadge}>
-                                <Ionicons name="camera" size={16} color="white" />
+                            <TouchableOpacity
+                                style={[styles.editBadge, isUploading && styles.disabledButton]}
+                                onPress={handlePickAvatar}
+                                disabled={isUploading}
+                            >
+                                {isUploading ? (
+                                    <ActivityIndicator color="white" size="small" />
+                                ) : (
+                                    <Ionicons name="camera" size={16} color="white" />
+                                )}
                             </TouchableOpacity>
                         </View>
                         <Text style={styles.emailText}>{user?.email}</Text>
@@ -81,9 +207,9 @@ export default function AccountDetails() {
                     </View>
 
                     <TouchableOpacity
-                        style={[styles.saveButton, isSaving && styles.disabledButton]}
+                        style={[styles.saveButton, (isSaving || isUploading) && styles.disabledButton]}
                         onPress={handleSave}
-                        disabled={isSaving}
+                        disabled={isSaving || isUploading}
                     >
                         <Text style={styles.saveButtonText}>
                             {isSaving ? 'Saving...' : 'Save Changes'}

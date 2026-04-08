@@ -1,20 +1,20 @@
 import { auth, db } from '@/configs/firebaseConfig';
-import { 
-    signOut as firebaseSignOut, 
-    onAuthStateChanged, 
-    sendPasswordResetEmail, 
-    User,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    updateProfile,
-    GoogleAuthProvider,
-    signInWithCredential
-} from 'firebase/auth';
+import { t } from '@/i18n';
+import { registerForPushNotificationsAsync, sendLocalNotification } from '@/services/NotificationService';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import {
+    createUserWithEmailAndPassword,
+    signOut as firebaseSignOut,
+    GoogleAuthProvider,
+    onAuthStateChanged,
+    sendPasswordResetEmail,
+    signInWithCredential,
+    signInWithEmailAndPassword,
+    updateProfile,
+    User
+} from 'firebase/auth';
 import { doc, getDoc, increment, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { registerForPushNotificationsAsync, sendLocalNotification } from '@/services/NotificationService';
-import { t } from '@/i18n';
 
 export const ALL_MEDALS = [
     require('@/assets/medals/m1.png'),
@@ -41,6 +41,7 @@ interface UserContextType {
     completeTask: (taskId: string, points: number) => Promise<void>;
     isTaskCompleted: (taskId: string) => Promise<boolean>;
     updateSettings: (settings: any) => Promise<void>;
+    updateProfileDetails: (updates: { displayName?: string; photoUrl?: string }) => Promise<void>;
     level: number;
     medal: any; // Using any for require() type
     medalName: string;
@@ -79,6 +80,7 @@ const UserContext = createContext<UserContextType>({
     completeTask: async () => { },
     isTaskCompleted: async () => false,
     updateSettings: async () => { },
+    updateProfileDetails: async () => { },
     level: 1,
     medal: null,
     medalName: 'M1',
@@ -412,6 +414,41 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [user]);
 
+    const updateProfileDetails = useCallback(async (updates: { displayName?: string; photoUrl?: string }) => {
+        if (!user) return;
+
+        const payload: any = {};
+        if (updates.displayName) {
+            payload.display_name = updates.displayName;
+            payload.displayName = updates.displayName;
+        }
+        if (updates.photoUrl) {
+            payload.photo_url = updates.photoUrl;
+        }
+
+        if (Object.keys(payload).length === 0) return;
+
+        try {
+            const userRef = doc(db, 'users', user.uid);
+            await setDoc(userRef, payload, { merge: true });
+
+            const authUpdates: { displayName?: string; photoURL?: string } = {};
+            if (updates.displayName) authUpdates.displayName = updates.displayName;
+            if (updates.photoUrl) authUpdates.photoURL = updates.photoUrl;
+            if (Object.keys(authUpdates).length > 0) {
+                await updateProfile(user, authUpdates);
+            }
+
+            setUserData((prev: any) => ({
+                ...(prev || {}),
+                ...payload
+            }));
+        } catch (error) {
+            console.error('[UserContext] Error updating profile:', error);
+            throw error;
+        }
+    }, [user]);
+
     // 6-Level System Constants
     const LEVEL_THRESHOLDS = [0, 50, 150, 300, 500, 800]; // Total XP needed at start of Lev 1-6
     const MEDAL_NAMES = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'];
@@ -517,7 +554,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             clearXpGained,
             medalUpgrade,
             clearMedalUpgrade,
-            updateSettings
+            updateSettings,
+            updateProfileDetails
         }}>
             {children}
         </UserContext.Provider>

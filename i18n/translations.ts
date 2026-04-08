@@ -92,7 +92,7 @@ export const translations = {
             distance20_plus: '20+ km',
             km: 'km',
             m: 'm',
-            popularSpot: 'A popular %{category} spot in this area.',
+            popularSpot: 'A well-known %{category} spot nearby that many people visit for a reliable experience',
             veryPopular: 'Very popular',
             away: 'away',
             hotStatus: 'Hot',

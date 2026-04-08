@@ -217,9 +217,7 @@ export default function PlacesScreen() {
         <SafeAreaView style={styles.container} edges={['top']}>
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>{t('places.title')}</Text>
-                <TouchableOpacity style={styles.circularButton}>
-                    <Ionicons name="search-outline" size={20} color="#1E293B" />
-                </TouchableOpacity>
+               
             </View>
 
             <View style={styles.filterBar}>
