@@ -30,7 +30,7 @@ export default function MedalUpgradeModal() {
 
         const timer = setTimeout(() => clearMedalUpgrade(), 3200);
         return () => clearTimeout(timer);
-    }, [medalUpgrade, clearMedalUpgrade, opacity, scale]);
+    }, [medalUpgrade]);
 
     if (!medalUpgrade) return null;
 

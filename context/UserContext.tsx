@@ -108,6 +108,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const [lastXpGained, setLastXpGained] = useState(0);
     const [medalUpgrade, setMedalUpgrade] = useState<MedalUpgradeInfo | null>(null);
     const prevLevelRef = useRef<number | null>(null);
+    const lastMedalLevelRef = useRef<number | null>(null);
 
     const clearXpGained = useCallback(() => setLastXpGained(0), []);
     const clearMedalUpgrade = useCallback(() => setMedalUpgrade(null), []);
@@ -197,6 +198,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                     email: currentUser.email,
                     displayName: currentUser.displayName,
                     photo_url: currentUser.photoURL || DEFAULT_PROFILE_PIC,
+                    lastMedalLevel: 1,
                     dailyProgress: {}
                 };
                 await setDoc(userRef, initialData);
@@ -340,6 +342,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                 email: email,
                 displayName: name,
                 photo_url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=200&auto=format&fit=crop', // Default avatar
+                lastMedalLevel: 1,
                 dailyProgress: {}
             };
             await setDoc(userRef, initialData);
@@ -449,6 +452,20 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [user]);
 
+    const persistLastMedalLevel = useCallback(async (level: number) => {
+        if (!user) return;
+        try {
+            const userRef = doc(db, 'users', user.uid);
+            await setDoc(userRef, { lastMedalLevel: level }, { merge: true });
+            setUserData((prev: any) => ({
+                ...(prev || {}),
+                lastMedalLevel: level
+            }));
+        } catch (error) {
+            console.error('[UserContext] Error updating medal level:', error);
+        }
+    }, [user]);
+
     // 6-Level System Constants
     const LEVEL_THRESHOLDS = [0, 50, 150, 300, 500, 800]; // Total XP needed at start of Lev 1-6
     const MEDAL_NAMES = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'];
@@ -504,8 +521,24 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (!user) {
             prevLevelRef.current = null;
+            lastMedalLevelRef.current = null;
             setMedalUpgrade(null);
             return;
+        }
+
+        if (!userData) return;
+
+        if (lastMedalLevelRef.current === null) {
+            const storedLevel = typeof userData?.lastMedalLevel === 'number'
+                ? userData.lastMedalLevel
+                : null;
+
+            if (storedLevel !== null) {
+                lastMedalLevelRef.current = storedLevel;
+            } else {
+                lastMedalLevelRef.current = levelData.level;
+                void persistLastMedalLevel(levelData.level);
+            }
         }
 
         if (prevLevelRef.current === null) {
@@ -513,17 +546,20 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             return;
         }
 
-        if (levelData.level > prevLevelRef.current) {
+        const lastShownLevel = lastMedalLevelRef.current ?? prevLevelRef.current;
+        if (levelData.level > lastShownLevel) {
             setMedalUpgrade({
                 level: levelData.level,
                 medalName: levelData.medalName,
                 medalAsset: getMedalAsset(levelData.level),
                 points,
             });
+            lastMedalLevelRef.current = levelData.level;
+            void persistLastMedalLevel(levelData.level);
         }
 
         prevLevelRef.current = levelData.level;
-    }, [loading, user, levelData.level, levelData.medalName, points]);
+    }, [loading, user, userData, levelData.level, levelData.medalName, points, persistLastMedalLevel]);
 
     return (
         <UserContext.Provider value={{
