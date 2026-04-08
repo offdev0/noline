@@ -71,6 +71,10 @@ export default function PlaceDetailScreen() {
     const latestReportSeconds = latestReport?.Timestamp?.seconds || latestReport?.Timestamp?._seconds || 0;
     const hasRecentReport = latestReportSeconds > 0
         && (Math.floor(Date.now() / 1000) - latestReportSeconds) <= 3600;
+
+    type QueueStatus = 'vacant' | 'medium' | 'loaded';
+    type StatusKey = QueueStatus | 'closed';
+
     const getStatusDescription = (report?: typeof latestReport) => {
         if (!report) return t('placeDetail.estimatedStatus');
         if (report.isOpen === false) return t('placeDetail.statusDescriptions.closed');
@@ -89,9 +93,26 @@ export default function PlaceDetailScreen() {
         }
     };
 
-    const statusSubtitle = hasRecentReport
-        ? getStatusDescription(latestReport)
-        : t('placeDetail.estimatedStatus');
+    const getStatusKeyFromReport = (report?: typeof latestReport): StatusKey | null => {
+        if (!report) return null;
+        if (report.isOpen === false) return 'closed';
+        if (report.crowdLevel <= 1) return 'vacant';
+        if (report.crowdLevel === 2) return 'medium';
+        return 'loaded';
+    };
+
+    const getEstimatedStatusDescription = (status: QueueStatus) => {
+        switch (status) {
+            case 'vacant':
+                return t('placeDetail.statusDescriptions.calm');
+            case 'medium':
+                return t('placeDetail.statusDescriptions.pressure');
+            case 'loaded':
+                return t('placeDetail.statusDescriptions.busy');
+            default:
+                return t('placeDetail.estimatedStatus');
+        }
+    };
 
     const formatTimestamp = (ts: any) => {
         if (!ts) return t('common.unknown');
@@ -126,7 +147,8 @@ export default function PlaceDetailScreen() {
         );
     }
 
-    const getQueueColor = (status: string) => {
+    const getQueueColor = (status: StatusKey) => {
+        if (status === 'closed') return '#94A3B8';
         if (status === 'vacant') return '#22C55E';
         if (status === 'medium') return '#F59E0B';
         return '#EF4444';
@@ -156,6 +178,14 @@ export default function PlaceDetailScreen() {
         if (url) Linking.openURL(url);
     };
 
+    const statusKey = (hasRecentReport ? getStatusKeyFromReport(latestReport) : null) || place.status;
+    const statusLabel = statusKey === 'closed'
+        ? t('reportModal.placeClosed')
+        : t(`places.${statusKey}`);
+    const statusSubtitle = hasRecentReport
+        ? getStatusDescription(latestReport)
+        : getEstimatedStatusDescription(place.status);
+
     const handleShare = async () => {
         if (!place) return;
         try {
@@ -164,7 +194,7 @@ export default function PlaceDetailScreen() {
                     name: place.name,
                     address: place.address,
                     rating: place.rating,
-                    status: t(`places.${place.status}`)
+                    status: statusLabel
                 }),
                 title: t('placeDetail.shareTitle', { name: place.name })
             });
@@ -217,9 +247,9 @@ export default function PlaceDetailScreen() {
                         {/* Status Badge */}
                         <View style={styles.statusBadgeContainer}>
                             <View style={styles.statusBadge}>
-                                <View style={[styles.statusDot, { backgroundColor: getQueueColor(place.status) }]} />
+                                <View style={[styles.statusDot, { backgroundColor: getQueueColor(statusKey) }]} />
                                 <Text style={styles.statusText}>
-                                    {t(`places.${place.status}`)}
+                                    {statusLabel}
                                 </Text>
                                
                             </View>
