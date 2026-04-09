@@ -24,15 +24,15 @@ export default function TrendsCategoryScreen() {
     const { mood } = useLocalSearchParams() as { mood?: string };
     const router = useRouter();
     const { language } = useLanguage();
-    const { trendingPlaces, loading } = usePlaces();
+    const { foodPlaces, loading } = usePlaces();
     const [selectedMood, setSelectedMood] = useState<string | null>(mood || null);
 
     const filtered = useMemo(() => {
-        if (!selectedMood || !trendingPlaces.length) return trendingPlaces || [];
+        if (!selectedMood || !foodPlaces.length) return foodPlaces || [];
 
         const moodStr = selectedMood.toLowerCase();
 
-        let results = (trendingPlaces || []).filter((place: any) => {
+        let results = (foodPlaces || []).filter((place: any) => {
             const category = (place.category || '').toLowerCase();
             const description = (place.description || '').toLowerCase();
             const name = (place.name || '').toLowerCase();
@@ -62,9 +62,9 @@ export default function TrendsCategoryScreen() {
         });
 
         // SUPPLEMENT: If specific mood results are too few, add top-rated ones for better UX
-        if (results.length < 15 && trendingPlaces.length > 0) {
+        if (results.length < 15 && foodPlaces.length > 0) {
             const seenIds = new Set(results.map(r => r.id));
-            const topRatedFallback = [...trendingPlaces]
+            const topRatedFallback = [...foodPlaces]
                 .sort((a, b) => (b.rating || 0) - (a.rating || 0))
                 .filter(p => !seenIds.has(p.id));
 
@@ -72,7 +72,7 @@ export default function TrendsCategoryScreen() {
         }
 
         return results;
-    }, [selectedMood, trendingPlaces]);
+    }, [selectedMood, foodPlaces]);
 
     // Limit number of displayed items to avoid memory pressure on devices with many results
     const MAX_DISPLAY = 15;

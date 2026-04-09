@@ -12,7 +12,7 @@ import { SectionHeader } from './places/SectionHeader';
 
 export default function PlacesSection({ isLocationEnabled = false }: { isLocationEnabled?: boolean }) {
     const router = useRouter();
-    const { allPlaces, loading } = usePlaces();
+    const { foodPlaces, loading } = usePlaces();
 
     const bestPlacesTitle = isLocationEnabled
         ? t('dashboard.bestPlacesNearby')
@@ -22,9 +22,9 @@ export default function PlacesSection({ isLocationEnabled = false }: { isLocatio
         : t('dashboard.popular');
 
     const sortedPlaces = useMemo(() => {
-        if (!allPlaces || allPlaces.length === 0) return [];
-        return [...allPlaces].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    }, [allPlaces]);
+        if (!foodPlaces || foodPlaces.length === 0) return [];
+        return [...foodPlaces].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    }, [foodPlaces]);
 
     const featuredPlace = sortedPlaces[0];
     const gridPlaces = sortedPlaces.slice(1, 3);
@@ -42,7 +42,7 @@ export default function PlacesSection({ isLocationEnabled = false }: { isLocatio
         description: p.description || ''
     });
 
-    if (loading && allPlaces.length === 0) {
+    if (loading && foodPlaces.length === 0) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#5356FF" />

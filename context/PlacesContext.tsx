@@ -9,6 +9,7 @@ import { useUser } from './UserContext';
 
 interface PlacesContextType {
     allPlaces: PlaceData[];
+    foodPlaces: PlaceData[];
     trendingPlaces: PlaceData[];
     hotPlaces: PlaceData[];
     restaurants: PlaceData[];
@@ -29,6 +30,8 @@ interface PlacesContextType {
     addToHistory: (query: string) => void;
 }
 
+const FOOD_CATEGORIES: PlaceData['category'][] = ['restaurant', 'hot'];
+
 const FOOD_QUERY_REGEX = /(restaurant|cafe|coffee|bistro|brunch|pizza|burger|sushi|bakery|tea|diner)/i;
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -46,12 +49,10 @@ const matchesSearchRegex = (place: PlaceData, regex: RegExp) => (
     regex.test(place.category)
 );
 
-const filterPlacesByQuery = (places: PlaceData[], regex: RegExp | null, restrictToRestaurants: boolean) => {
-    if (!regex) return restrictToRestaurants ? places.filter(p => p.category === 'restaurant') : places;
-    return places.filter(place => {
-        if (restrictToRestaurants && place.category !== 'restaurant') return false;
-        return matchesSearchRegex(place, regex);
-    });
+const filterPlacesByQuery = (places: PlaceData[], regex: RegExp | null, restrictToFood: boolean) => {
+    const filtered = restrictToFood ? places.filter(p => FOOD_CATEGORIES.includes(p.category)) : places;
+    if (!regex) return filtered;
+    return filtered.filter(place => matchesSearchRegex(place, regex));
 };
 
 const mergePlacesById = (primary: PlaceData[], secondary: PlaceData[]) => {
@@ -67,6 +68,7 @@ const mergePlacesById = (primary: PlaceData[], secondary: PlaceData[]) => {
 
 const PlacesContext = createContext<PlacesContextType>({
     allPlaces: [],
+    foodPlaces: [],
     trendingPlaces: [],
     hotPlaces: [],
     restaurants: [],
@@ -204,7 +206,6 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
             addToHistory(trimmedQuery);
 
             const searchRegex = buildSearchRegex(trimmedQuery);
-            const isFoodQuery = FOOD_QUERY_REGEX.test(trimmedQuery);
 
             let targetCoords: { latitude: number; longitude: number } | null = null;
             try {
@@ -222,7 +223,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
             const textResults = filterPlacesByQuery(
                 await MapsService.fetchPlacesByTextQuery(trimmedQuery, language, biasCoords || undefined),
                 searchRegex,
-                isFoodQuery
+                true
             );
 
             let data: PlaceData[] = textResults;
@@ -233,7 +234,7 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
                 } else {
                     nearbyResults = await MapsService.fetchNearbyPlaces(queryWithIsrael, language);
                 }
-                const filteredNearby = isFoodQuery ? filterPlacesByQuery(nearbyResults, searchRegex, true) : nearbyResults;
+                const filteredNearby = filterPlacesByQuery(nearbyResults, searchRegex, true);
                 data = mergePlacesById(data, filteredNearby);
             }
 
@@ -342,10 +343,13 @@ export const PlacesProvider = ({ children }: { children: React.ReactNode }) => {
         return vibes.length > 0 ? vibes : filteredPlaces.filter(p => p.category === 'hot');
     }, [filteredPlaces]);
 
+    const foodPlaces = useMemo(() => allPlaces.filter(p => FOOD_CATEGORIES.includes(p.category)), [allPlaces]);
+
     return (
         <PlacesContext.Provider
             value={{
                 allPlaces,
+                foodPlaces,
                 trendingPlaces: filteredPlaces,
                 hotPlaces: memoizedHotPlaces,
                 restaurants: memoizedRestaurants,

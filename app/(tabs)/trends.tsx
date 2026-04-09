@@ -15,6 +15,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useLanguage } from '@/context/LanguageContext';
+import { usePlaces } from '@/context/PlacesContext';
+import { PlaceData } from '@/services/MapsService';
+
 const { width } = Dimensions.get('window');
 
 const moods = [
@@ -24,27 +28,21 @@ const moods = [
     { id: '4', label: 'spontaneous', icon: 'aperture-outline', colors: ['#F0FDF4', '#DCFCE7'], iconColor: '#16A34A', description: 'Quick ideas for when you just want to go out now.' },
 ];
 
-
-
-import { useLanguage } from '@/context/LanguageContext';
-import { usePlaces } from '@/context/PlacesContext';
-import { PlaceData } from '@/services/MapsService';
-
 const isLatinText = (value: string) => /[A-Za-z]/.test(value) && /^[\x00-\x7F]*$/.test(value);
 
 export default function TrendsScreen() {
     const router = useRouter();
     const { language } = useLanguage();
-    const { trendingPlaces, loading } = usePlaces();
+    const { foodPlaces, loading } = usePlaces();
     const [showAllTrending, setShowAllTrending] = useState(false);
     const [selectedMood, setSelectedMood] = useState<string | null>(null);
 
-    const filteredTrendingPlaces = useMemo(() => {
-        if (!selectedMood) return trendingPlaces || [];
+    const filteredTrendingPlaces = useMemo<PlaceData[]>(() => {
+        if (!selectedMood) return foodPlaces || [];
 
         const moodStr = selectedMood.toLowerCase();
 
-        let results = trendingPlaces.filter((place: PlaceData) => {
+        let results = foodPlaces.filter((place: PlaceData) => {
             const category = place.category.toLowerCase();
             const description = place.description.toLowerCase();
             const name = place.name.toLowerCase();
@@ -74,8 +72,8 @@ export default function TrendsScreen() {
         });
 
         // Fallback to ensure results are never empty
-        return results.length > 0 ? results : trendingPlaces;
-    }, [selectedMood, trendingPlaces]);
+        return results.length > 0 ? results : foodPlaces;
+    }, [selectedMood, foodPlaces]);
 
     const handlePlacePress = (id: string) => {
         router.push({
@@ -148,7 +146,7 @@ export default function TrendsScreen() {
                 {/* Trending Section */}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>{t('trends.trendingNearYou')}</Text>
-                    {trendingPlaces.length > 3 && (
+                    {foodPlaces.length > 3 && (
                         <TouchableOpacity onPress={() => setShowAllTrending(!showAllTrending)}>
                             <Text style={styles.seeAllText}>
                                 {showAllTrending ? t('trends.showLess') : t('trends.seeAll')}
@@ -158,7 +156,7 @@ export default function TrendsScreen() {
                 </View>
 
                 <View style={styles.trendingContainer}>
-                    {loading && trendingPlaces.length === 0 ? (
+                    {loading && foodPlaces.length === 0 ? (
                         <View style={{ padding: 20 }}>
                             <Text style={{ color: '#666', textAlign: 'center' }}>{t('trends.updating')}</Text>
                         </View>

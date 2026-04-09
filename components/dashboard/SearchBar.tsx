@@ -29,7 +29,7 @@ const buildSearchRegex = (query: string) => {
 export default function SearchBar() {
     const router = useRouter();
     const { userData } = useUser();
-    const { searchHistory, performSearch, restaurants } = usePlaces();
+    const { searchHistory, performSearch, foodPlaces } = usePlaces();
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
@@ -81,7 +81,7 @@ export default function SearchBar() {
     const suggestions = useMemo(() => {
         const regex = buildSearchRegex(searchQuery);
         if (!regex) return [];
-        return restaurants
+        return foodPlaces
             .filter(place => (
                 regex.test(place.name) ||
                 regex.test(place.description) ||
@@ -89,7 +89,7 @@ export default function SearchBar() {
             ))
             .sort((a, b) => (b.rating || 0) - (a.rating || 0))
             .slice(0, 6);
-    }, [restaurants, searchQuery]);
+    }, [foodPlaces, searchQuery]);
 
     return (
         <View style={styles.container}>

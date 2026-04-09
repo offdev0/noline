@@ -50,7 +50,7 @@ export const translations = {
             changeMood: 'Change mood',
             placesFor: 'Placesaaa for %{mood}',
             noPlaces: 'No places found for this mood.',
-            showingFirst: 'Showing first %{count} of %{total} places',
+            showingFirst: '',
         },
         time: {
             justNow: 'Just now',
@@ -607,7 +607,7 @@ export const translations = {
             changeMood: 'החלף מצב רוח',
             placesFor: 'מקומות עבור %{mood}',
             noPlaces: 'לא נמצאו מקומות למצב רוח זה.',
-            showingFirst: 'מציג %{count} מתוך %{total} מקומות',
+            showingFirst: '',
         },
         time: {
             justNow: 'כרגע',
