@@ -3,7 +3,7 @@ import { t } from '@/i18n';
 import { formatDistance } from '@/utils/formatters';
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 // Modular Components
 import { CategoryIcon } from './places/CategoryIcon';
@@ -35,7 +35,14 @@ export default function PlacesSection() {
         description: p.description || ''
     });
 
-    if (loading && allPlaces.length === 0) return null;
+    if (loading && allPlaces.length === 0) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#5356FF" />
+                <Text style={styles.loadingText}>{t('placesSection.fetching')}</Text>
+            </View>
+        );
+    }
 
     return (
         <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
@@ -113,6 +120,8 @@ export default function PlacesSection() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F8FAFC' },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' },
+    loadingText: { marginTop: 12, fontSize: 16, fontWeight: '700', color: '#475569' },
     gridRow: { flexDirection: 'row', paddingHorizontal: CARD_MARGIN, justifyContent: 'space-between', marginBottom: 24 },
     categorySection: { marginBottom: 0 },
     categoryScroll: { paddingHorizontal: CARD_MARGIN, gap: 12 },
