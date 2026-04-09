@@ -20,8 +20,10 @@ export const translations = {
             titleLine1: 'Before you leave',
             titleLine2: '– Check the queue!',
             enableLocation: 'Enable location for more accurate results nearby',
-            bestPlaces: 'Best places near you right now',
+            bestPlaces: 'Best places available now',
+            bestPlacesNearby: 'Best places near you right now',
             exploreByCategory: 'Explore by category',
+            popular: 'Popular picks',
             popularNearYou: 'Popular • Near You',
         },
         moods: {
@@ -575,8 +577,10 @@ export const translations = {
             titleLine1: 'לפני שאתה יוצא',
             titleLine2: '– בדוק את התור!',
             enableLocation: 'הפעל מיקום לקבלת תוצאות מדויקות יותר בסביבה',
-            bestPlaces: 'המקומות הכי טובים לידך עכשיו',
+            bestPlaces: 'המקומות הטובים ביותר עכשיו',
+            bestPlacesNearby: 'המקומות הטובים ביותר לידך עכשיו',
             exploreByCategory: 'חיפוש לפי קטגוריה',
+            popular: 'פופולרי • מומלץ',
             popularNearYou: 'פופולרי • בקרבת מקום',
         },
         moods: {

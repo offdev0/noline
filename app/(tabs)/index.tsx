@@ -20,7 +20,7 @@ export default function DashboardScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const { user, streak, points, lastXpGained, clearXpGained } = useUser();
   const { permissionStatus, requestLocation } = useLocation();
-
+  const isLocationEnabled = permissionStatus === 'granted';
 
 
   return (
@@ -62,7 +62,7 @@ export default function DashboardScreen() {
           <SearchBar />
 
 
-          <PlacesSection />
+          <PlacesSection isLocationEnabled={isLocationEnabled} />
 
         </ScrollView>
       </SafeAreaView>

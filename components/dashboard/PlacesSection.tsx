@@ -10,9 +10,16 @@ import { CategoryIcon } from './places/CategoryIcon';
 import { CARD_MARGIN, FeaturedCard, GridCard, ListCard, PlaceProps } from './places/PlaceCards';
 import { SectionHeader } from './places/SectionHeader';
 
-export default function PlacesSection() {
+export default function PlacesSection({ isLocationEnabled = false }: { isLocationEnabled?: boolean }) {
     const router = useRouter();
     const { allPlaces, loading } = usePlaces();
+
+    const bestPlacesTitle = isLocationEnabled
+        ? t('dashboard.bestPlacesNearby')
+        : t('dashboard.bestPlaces');
+    const popularTitle = isLocationEnabled
+        ? t('dashboard.popularNearYou')
+        : t('dashboard.popular');
 
     const sortedPlaces = useMemo(() => {
         if (!allPlaces || allPlaces.length === 0) return [];
@@ -46,7 +53,7 @@ export default function PlacesSection() {
 
     return (
         <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-            <SectionHeader title={t('dashboard.bestPlaces')} />
+            <SectionHeader title={bestPlacesTitle} />
 
             {featuredPlace && (
                 <FeaturedCard
@@ -100,9 +107,7 @@ export default function PlacesSection() {
             </View>
 
             <View style={styles.popularDivider}>
-                <Text style={styles.popularTitle}>
-                    {t('dashboard.popularNearYou')}
-                </Text>
+                <Text style={styles.popularTitle}>{popularTitle}</Text>
             </View>
 
             <View style={styles.listContainer}>
