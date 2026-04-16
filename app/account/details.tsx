@@ -17,6 +17,7 @@ import {
     View
 } from 'react-native';
 
+import { t } from '@/i18n';
 import { useUser } from '@/context/UserContext';
 
 export default function AccountDetails() {
@@ -45,8 +46,8 @@ export default function AccountDetails() {
     const uploadToCloudinary = async (asset: ImagePicker.ImagePickerAsset) => {
         if (!cloudName || !uploadPreset) {
             Alert.alert(
-                'Cloudinary not configured',
-                'Set EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME and EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET in your environment.'
+                t('accountDetailsPage.notConfigured'),
+                t('accountDetailsPage.configMsg')
             );
             return null;
         }
@@ -69,7 +70,7 @@ export default function AccountDetails() {
 
         const result = await response.json();
         if (!response.ok) {
-            throw new Error(result?.error?.message || 'Upload failed');
+            throw new Error(result?.error?.message || t('accountDetailsPage.uploadFailed'));
         }
 
         return result.secure_url as string;
@@ -80,15 +81,15 @@ export default function AccountDetails() {
 
         if (!cloudName || !uploadPreset) {
             Alert.alert(
-                'Cloudinary not configured',
-                'Set EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME and EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET in your environment.'
+                t('accountDetailsPage.notConfigured'),
+                t('accountDetailsPage.configMsg')
             );
             return;
         }
 
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
-            Alert.alert('Permission required', 'Please allow photo library access to upload a profile photo.');
+            Alert.alert(t('accountDetailsPage.permissionRequired'), t('accountDetailsPage.permissionMsg'));
             return;
         }
 
@@ -103,7 +104,7 @@ export default function AccountDetails() {
 
         const asset = result.assets?.[0];
         if (!asset?.uri) {
-            Alert.alert('Error', 'Could not read the selected image.');
+            Alert.alert(t('common.error'), t('accountDetailsPage.readError'));
             return;
         }
 
@@ -120,11 +121,11 @@ export default function AccountDetails() {
             setPhotoUrl(uploadedUrl);
             setLocalPhotoUri(null);
             await updateProfileDetails({ photoUrl: uploadedUrl });
-            Alert.alert('Success', 'Profile photo updated successfully!');
+            Alert.alert(t('auth.success'), t('accountDetailsPage.photoSuccess'));
         } catch (error) {
             console.error('Avatar upload failed:', error);
             setLocalPhotoUri(null);
-            Alert.alert('Upload failed', 'Please try again.');
+            Alert.alert(t('accountDetailsPage.uploadFailed'), t('accountDetailsPage.uploadFailedMsg'));
         } finally {
             setIsUploading(false);
         }
@@ -133,7 +134,7 @@ export default function AccountDetails() {
     const handleSave = async () => {
         const trimmedName = displayName.trim();
         if (!trimmedName) {
-            Alert.alert('Missing name', 'Please enter a display name.');
+            Alert.alert(t('accountDetailsPage.missingName'), t('accountDetailsPage.missingNameMsg'));
             return;
         }
 
@@ -143,10 +144,10 @@ export default function AccountDetails() {
                 displayName: trimmedName,
                 photoUrl: photoUrl || undefined,
             });
-            Alert.alert('Success', 'Profile updated successfully!');
+            Alert.alert(t('auth.success'), t('accountDetailsPage.success'));
         } catch (error) {
             console.error('Profile update failed:', error);
-            Alert.alert('Error', 'Could not update profile. Please try again.');
+            Alert.alert(t('common.error'), t('accountDetailsPage.error'));
         } finally {
             setIsSaving(false);
         }
@@ -158,7 +159,7 @@ export default function AccountDetails() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#333" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Account details</Text>
+                <Text style={styles.headerTitle}>{t('accountDetailsPage.title')}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -187,17 +188,17 @@ export default function AccountDetails() {
 
                     <View style={styles.formSection}>
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Display Name</Text>
+                            <Text style={styles.label}>{t('accountDetailsPage.displayName')}</Text>
                             <TextInput
                                 style={styles.input}
                                 value={displayName}
                                 onChangeText={setDisplayName}
-                                placeholder="Enter your name"
+                                placeholder={t('accountDetailsPage.enterName')}
                             />
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Email Address</Text>
+                            <Text style={styles.label}>{t('accountDetailsPage.emailAddress')}</Text>
                             <TextInput
                                 style={[styles.input, styles.disabledInput]}
                                 value={user?.email || ''}
@@ -212,7 +213,7 @@ export default function AccountDetails() {
                         disabled={isSaving || isUploading}
                     >
                         <Text style={styles.saveButtonText}>
-                            {isSaving ? 'Saving...' : 'Save Changes'}
+                            {isSaving ? t('accountDetailsPage.saving') : t('accountDetailsPage.saveChanges')}
                         </Text>
                     </TouchableOpacity>
                 </ScrollView>
