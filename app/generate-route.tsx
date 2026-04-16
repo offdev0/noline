@@ -30,7 +30,7 @@ export default function GenerateRouteScreen() {
 
     const generateRoute = async (durationId: string) => {
         if (allPlaces.length === 0) {
-            alert('Wait a moment, we are still loading places near you...');
+            alert(t('route.loadingPlaces'));
             return;
         }
 

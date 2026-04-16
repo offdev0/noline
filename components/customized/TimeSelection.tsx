@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
@@ -5,11 +6,11 @@ import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 
 const { width } = Dimensions.get('window');
 
-const TIME_OPTIONS = [
-    { id: '1h', icon: 'time-outline', label: '1 Hour', color: '#6366F1' },
-    { id: '3h', icon: 'hourglass-outline', label: '3 Hours', color: '#8B5CF6' },
-    { id: 'half', icon: 'sunny-outline', label: 'Half Day', color: '#F59E0B' },
-    { id: 'full', icon: 'calendar-outline', label: 'Full Day', color: '#EC4899' },
+const getTimeOptions = () => [
+    { id: '1h', icon: 'time-outline', label: t('route.hour1'), color: '#6366F1' },
+    { id: '3h', icon: 'hourglass-outline', label: t('route.hours3'), color: '#8B5CF6' },
+    { id: 'half', icon: 'sunny-outline', label: t('route.halfDay'), color: '#F59E0B' },
+    { id: 'full', icon: 'calendar-outline', label: t('route.fullDay'), color: '#EC4899' },
 ];
 
 interface TimeSelectionProps {
@@ -18,6 +19,7 @@ interface TimeSelectionProps {
 }
 
 export const TimeSelection: React.FC<TimeSelectionProps> = ({ onSelect, onBack }) => {
+    const TIME_OPTIONS = getTimeOptions();
     return (
         <View style={styles.container}>
             
