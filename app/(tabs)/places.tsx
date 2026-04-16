@@ -134,6 +134,32 @@ export default function PlacesScreen() {
         const isLiked = item.likes?.includes(user?.email || '');
         const avatarId = (item.reportBy?.length || 0) % 70;
 
+        // Translation helper for liveSituation
+        const getTranslatedSituation = (situation: string, level: number) => {
+            if (level === 1) return t('reportModal.calm');
+            if (level === 2) return t('reportModal.pressure');
+            if (level === 3) return t('reportModal.slow');
+            if (level === 4) return t('reportModal.busy');
+            
+            // Handle Review types (legacy or current)
+            if (situation === 'Add Review' || situation === 'הוסף ביקורת' || situation === 'User Review') {
+                return t('reviewModal.title');
+            }
+            
+            // If it's some other string, check if it's one of ours in the other language
+            const calmHE = 'רגוע 🙂';
+            const pressureHE = 'לחץ קל ⚡';
+            const slowHE = 'שרות איטי ⏳';
+            const busyHE = 'עמוס מאוד 🔥';
+
+            if (situation.includes('רגוע') || situation.includes('Calm')) return t('reportModal.calm');
+            if (situation.includes('לחץ') || situation.includes('pressure')) return t('reportModal.pressure');
+            if (situation.includes('איטי') || situation.includes('Slow')) return t('reportModal.slow');
+            if (situation.includes('עמוס') || situation.includes('busy')) return t('reportModal.busy');
+
+            return situation;
+        };
+
         return (
             <View style={{ marginBottom: 12 }}>
                 <TouchableOpacity
@@ -170,7 +196,7 @@ export default function PlacesScreen() {
                         <View style={{ flex: 1, marginLeft: 10 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
                                 <Text style={styles.boldText}>{item.reportBy?.split('@')[0] || t('places.user')}</Text>
-                                <Text style={styles.reportTextInline}> · {item.liveSituation}</Text>
+                                <Text style={styles.reportTextInline}> · {getTranslatedSituation(item.liveSituation, item.crowdLevel)}</Text>
                             </View>
                         </View>
                     </View>
@@ -205,7 +231,7 @@ export default function PlacesScreen() {
                             </TouchableOpacity>
                         </View>
                         <View style={[styles.typeBadge, { backgroundColor: type === 'vacant' ? '#22C55E' : type === 'medium' ? '#F59E0B' : '#EF4444' }]}>
-                            <Text style={styles.typeBadgeText}>{type.toUpperCase()}</Text>
+                            <Text style={styles.typeBadgeText}>{t(`places.${type}`).toUpperCase()}</Text>
                         </View>
                     </View>
                 </TouchableOpacity>

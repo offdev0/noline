@@ -13,7 +13,7 @@ export const PlaceBadge = ({ type, text, icon }: PlaceBadgeProps) => {
         return (
             <View style={[styles.badge, styles.hotBadge]}>
                 <Text style={styles.badgeEmoji}>🔥</Text>
-                <Text style={styles.badgeTextHot}>Hot</Text>
+                <Text style={styles.badgeTextHot}>{text}</Text>
             </View>
         );
     }
@@ -21,7 +21,7 @@ export const PlaceBadge = ({ type, text, icon }: PlaceBadgeProps) => {
         return (
             <View style={[styles.badge, styles.noWaitBadge]}>
                 <Ionicons name="time-outline" size={12} color="#fff" style={{ marginRight: 2 }} />
-                <Text style={styles.badgeTextWhite}>No Wait</Text>
+                <Text style={styles.badgeTextWhite}>{text}</Text>
             </View>
         );
     }

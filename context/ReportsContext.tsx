@@ -104,7 +104,7 @@ export const ReportsProvider = ({ children }: { children: React.ReactNode }) => 
     const addReport = async (data: Omit<ReportData, 'id' | 'Timestamp' | 'likes' | 'commentsCount' | 'HELPCOUNT'>) => {
         const cooldown = canReport(data.businessRef);
         if (!cooldown.allowed) {
-            throw new Error(`You’ve just reported this place. You’ll be able to report again in ${Math.ceil(cooldown.remainingMs / 60000)} minutes.`);
+            throw new Error(t('reportModal.cooldownA')); // Or another appropriate key
         }
 
         try {
@@ -148,12 +148,26 @@ export const ReportsProvider = ({ children }: { children: React.ReactNode }) => 
         const placeReports = getReportsByPlace(placeId);
 
         if (placeReports.length === 0) {
-            return { status: 'Expected to be busy', isExpected: true };
+            return { status: t('placeDetail.estimatedStatus'), isExpected: true };
         }
 
         // Get most recent report status
-        const latest = placeReports[0]; // Already sorted by desc Timestamp in useEffect
-        return { status: latest.liveSituation || 'Busy', isExpected: false };
+        const latest = placeReports[0]; 
+        
+        // Translation logic
+        const getStatusText = (report: ReportData) => {
+            if (report.crowdLevel === 1) return t('reportModal.calm');
+            if (report.crowdLevel === 2) return t('reportModal.pressure');
+            if (report.crowdLevel === 3) return t('reportModal.slow');
+            if (report.crowdLevel === 4) return t('reportModal.busy');
+            
+            if (report.liveSituation === 'Add Review' || report.liveSituation === 'הוסף ביקורת') {
+                return t('reviewModal.title');
+            }
+            return report.liveSituation || t('placeDetail.estimatedStatus');
+        };
+
+        return { status: getStatusText(latest), isExpected: false };
     };
 
     const toggleLike = async (reportId: string) => {

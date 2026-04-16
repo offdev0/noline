@@ -361,7 +361,14 @@ export default function PlaceDetailScreen() {
                                             <View style={styles.reportNameStatusRow}>
                                                 <Text style={styles.reporterName}>{report.reportBy.split('@')[0]}</Text>
                                                 <Text style={styles.reportNameDot}> · </Text>
-                                                <Text style={styles.reportStatus} numberOfLines={1}>{report.liveSituation}</Text>
+                                                <Text style={styles.reportStatus} numberOfLines={1}>
+                                                    {report.crowdLevel === 1 ? t('reportModal.calm') :
+                                                     report.crowdLevel === 2 ? t('reportModal.pressure') :
+                                                     report.crowdLevel === 3 ? t('reportModal.slow') :
+                                                     report.crowdLevel === 4 ? t('reportModal.busy') :
+                                                     (report.liveSituation === 'Add Review' || report.liveSituation === 'הוסף ביקורת') ? t('reviewModal.title') :
+                                                     report.liveSituation}
+                                                </Text>
                                             </View>
                                             <Text style={styles.reportTime}>{formatTimestamp(report.Timestamp)}</Text>
                                         </View>
